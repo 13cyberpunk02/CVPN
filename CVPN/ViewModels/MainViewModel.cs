@@ -235,6 +235,8 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
  
+        ExplainRouting();
+ 
         _core = new SingBoxService(Settings.CorePath);
         _core.LineReceived += OnCoreLine;
         _core.Exited += OnCoreExited;
@@ -637,6 +639,33 @@ public sealed class MainViewModel : ObservableObject
  
         Append($"[cvpn] флаги не загружены: {string.Join(", ", FlagCatalog.Missing)}");
         Append("[cvpn] проверьте, что файлы Assets/Flags/*.png добавлены в проект с действием Resource");
+    }
+ 
+    /// <summary>
+    /// Пишет в лог, как разошлись правила. Помогает понять, почему сайт всё ещё
+    /// идёт через прокси: чаще всего домена просто нет в наборе.
+    /// </summary>
+    private void ExplainRouting()
+    {
+        var active = Rules.Where(r => r.Enabled).ToList();
+        var direct = active.Count(r => r.Action == RouteAction.Direct);
+        var blocked = active.Count(r => r.Action == RouteAction.Block);
+ 
+        Append($"[cvpn] правил: {active.Count} (напрямую {direct}, блок {blocked}), " +
+               $"остальное {(Settings.ProxyByDefault ? "через прокси" : "напрямую")}");
+ 
+        // geoip сопоставляется по адресу, а на момент DNS-запроса его ещё нет
+        var geoipDirect = active
+            .Where(r => r.Action == RouteAction.Direct && r.Match == MatchKind.Geoip)
+            .Select(r => r.Value)
+            .ToList();
+ 
+        if (geoipDirect.Count > 0)
+        {
+            Append($"[cvpn] geoip ({string.Join(", ", geoipDirect)}) работает только для соединений, " +
+                   "но не для DNS: домен резолвится через туннель. Для сайтов с геобалансировкой " +
+                   "добавьте правило по домену или geosite.");
+        }
     }
  
     /// <summary>Отметка о нажатии на круг — для диагностики привязок.</summary>

@@ -10,10 +10,10 @@ namespace CVPN.Services;
 /// Собирает config.json под sing-box 1.12+.
 ///
 /// Что важно знать про эту версию:
-///  1. geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
-///  2. спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
-///  3. legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
-///  4. DNS-серверы описываются новым форматом с полями type/server.
+///  • geosite/geoip удалены — вместо них удалённые rule-set в формате .srs;
+///  • спецвыходы block/dns устарели — вместо них действия правил reject/hijack-dns;
+///  • legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
+///  • DNS-серверы описываются новым форматом с полями type/server.
 /// </summary>
 public static class ConfigBuilder
 {
@@ -35,6 +35,11 @@ public static class ConfigBuilder
         var ruleSets = new JsonArray();
         var seenSets = new HashSet<string>(StringComparer.Ordinal);
  
+        // Порядок важен: обе секции складывают наборы правил в общий список,
+        // а дедупликация идёт по тегу через seenSets
+        var dns = BuildDns(active, settings, ruleSets, seenSets);
+        var route = BuildRoute(active, settings, ruleSets, seenSets);
+ 
         var root = new JsonObject
         {
             ["log"] = new JsonObject
@@ -42,14 +47,14 @@ public static class ConfigBuilder
                 ["level"] = settings.LogLevel,
                 ["timestamp"] = true
             },
-            ["dns"] = BuildDns(settings),
+            ["dns"] = dns,
             ["inbounds"] = BuildInbounds(settings),
             ["outbounds"] = new JsonArray
             {
                 BuildOutbound(profile),
                 new JsonObject { ["type"] = "direct", ["tag"] = DirectTag }
             },
-            ["route"] = BuildRoute(active, settings, ruleSets, seenSets),
+            ["route"] = route,
             ["experimental"] = new JsonObject
             {
                 ["cache_file"] = new JsonObject
@@ -228,6 +233,8 @@ public static class ConfigBuilder
     {
         var routeRules = new JsonArray
         {
+            // Определяем протокол до маршрутизации — иначе доменные правила
+            // не сработают для соединений, пришедших по IP из TUN
             new JsonObject { ["action"] = "sniff" },
             new JsonObject { ["protocol"] = "dns", ["action"] = "hijack-dns" },
             new JsonObject { ["ip_is_private"] = true, ["outbound"] = DirectTag }
@@ -361,26 +368,142 @@ public static class ConfigBuilder
  
     // ===================== dns =====================
  
-    private static JsonObject BuildDns(AppSettings s) => new()
+    /// <summary>
+    /// Домены, которые ходят напрямую, и резолвиться должны локально.
+    /// Иначе запрос уходит через туннель, сайт с геобалансировкой отдаёт адрес
+    /// ближайшего к выходной ноде узла — и «прямое» соединение приезжает
+    /// на зарубежный сервер. Заодно это утечка: провайдер прокси иначе
+    /// видит все DNS-запросы, включая к прямым сайтам.
+    /// </summary>
+    private static JsonObject BuildDns(
+        List<RouteRule> rules, AppSettings s, JsonArray ruleSets, HashSet<string> seen)
     {
-        ["servers"] = new JsonArray
+        var dnsRules = new JsonArray();
+ 
+        foreach (var rule in rules.Where(r => r.Action == RouteAction.Direct))
         {
-            new JsonObject
+            var node = ToDnsRule(rule, ruleSets, seen);
+            if (node is not null) dnsRules.Add(node);
+        }
+ 
+        return new JsonObject
+        {
+            ["servers"] = new JsonArray
             {
-                ["tag"] = "dns-remote",
-                ["type"] = "tls",
-                ["server"] = s.RemoteDns,
-                ["detour"] = ProxyTag
+                RemoteDnsServer(s),
+                // type "local" берёт системные резолверы — работает и в отеле, и за корпоративным NAT
+                new JsonObject
+                {
+                    ["tag"] = "dns-local",
+                    ["type"] = "local"
+                }
             },
-            // type "local" берёт системные резолверы — работает и в отеле, и за корпоративным NAT
-            new JsonObject
+            ["rules"] = dnsRules,
+            ["final"] = "dns-remote",
+            ["strategy"] = "prefer_ipv4",
+            ["independent_cache"] = true
+        };
+    }
+ 
+    /// <summary>
+    /// Транспорт удалённого резолвера выводится из схемы адреса. По умолчанию DoH:
+    /// он идёт по 443 порту и проходит везде, тогда как DoT (853) через прокси
+    /// часто висит до таймаута — провайдеры и сами прокси-серверы его режут.
+    ///
+    ///   https://1.1.1.1/dns-query  — DoH, значение по умолчанию
+    ///   tls://1.1.1.1              — DoT
+    ///   quic://1.1.1.1             — DoQ
+    ///   udp://1.1.1.1              — обычный DNS, шифрования нет
+    /// </summary>
+    private static JsonObject RemoteDnsServer(AppSettings s)
+    {
+        var raw = s.RemoteDns.Trim();
+        var type = "https";
+        var host = raw;
+        var path = "/dns-query";
+        var port = 0;
+ 
+        if (raw.Contains("://", StringComparison.Ordinal) && Uri.TryCreate(raw, UriKind.Absolute, out var uri))
+        {
+            host = uri.Host;
+ 
+            type = uri.Scheme.ToLowerInvariant() switch
             {
-                ["tag"] = "dns-local",
-                ["type"] = "local"
+                "tls" or "dot" => "tls",
+                "quic" or "doq" => "quic",
+                "h3" => "h3",
+                "udp" or "dns" => "udp",
+                "tcp" => "tcp",
+                _ => "https"
+            };
+ 
+            if (uri.AbsolutePath.Length > 1) path = uri.AbsolutePath;
+            if (!uri.IsDefaultPort) port = uri.Port;
+        }
+ 
+        var node = new JsonObject
+        {
+            ["tag"] = "dns-remote",
+            ["type"] = type,
+            ["server"] = host,
+            ["detour"] = ProxyTag
+        };
+ 
+        if (type is "https" or "h3") node["path"] = path;
+        if (port > 0) node["server_port"] = port;
+ 
+        return node;
+    }
+ 
+    /// <summary>
+    /// В DNS-правило можно перенести только доменные условия: на момент запроса
+    /// адрес ещё неизвестен, поэтому geoip и process_name здесь бессмысленны.
+    /// </summary>
+    private static JsonObject? ToDnsRule(RouteRule rule, JsonArray ruleSets, HashSet<string> seen)
+    {
+        var value = rule.Value.Trim();
+        if (value.Length == 0) return null;
+ 
+        var node = new JsonObject();
+ 
+        switch (rule.Match)
+        {
+            case MatchKind.Geosite:
+            {
+                var tag = $"geosite-{value}";
+                AddRemoteRuleSet(ruleSets, seen, tag, $"{GeositeBase}/{tag}.srs");
+                node["rule_set"] = new JsonArray { tag };
+                break;
             }
-        },
-        ["final"] = "dns-remote",
-        ["strategy"] = "prefer_ipv4",
-        ["independent_cache"] = true
-    };
+            case MatchKind.Domain:
+                node["domain"] = new JsonArray { value };
+                break;
+            case MatchKind.DomainSuffix:
+                node["domain_suffix"] = new JsonArray { value };
+                break;
+            case MatchKind.DomainKeyword:
+                node["domain_keyword"] = new JsonArray { value };
+                break;
+            case MatchKind.RuleSetRemote:
+            {
+                var tag = SetTag(value);
+                AddRemoteRuleSet(ruleSets, seen, tag, value);
+                node["rule_set"] = new JsonArray { tag };
+                break;
+            }
+            case MatchKind.RuleSetLocal:
+            {
+                var tag = SetTag(value);
+                AddLocalRuleSet(ruleSets, seen, tag, value);
+                node["rule_set"] = new JsonArray { tag };
+                break;
+            }
+            default:
+                // geoip и process_name на этапе резолва неприменимы
+                return null;
+        }
+ 
+        node["server"] = "dns-local";
+        return node;
+    }
 }

@@ -65,6 +65,19 @@
 
                         <Grid>
                             <StackPanel>
+                                <TextBlock Text="Подробный лог" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="Ядро пишет, какое правило сработало для каждого соединения. Помогает понять, почему сайт идёт не туда."
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                           MaxWidth="380" HorizontalAlignment="Left" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.VerboseLog}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
                                 <TextBlock Text="Сворачивать в трей" Style="{StaticResource T.Body}" />
                                 <TextBlock Text="Крестик прячет окно вместо выхода. Выйти можно из меню значка."
                                            Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
@@ -91,7 +104,7 @@
                     <StackPanel>
                         <TextBlock Text="dns" Style="{StaticResource T.Label}" />
                         <TextBox Style="{StaticResource Input}" Text="{Binding Settings.RemoteDns, UpdateSourceTrigger=PropertyChanged}" Margin="0,8,0,0" />
-                        <TextBlock Text="Запросы вне правил уходят на этот резолвер через туннель."
+                        <TextBlock Text="Запросы вне правил уходят на этот резолвер через туннель. Схема задаёт транспорт: https:// (DoH, по 443 — надёжнее всего), tls:// (DoT, порт 853 часто блокируется), quic://, udp://."
                                    Style="{StaticResource T.Caption}" Margin="0,8,0,0" />
                     </StackPanel>
                 </Border>
