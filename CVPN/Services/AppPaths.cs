@@ -4,8 +4,6 @@ using CVPN.Core;
 namespace CVPN.Services;
 
 /// <summary>Все пути приложения в одном месте, чтобы не плодить Path.Combine по коду.</summary>
-/// <summary>Все пути приложения в одном месте, чтобы не плодить Path.Combine по коду.</summary>
-/// <summary>Все пути приложения в одном месте, чтобы не плодить Path.Combine по коду.</summary>
 public static class AppPaths
 {
     public static string DataDir { get; } = Path.Combine(
@@ -19,8 +17,15 @@ public static class AppPaths
  
     public static string CacheFile => Path.Combine(DataDir, "cache.db");
  
+    /// <summary>Сюда копируются локальные .srs, чтобы профиль не зависел от исходного пути.</summary>
+    public static string RulesDir => Path.Combine(DataDir, "rules");
+ 
     public static string DefaultCorePath =>
         Path.Combine(AppContext.BaseDirectory, "core", "sing-box.exe");
  
-    public static void EnsureCreated() => Directory.CreateDirectory(DataDir);
+    public static void EnsureCreated()
+    {
+        Directory.CreateDirectory(DataDir);
+        Directory.CreateDirectory(RulesDir);
+    }
 }

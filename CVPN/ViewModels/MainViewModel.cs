@@ -20,6 +20,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly DispatcherTimer _uptimeTimer;
     private SingBoxService? _core;
     private bool? _sessionTun;
+    private bool _busy;
     private ClashApiClient? _stats;
     private DateTime _connectedAt;
  
@@ -74,12 +75,21 @@ public sealed class MainViewModel : ObservableObject
         BrowseCore = new RelayCommand(PickCore);
         OpenConfig = new RelayCommand(ShowGeneratedConfig);
         MeasureDelay = new RelayCommand(async () => await MeasureAsync(), () => IsConnected);
+        PingAll = new RelayCommand(async () => await PingAllAsync(), () => !IsBusy);
+        UpdateSubscription = new RelayCommand(async () => await UpdateSubscriptionAsync(), () => !IsBusy);
         ClearLog = new RelayCommand(Log.Clear, () => Log.Count > 0);
         CopyLog = new RelayCommand(CopyLogToClipboard, () => Log.Count > 0);
         CheckConfig = new RelayCommand(async () => await CheckAsync());
  
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _uptimeTimer.Tick += (_, _) => Uptime = (DateTime.Now - _connectedAt).ToString(@"hh\:mm\:ss");
+ 
+        // Реестр мог разойтись с настройкой, если приложение перенесли
+        AutoStart.Sync(Settings.AutoStart);
+        Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AppSettings.AutoStart)) AutoStart.Apply(Settings.AutoStart);
+        };
  
         _ = DetectCoreAsync();
         ReportMissingFlags();
@@ -100,6 +110,8 @@ public sealed class MainViewModel : ObservableObject
     public ICommand BrowseCore { get; }
     public ICommand OpenConfig { get; }
     public ICommand MeasureDelay { get; }
+    public ICommand PingAll { get; }
+    public ICommand UpdateSubscription { get; }
     public ICommand SelectProfile { get; }
     public ICommand ClearLog { get; }
     public ICommand CopyLog { get; }
@@ -120,6 +132,13 @@ public sealed class MainViewModel : ObservableObject
     }
  
     public bool IsConnected => State == TunnelState.Connected;
+ 
+    /// <summary>Идёт долгая операция: пинг всех серверов или загрузка подписки.</summary>
+    public bool IsBusy
+    {
+        get => _busy;
+        private set => Set(ref _busy, value);
+    }
  
     // ===================== режим сессии =====================
  
@@ -589,6 +608,13 @@ public sealed class MainViewModel : ObservableObject
  
         Settings.CorePath = dialog.FileName;
         Persist();
+        // Реестр мог разойтись с настройкой, если приложение перенесли
+        AutoStart.Sync(Settings.AutoStart);
+        Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AppSettings.AutoStart)) AutoStart.Apply(Settings.AutoStart);
+        };
+ 
         _ = DetectCoreAsync();
         ReportMissingFlags();
         Status = "";
@@ -666,6 +692,86 @@ public sealed class MainViewModel : ObservableObject
                    "но не для DNS: домен резолвится через туннель. Для сайтов с геобалансировкой " +
                    "добавьте правило по домену или geosite.");
         }
+    }
+ 
+    /// <summary>
+    /// Проверяет все серверы разом. Замер идёт напрямую по TCP, а не через ядро:
+    /// так это работает и без подключения, и сразу для всего списка.
+    /// </summary>
+    private async Task PingAllAsync()
+    {
+        if (Profiles.Count == 0) return;
+ 
+        IsBusy = true;
+        Status = "Проверка серверов…";
+ 
+        try
+        {
+            var probes = Profiles.Select(async profile =>
+            {
+                var ms = await LatencyProbe.MeasureAsync(profile.Host, profile.Port);
+                Dispatch(() => profile.LatencyMs = ms);
+            });
+ 
+            await Task.WhenAll(probes);
+ 
+            var alive = Profiles.Count(p => p.LatencyMs >= 0);
+            Status = $"Ответили {alive} из {Profiles.Count}";
+            Append($"[cvpn] проверка серверов: {Status.ToLowerInvariant()}");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+ 
+    /// <summary>
+    /// Обновляет профили из подписки. Заменяются только пришедшие из неё:
+    /// созданные вручную остаются на месте.
+    /// </summary>
+    private async Task UpdateSubscriptionAsync()
+    {
+        IsBusy = true;
+        Status = "Загрузка подписки…";
+ 
+        try
+        {
+            var (fetched, error) = await SubscriptionService.FetchAsync(Settings.SubscriptionUrl);
+ 
+            if (error.Length > 0)
+            {
+                Status = error;
+                Append($"[cvpn] подписка: {error}");
+                return;
+            }
+ 
+            var activeName = Active?.Name;
+ 
+            foreach (var stale in Profiles.Where(p => p.Subscription == Settings.SubscriptionUrl).ToList())
+                Profiles.Remove(stale);
+ 
+            foreach (var profile in fetched) Profiles.Add(profile);
+ 
+            // Возвращаем выбор на сервер с тем же именем, если он ещё есть
+            Active = Profiles.FirstOrDefault(p => p.Name == activeName) ?? Profiles.FirstOrDefault();
+ 
+            Status = $"Из подписки загружено серверов: {fetched.Count}";
+            Append($"[cvpn] {Status.ToLowerInvariant()}");
+            Persist();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+ 
+    /// <summary>Автоподключение при старте — вызывается окном после загрузки.</summary>
+    public async Task StartupAsync()
+    {
+        if (!Settings.AutoConnect || Active is null) return;
+ 
+        Append("[cvpn] автоподключение");
+        await ConnectAsync();
     }
  
     /// <summary>Отметка о нажатии на круг — для диагностики привязок.</summary>

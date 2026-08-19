@@ -12,6 +12,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -24,8 +25,10 @@
                            Foreground="{StaticResource Warning}" TextWrapping="Wrap" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <Button Content="Проверить все" Style="{StaticResource Btn.Ghost}"
+                        Command="{Binding PingAll}" />
                 <Button Content="Импорт из файла" Style="{StaticResource Btn.Base}"
-                        Command="{Binding ImportFile}" />
+                        Margin="8,0,0,0" Command="{Binding ImportFile}" />
                 <Button Content="Создать вручную" Style="{StaticResource Btn.Primary}"
                         Margin="8,0,0,0" Command="{Binding CreateProfile}" />
             </StackPanel>
@@ -44,7 +47,19 @@
                     Margin="8,0,0,0" Command="{Binding ImportLink}" />
         </Grid>
 
-        <ListBox Grid.Row="2" Style="{StaticResource PlainList}" Margin="0,18,0,0"
+        <Grid Grid.Row="2" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Style="{StaticResource Input}"
+                     Text="{Binding Settings.SubscriptionUrl, UpdateSourceTrigger=PropertyChanged}"
+                     Tag="https://…  —  ссылка подписки" />
+            <Button Grid.Column="1" Content="Обновить подписку" Style="{StaticResource Btn.Base}"
+                    Margin="8,0,0,0" Command="{Binding UpdateSubscription}" />
+        </Grid>
+
+        <ListBox Grid.Row="3" Style="{StaticResource PlainList}" Margin="0,18,0,0"
                  ItemsSource="{Binding Profiles}">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type models:ServerProfile}">
@@ -91,8 +106,23 @@
                                                    Foreground="{StaticResource Accent}" />
                                     </Border>
                                 </StackPanel>
-                                <TextBlock Text="{Binding Endpoint}" Style="{StaticResource T.Mono}"
-                                           FontSize="{StaticResource Size.Small}" Margin="0,5,0,0" />
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <TextBlock Text="{Binding Endpoint}" Style="{StaticResource T.Mono}"
+                                               FontSize="{StaticResource Size.Small}" />
+                                    <TextBlock Text="из подписки"
+                                               Margin="10,0,0,0" Foreground="{StaticResource TextFaint}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource T.Caption}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Subscription}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
                             </StackPanel>
 
                             <TextBlock Grid.Column="1" Text="{Binding LatencyLabel}" Style="{StaticResource T.Mono}"

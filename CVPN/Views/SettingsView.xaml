@@ -91,10 +91,22 @@
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="Запуск вместе с Windows" Style="{StaticResource T.Body}" />
-                                <TextBlock Text="Свернуться в трей и подключиться к последнему профилю"
+                                <TextBlock Text="Приложение стартует свёрнутым в трей"
                                            Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
                             </StackPanel>
-                            <ToggleButton Style="{StaticResource Switch}"
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoStart}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Подключаться при запуске" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="Сразу поднимать туннель с последним выбранным профилем"
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoConnect}"
                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
                     </StackPanel>

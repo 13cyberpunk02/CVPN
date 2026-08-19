@@ -21,7 +21,16 @@ public partial class MainWindow : Window
         _tray.ExitRequested += ExitApplication;
 
         DataContextChanged += (_, _) => Subscribe();
-        Loaded += (_, _) => Subscribe();
+
+        Loaded += async (_, _) =>
+        {
+            Subscribe();
+
+            // Запуск из автозагрузки: окно не показываем, только значок в трее
+            if (Environment.GetCommandLineArgs().Contains(AutoStart.MinimizedArgument)) Hide();
+
+            if (Vm is not null) await Vm.StartupAsync();
+        };
     }
 
     private MainViewModel? Vm => DataContext as MainViewModel;

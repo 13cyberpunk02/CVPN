@@ -40,6 +40,13 @@ public sealed class ServerProfile : ObservableObject
     public string Path { get; set; } = "/";
     public string Username { get; set; } = "";
  
+    /// <summary>
+    /// Ссылка подписки, из которой пришёл профиль. Пусто — создан вручную.
+    /// По этому признаку обновление подписки заменяет только свои профили
+    /// и не трогает добавленные руками.
+    /// </summary>
+    public string Subscription { get; set; } = "";
+ 
     [JsonIgnore]
     public string Endpoint => $"{Host}:{Port}";
  
