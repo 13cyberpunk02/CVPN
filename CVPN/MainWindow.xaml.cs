@@ -1,53 +1,119 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using CVPN.Services;
 using CVPN.ViewModels;
 using CVPN.Views;
 
 namespace CVPN;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow : Window
 {
-    private bool _shuttingDown;
- 
-    public MainWindow() => InitializeComponent();
- 
+    private readonly TrayIcon _tray = new();
+    private bool _exiting;
+
+    public MainWindow()
+    {
+        InitializeComponent();
+
+        _tray.ShowRequested += RestoreFromTray;
+        _tray.ToggleRequested += () => Vm?.ToggleConnection.Execute(null);
+        _tray.ExitRequested += ExitApplication;
+
+        DataContextChanged += (_, _) => Subscribe();
+        Loaded += (_, _) => Subscribe();
+    }
+
+    private MainViewModel? Vm => DataContext as MainViewModel;
+
+    private void Subscribe()
+    {
+        if (Vm is null) return;
+
+        Vm.PropertyChanged -= OnVmChanged;
+        Vm.PropertyChanged += OnVmChanged;
+        RefreshTray();
+    }
+
+    private void OnVmChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(MainViewModel.State) or nameof(MainViewModel.Active)) RefreshTray();
+    }
+
+    private void RefreshTray()
+    {
+        if (Vm is not null) _tray.Update(Vm.State, Vm.Active?.Name);
+    }
+
+    // ===================== заголовок окна =====================
+
     private void OnMinimize(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
- 
+
     private void OnMaximize(object sender, RoutedEventArgs e) =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
- 
+
     private void OnClose(object sender, RoutedEventArgs e) => Close();
- 
+
+    // ===================== трей =====================
+
+    private void RestoreFromTray()
+    {
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private void ExitApplication()
+    {
+        _exiting = true;
+        Close();
+    }
+
+    protected override void OnStateChanged(EventArgs e)
+    {
+        // Свёрнутое окно уходит с панели задач: значок в трее его заменяет
+        if (WindowState == WindowState.Minimized) Hide();
+
+        base.OnStateChanged(e);
+    }
+
     /// <summary>
-    /// Закрытие откладывается до остановки ядра и возврата системного прокси:
-    /// иначе процесс sing-box переживёт приложение, а в настройках Windows
-    /// останется мёртвый прокси на 127.0.0.1.
+    /// Крестик прячет окно, если так настроено. Настоящее закрытие ждёт
+    /// остановки ядра и возврата системного прокси.
     /// </summary>
     protected override async void OnClosing(CancelEventArgs e)
     {
-        if (_shuttingDown || DataContext is not MainViewModel vm)
+        if (!_exiting && Vm?.Settings.CloseToTray == true)
         {
-            base.OnClosing(e);
+            e.Cancel = true;
+            Hide();
+
+            if (Vm.IsConnected)
+                _tray.Notify("CVPN работает", "Приложение свёрнуто в трей. Выход — через меню значка.");
+
             return;
         }
- 
-        e.Cancel = true;
-        _shuttingDown = true;
- 
-        await vm.ShutdownAsync();
- 
+
+        if (_exiting && Vm is not null)
+        {
+            e.Cancel = true;
+            _exiting = false;
+
+            await Vm.ShutdownAsync();
+            _tray.Dispose();
+
+            Application.Current.Shutdown();
+            return;
+        }
+
+        _tray.Dispose();
         base.OnClosing(e);
-        Close();
     }
- 
+
     private void OnNavChanged(object sender, RoutedEventArgs e)
     {
         if (PageHost is null || sender is not RadioButton { Tag: string tag }) return;
- 
+
         PageHost.Content = tag switch
         {
             "profiles" => new ProfilesView(),

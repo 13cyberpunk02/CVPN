@@ -228,8 +228,6 @@ public static class ConfigBuilder
     {
         var routeRules = new JsonArray
         {
-            // Определяем протокол до маршрутизации — иначе доменные правила
-            // не сработают для соединений, пришедших по IP из TUN
             new JsonObject { ["action"] = "sniff" },
             new JsonObject { ["protocol"] = "dns", ["action"] = "hijack-dns" },
             new JsonObject { ["ip_is_private"] = true, ["outbound"] = DirectTag }

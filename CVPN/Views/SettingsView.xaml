@@ -7,7 +7,7 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
 
-      <Grid Margin="28,22,28,24">
+    <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -59,6 +59,18 @@
                             </StackPanel>
                             <TextBox Style="{StaticResource Input}" Text="{Binding Settings.MixedPort, UpdateSourceTrigger=PropertyChanged}" Width="96"
                                      HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Сворачивать в трей" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="Крестик прячет окно вместо выхода. Выйти можно из меню значка."
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.CloseToTray}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
 
                         <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />

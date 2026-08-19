@@ -4,7 +4,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:vm="clr-namespace:CVPN.ViewModels"
         xmlns:views="clr-namespace:CVPN.Views"
-        Title="CVPN" Width="980" Height="660" MinWidth="860" MinHeight="580"
+        Title="CVPN" Icon="Assets/cvpn.ico" Width="980" Height="660" MinWidth="860" MinHeight="580"
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
         TextOptions.TextFormattingMode="Ideal">
 
