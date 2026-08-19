@@ -68,7 +68,7 @@ public sealed class MainViewModel : ObservableObject
         ImportLink = new RelayCommand(Import);
         RemoveProfile = new RelayCommand(p => { if (p is ServerProfile sp) DeleteProfile(sp); });
         RemoveRule = new RelayCommand(p => { if (p is RouteRule rr) { Rules.Remove(rr); Persist(); } });
-        SelectProfile = new RelayCommand(p => { if (p is ServerProfile sp) { Active = sp; Persist(); } });
+        SelectProfile = new RelayCommand(p => { if (p is ServerProfile sp) _ = SelectServerAsync(sp); });
         ImportFile = new RelayCommand(ImportFromFile);
         CreateProfile = new RelayCommand(() => EditProfile(null));
         EditProfileCommand = new RelayCommand(p => { if (p is ServerProfile sp) EditProfile(sp); });
@@ -246,7 +246,7 @@ public sealed class MainViewModel : ObservableObject
         string configPath;
         try
         {
-            configPath = ConfigBuilder.Write(Active, Rules, Settings);
+            configPath = ConfigBuilder.Write([.. Profiles], Active, Rules, Settings);
         }
         catch (Exception ex)
         {
@@ -295,7 +295,9 @@ public sealed class MainViewModel : ObservableObject
         _uptimeTimer.Start();
         State = TunnelState.Connected;
         Status = "";
-        Append($"[cvpn] подключение к {Active.Name} ({Active.ProtocolLabel})");
+        Append(Settings.AutoSelectFastest && Profiles.Count > 1
+            ? $"[cvpn] автовыбор быстрейшего из {Profiles.Count} серверов"
+            : $"[cvpn] подключение к {Active.Name} ({Active.ProtocolLabel})");
  
         // Первый замер с задержкой: ядру нужно поднять Clash API и сам туннель
         _ = Task.Run(async () =>
@@ -348,7 +350,7 @@ public sealed class MainViewModel : ObservableObject
  
         try
         {
-            var path = ConfigBuilder.Write(Active, Rules, Settings);
+            var path = ConfigBuilder.Write([.. Profiles], Active, Rules, Settings);
             var service = new SingBoxService(Settings.CorePath);
             var (ok, message) = await service.CheckConfigAsync(path);
             Status = ok ? "Конфигурация корректна" : message;
@@ -545,7 +547,7 @@ public sealed class MainViewModel : ObservableObject
     {
         try
         {
-            if (Active is not null) ConfigBuilder.Write(Active, Rules, Settings);
+            if (Active is not null) ConfigBuilder.Write([.. Profiles], Active, Rules, Settings);
  
             if (!File.Exists(AppPaths.GeneratedConfig))
             {
@@ -682,7 +684,7 @@ public sealed class MainViewModel : ObservableObject
  
         // geoip сопоставляется по адресу, а на момент DNS-запроса его ещё нет
         var geoipDirect = active
-            .Where(r => r is { Action: RouteAction.Direct, Match: MatchKind.Geoip })
+            .Where(r => r.Action == RouteAction.Direct && r.Match == MatchKind.Geoip)
             .Select(r => r.Value)
             .ToList();
  
@@ -789,6 +791,34 @@ public sealed class MainViewModel : ObservableObject
  
         Append("[cvpn] автоподключение");
         await ConnectAsync();
+    }
+ 
+    /// <summary>
+    /// Смена сервера. При живом туннеле идёт через селектор Clash API —
+    /// ядро не перезапускается, существующие соединения не рвутся.
+    /// Перегенерировать конфиг нужно только чтобы выбор пережил перезапуск.
+    /// </summary>
+    private async Task SelectServerAsync(ServerProfile profile)
+    {
+        Active = profile;
+        Persist();
+ 
+        if (!IsConnected || _stats is null) return;
+ 
+        var tag = ConfigBuilder.BuildTags([.. Profiles]).GetValueOrDefault(profile);
+        if (tag is null) return;
+ 
+        if (await _stats.SelectAsync(tag))
+        {
+            Append($"[cvpn] переключение на {profile.Name} без перезапуска ядра");
+            ConfigBuilder.Write([.. Profiles], profile, Rules, Settings);
+            await MeasureAsync();
+        }
+        else
+        {
+            Status = "Не удалось переключить сервер. Переподключитесь вручную.";
+            Append($"[cvpn] селектор не ответил, нужно переподключение");
+        }
     }
  
     /// <summary>Отметка о нажатии на круг — для диагностики привязок.</summary>

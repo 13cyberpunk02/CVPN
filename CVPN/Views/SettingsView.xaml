@@ -65,6 +65,19 @@
 
                         <Grid>
                             <StackPanel>
+                                <TextBlock Text="Автовыбор быстрого сервера" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="Ядро само держит соединение на быстрейшем сервере и перепроверяет раз в три минуты."
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                           MaxWidth="380" HorizontalAlignment="Left" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoSelectFastest}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
                                 <TextBlock Text="Подробный лог" Style="{StaticResource T.Body}" />
                                 <TextBlock Text="Ядро пишет, какое правило сработало для каждого соединения. Помогает понять, почему сайт идёт не туда."
                                            Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
