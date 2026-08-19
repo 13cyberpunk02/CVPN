@@ -24,7 +24,11 @@ public sealed class ServerProfile : ObservableObject
  
     /// <summary>-1 означает «ещё не измеряли».</summary>
     [JsonIgnore]
-    public int LatencyMs { get => _latencyMs; set { Set(ref _latencyMs, value); Raise(nameof(LatencyLabel)); } }
+    public int LatencyMs
+    {
+        get => _latencyMs;
+        set { Set(ref _latencyMs, value); Raise(nameof(LatencyLabel)); Raise(nameof(LatencyGrade)); }
+    }
  
     /// <summary>Состояние интерфейса, в файл не пишется.</summary>
     [JsonIgnore]
@@ -136,4 +140,15 @@ public sealed class ServerProfile : ObservableObject
  
     [JsonIgnore]
     public string LatencyLabel => LatencyMs < 0 ? "—" : $"{LatencyMs} ms";
+ 
+    /// <summary>Качество канала для подсветки: unknown · good · fair · poor · dead.</summary>
+    [JsonIgnore]
+    public string LatencyGrade => LatencyMs switch
+    {
+        < 0 => "unknown",
+        0 => "dead",
+        < 80 => "good",
+        < 200 => "fair",
+        _ => "poor"
+    };
 }

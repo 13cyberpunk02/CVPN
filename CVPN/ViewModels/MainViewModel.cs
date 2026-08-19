@@ -682,7 +682,7 @@ public sealed class MainViewModel : ObservableObject
  
         // geoip сопоставляется по адресу, а на момент DNS-запроса его ещё нет
         var geoipDirect = active
-            .Where(r => r.Action == RouteAction.Direct && r.Match == MatchKind.Geoip)
+            .Where(r => r is { Action: RouteAction.Direct, Match: MatchKind.Geoip })
             .Select(r => r.Value)
             .ToList();
  
@@ -695,19 +695,36 @@ public sealed class MainViewModel : ObservableObject
     }
  
     /// <summary>
-    /// Проверяет все серверы разом. Замер идёт напрямую по TCP, а не через ядро:
+    /// Замеряет только те профили, которые ещё не проверялись. Вызывается при
+    /// открытии списка: прочерки вместо чисел читаются как поломка, а не как
+    /// «данных пока нет».
+    /// </summary>
+    public async Task EnsureLatencyAsync()
+    {
+        if (IsBusy) return;
+        if (Profiles.All(p => p.LatencyMs >= 0)) return;
+ 
+        await PingAllAsync(onlyUnknown: true);
+    }
+ 
+    /// <summary>
+    /// Проверяет серверы разом. Замер идёт напрямую по TCP, а не через ядро:
     /// так это работает и без подключения, и сразу для всего списка.
     /// </summary>
-    private async Task PingAllAsync()
+    private async Task PingAllAsync(bool onlyUnknown = false)
     {
-        if (Profiles.Count == 0) return;
+        var targets = onlyUnknown
+            ? Profiles.Where(p => p.LatencyMs < 0).ToList()
+            : Profiles.ToList();
+ 
+        if (targets.Count == 0) return;
  
         IsBusy = true;
         Status = "Проверка серверов…";
  
         try
         {
-            var probes = Profiles.Select(async profile =>
+            var probes = targets.Select(async profile =>
             {
                 var ms = await LatencyProbe.MeasureAsync(profile.Host, profile.Port);
                 Dispatch(() => profile.LatencyMs = ms);
@@ -715,8 +732,8 @@ public sealed class MainViewModel : ObservableObject
  
             await Task.WhenAll(probes);
  
-            var alive = Profiles.Count(p => p.LatencyMs >= 0);
-            Status = $"Ответили {alive} из {Profiles.Count}";
+            var alive = targets.Count(p => p.LatencyMs >= 0);
+            Status = $"Ответили {alive} из {targets.Count}";
             Append($"[cvpn] проверка серверов: {Status.ToLowerInvariant()}");
         }
         finally

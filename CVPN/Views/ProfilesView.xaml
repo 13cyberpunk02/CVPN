@@ -125,8 +125,28 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <TextBlock Grid.Column="1" Text="{Binding LatencyLabel}" Style="{StaticResource T.Mono}"
-                                       VerticalAlignment="Center" Margin="0,0,14,0" />
+                            <TextBlock Grid.Column="1" Text="{Binding LatencyLabel}"
+                                       VerticalAlignment="Center" Margin="0,0,14,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource T.Mono}">
+                                        <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding LatencyGrade}" Value="good">
+                                                <Setter Property="Foreground" Value="{StaticResource Connected}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LatencyGrade}" Value="fair">
+                                                <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LatencyGrade}" Value="poor">
+                                                <Setter Property="Foreground" Value="{StaticResource Warning}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LatencyGrade}" Value="dead">
+                                                <Setter Property="Foreground" Value="{StaticResource Danger}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
 
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Content="Изменить" Style="{StaticResource Btn.Ghost}" Padding="10,6"
