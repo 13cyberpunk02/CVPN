@@ -58,6 +58,7 @@
                        Subtitle="{Binding Active.ProtocolLabel, TargetNullValue=—, FallbackValue=—}"
                        Metric="{Binding Active.LatencyLabel, TargetNullValue=—, FallbackValue=—}"
                        Country="{Binding Active.CountryCode, TargetNullValue='', FallbackValue=''}"
+                       Flag="{Binding Active.FlagImage}"
                        Endpoint="{Binding Active.Endpoint, TargetNullValue='', FallbackValue=''}"
                        ActionLabel="{Binding PrimaryActionLabel}"
                        Command="{Binding ToggleConnection}"
@@ -119,4 +120,5 @@
                     Margin="6,0,0,0" Command="{Binding OpenConfig}" />
         </Grid>
     </Grid>
+
 </UserControl>

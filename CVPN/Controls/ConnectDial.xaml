@@ -3,8 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:enums="clr-namespace:CVPN.Models.Enums"
              xmlns:ctl="clr-namespace:CVPN.Controls"
-             Width="220" Height="220">
-     <UserControl.Resources>
+             x:Name="Root" Width="240" Height="240">
+
+    <UserControl.Resources>
         <!-- Ядро круга и есть кнопка: обод показывает состояние, центр им управляет -->
         <Style x:Key="DialCore" TargetType="Button">
             <Setter Property="Cursor" Value="Hand" />
@@ -128,8 +129,26 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <TextBlock Text="{Binding Country, RelativeSource={RelativeSource AncestorType={x:Type ctl:ConnectDial}}}" Style="{StaticResource T.Mono}"
-                               FontSize="{StaticResource Size.Caption}" Foreground="{StaticResource TextSecondary}" />
+                    <StackPanel Orientation="Horizontal">
+                        <!-- Флаг картинкой: эмодзи-флаги Windows не отрисовывает -->
+                        <Image Width="16" Height="11" VerticalAlignment="Center" Margin="0,0,6,0"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               Source="{Binding Flag, RelativeSource={RelativeSource AncestorType={x:Type ctl:ConnectDial}}}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Flag, RelativeSource={RelativeSource AncestorType={x:Type ctl:ConnectDial}}}"
+                                                     Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="{Binding Country, RelativeSource={RelativeSource AncestorType={x:Type ctl:ConnectDial}}}"
+                                   Style="{StaticResource T.Mono}" VerticalAlignment="Center"
+                                   FontSize="{StaticResource Size.Caption}" Foreground="{StaticResource TextSecondary}" />
+                    </StackPanel>
                 </Border>
 
                 <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType={x:Type ctl:ConnectDial}}}" Style="{StaticResource T.Heading}"

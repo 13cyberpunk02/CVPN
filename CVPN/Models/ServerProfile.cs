@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using CVPN.Core;
 using CVPN.Models.Enums;
 
@@ -12,14 +13,21 @@ public sealed class ServerProfile : ObservableObject
     private int _latencyMs = -1;
     private bool _isActive;
  
-    public string Name { get => _name; set { Set(ref _name, value); Raise(nameof(CountryCode)); } }
+    public string Name
+    {
+        get => _name;
+        set { Set(ref _name, value); Raise(nameof(CountryCode)); Raise(nameof(FlagImage)); }
+    }
     public string Host { get => _host; set => Set(ref _host, value); }
     public int Port { get => _port; set => Set(ref _port, value); }
     public ProtocolKind Protocol { get => _protocol; set { Set(ref _protocol, value); Raise(nameof(ProtocolLabel)); } }
  
     /// <summary>-1 означает «ещё не измеряли».</summary>
+    [JsonIgnore]
     public int LatencyMs { get => _latencyMs; set { Set(ref _latencyMs, value); Raise(nameof(LatencyLabel)); } }
  
+    /// <summary>Состояние интерфейса, в файл не пишется.</summary>
+    [JsonIgnore]
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
  
     // Учётные данные протокола
@@ -32,19 +40,47 @@ public sealed class ServerProfile : ObservableObject
     public string Path { get; set; } = "/";
     public string Username { get; set; } = "";
  
+    [JsonIgnore]
     public string Endpoint => $"{Host}:{Port}";
  
     private string _countryCode = "";
  
     /// <summary>
-    /// Двухбуквенный код страны для значка. Windows не рисует флаги из regional
-    /// indicator — эмодзи там показывается как две буквы, поэтому значок текстовый.
+    /// Двухбуквенный код страны: заданный вручную либо определённый по названию.
+    /// Windows не рисует флаги-эмодзи из regional indicator, поэтому флаги
+    /// лежат картинками в Assets/Flags.
     /// </summary>
+    [JsonIgnore]
     public string CountryCode
     {
         get => _countryCode.Length > 0 ? _countryCode : GuessCountry();
-        set => Set(ref _countryCode, value.Trim().ToUpperInvariant());
+        set
+        {
+            Set(ref _countryCode, value.Trim().ToUpperInvariant());
+            Raise(nameof(FlagImage));
+        }
     }
+ 
+    /// <summary>
+    /// В файл пишется только явно заданный код. Пустая строка означает
+    /// «определять автоматически» — иначе догадка застыла бы навсегда
+    /// и переименование профиля перестало бы на неё влиять.
+    /// </summary>
+    [JsonPropertyName("CountryCode")]
+    public string StoredCountryCode
+    {
+        get => _countryCode;
+        set
+        {
+            _countryCode = value.Trim().ToUpperInvariant();
+            Raise(nameof(CountryCode));
+            Raise(nameof(FlagImage));
+        }
+    }
+ 
+    /// <summary>Картинка флага или null, если для страны её нет.</summary>
+    [JsonIgnore]
+    public System.Windows.Media.ImageSource? FlagImage => Services.FlagCatalog.Get(CountryCode);
  
     /// <summary>
     /// Догадка по имени профиля и по хосту вида nl-01.example.net.
@@ -81,6 +117,7 @@ public sealed class ServerProfile : ObservableObject
         ("russia", "RU"), ("росси", "RU"), ("moscow", "RU")
     ];
  
+    [JsonIgnore]
     public string ProtocolLabel => Protocol switch
     {
         ProtocolKind.VlessReality => "vless · reality",
@@ -90,6 +127,6 @@ public sealed class ServerProfile : ObservableObject
         _ => "—"
     };
  
+    [JsonIgnore]
     public string LatencyLabel => LatencyMs < 0 ? "—" : $"{LatencyMs} ms";
 }
-

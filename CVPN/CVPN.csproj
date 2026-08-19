@@ -31,7 +31,7 @@
         <Resource Include="Assets\cvpn.ico" />
         <Resource Include="Assets\cvpn-connected.ico" />
         <Resource Include="Assets\cvpn-idle.ico" />
+        <Resource Include="Assets\Flags\*.png" />
     </ItemGroup>
-
 
 </Project>

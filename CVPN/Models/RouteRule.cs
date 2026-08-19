@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using CVPN.Core;
 using CVPN.Models.Enums;
 
@@ -15,6 +16,7 @@ public sealed class RouteRule : ObservableObject
     public RouteAction Action { get => _action; set { Set(ref _action, value); Raise(nameof(ActionLabel)); } }
     public bool Enabled { get => _enabled; set => Set(ref _enabled, value); }
  
+    [JsonIgnore]
     public string MatchLabel => Match switch
     {
         MatchKind.Geosite => "geosite",
@@ -29,6 +31,7 @@ public sealed class RouteRule : ObservableObject
     };
  
     /// <summary>Для .srs в списке показываем имя набора: путь и ссылка не влезают в строку.</summary>
+    [JsonIgnore]
     public string DisplayValue => Match switch
     {
         MatchKind.RuleSetRemote or MatchKind.RuleSetLocal => ShortName(Value),
@@ -43,6 +46,7 @@ public sealed class RouteRule : ObservableObject
         return name.EndsWith(".srs", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
     }
  
+    [JsonIgnore]
     public string ActionLabel => Action switch
     {
         RouteAction.Proxy => "через прокси",
