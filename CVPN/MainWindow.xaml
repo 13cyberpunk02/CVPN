@@ -7,7 +7,8 @@
         Title="CVPN" Width="980" Height="660" MinWidth="860" MinHeight="580"
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
         TextOptions.TextFormattingMode="Ideal">
- <Window.DataContext>
+
+    <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
@@ -79,8 +80,55 @@
                                     Padding="18,12">
                                 <StackPanel>
                                     <TextBlock Text="режим" Style="{StaticResource T.Label}" />
-                                    <TextBlock Text="TUN · системный" Style="{StaticResource T.Mono}"
-                                               FontSize="{StaticResource Size.Small}" Margin="0,3,0,0" />
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                        <!-- Точка горит, только когда режим реально работает -->
+                                        <Ellipse Width="6" Height="6" VerticalAlignment="Center" Margin="0,0,7,0">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Fill" Value="{StaticResource TextFaint}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ModeActive}" Value="True">
+                                                            <Setter Property="Fill" Value="{StaticResource Connected}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+
+                                        <TextBlock Text="{Binding ModeTitle}" HorizontalAlignment="Left">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource T.Body}">
+                                                    <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ModeActive}" Value="True">
+                                                            <Setter Property="Foreground" Value="{StaticResource Text}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <TextBlock Text="{Binding ModeDetail}" Style="{StaticResource T.Mono}"
+                                               FontSize="{StaticResource Size.Caption}" Margin="13,2,0,0"
+                                               TextTrimming="CharacterEllipsis" />
+
+                                    <!-- Настройку сменили на ходу: к текущей сессии она не применится -->
+                                    <TextBlock Text="{Binding ModePendingHint}"
+                                               Foreground="{StaticResource Warning}" Margin="13,5,0,0"
+                                               TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource T.Caption}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ModePending}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </StackPanel>
                             </Border>
                         </Grid>

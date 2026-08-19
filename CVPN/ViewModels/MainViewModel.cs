@@ -4,24 +4,25 @@ using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using CVPN.Core;
 using CVPN.Models;
 using CVPN.Models.Enums;
 using CVPN.Services;
-using Microsoft.Win32;
 
 namespace CVPN.ViewModels;
 
 public sealed class MainViewModel : ObservableObject
 {
     private const int MaxLogLines = 500;
- 
+
     private readonly StoredState _state;
     private readonly DispatcherTimer _uptimeTimer;
     private SingBoxService? _core;
+    private bool? _sessionTun;
     private ClashApiClient? _stats;
     private DateTime _connectedAt;
- 
+
     private TunnelState _tunnel = TunnelState.Disconnected;
     private ServerProfile? _active;
     private string _uptime = "00:00:00";
@@ -32,21 +33,23 @@ public sealed class MainViewModel : ObservableObject
     private string _singBoxVersion = "ядро не найдено";
     private string _importLink = "";
     private string _status = "";
- 
+
     public MainViewModel()
     {
         _state = ProfileStore.Load();
- 
+
         Profiles = new ObservableCollection<ServerProfile>(_state.Profiles);
         Rules = new ObservableCollection<RouteRule>(_state.Rules);
         Settings = _state.Settings;
- 
+
         Active = Profiles.FirstOrDefault(p => p.Name == _state.ActiveProfileName)
                  ?? Profiles.FirstOrDefault();
- 
+
         // Импорт добавляет профили в уже открытое приложение: если активного нет, берём первый
         Profiles.CollectionChanged += (_, _) => Active ??= Profiles.FirstOrDefault();
- 
+
+        Settings.PropertyChanged += (_, _) => RaiseMode();
+
         // Счётчик активных правил зависит и от состава списка, и от галочки в каждом правиле
         Rules.CollectionChanged += (_, e) =>
         {
@@ -54,12 +57,12 @@ public sealed class MainViewModel : ObservableObject
                 rule.PropertyChanged += OnRulePropertyChanged;
             foreach (var rule in e.OldItems?.OfType<RouteRule>() ?? [])
                 rule.PropertyChanged -= OnRulePropertyChanged;
- 
+
             Raise(nameof(ActiveRuleCount));
         };
- 
+
         foreach (var rule in Rules) rule.PropertyChanged += OnRulePropertyChanged;
- 
+
         ToggleConnection = new RelayCommand(async () => await ToggleAsync());
         ImportLink = new RelayCommand(Import);
         RemoveProfile = new RelayCommand(p => { if (p is ServerProfile sp) DeleteProfile(sp); });
@@ -72,18 +75,18 @@ public sealed class MainViewModel : ObservableObject
         ClearLog = new RelayCommand(Log.Clear, () => Log.Count > 0);
         CopyLog = new RelayCommand(CopyLogToClipboard, () => Log.Count > 0);
         CheckConfig = new RelayCommand(async () => await CheckAsync());
- 
+
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _uptimeTimer.Tick += (_, _) => Uptime = (DateTime.Now - _connectedAt).ToString(@"hh\:mm\:ss");
- 
+
         _ = DetectCoreAsync();
     }
- 
+
     public ObservableCollection<ServerProfile> Profiles { get; }
     public ObservableCollection<RouteRule> Rules { get; }
     public ObservableCollection<string> Log { get; } = [];
     public AppSettings Settings { get; }
- 
+
     public ICommand ToggleConnection { get; }
     public ICommand ImportLink { get; }
     public ICommand RemoveProfile { get; }
@@ -96,9 +99,9 @@ public sealed class MainViewModel : ObservableObject
     public ICommand ClearLog { get; }
     public ICommand CopyLog { get; }
     public ICommand CheckConfig { get; }
- 
+
     // ===================== состояние =====================
- 
+
     public TunnelState State
     {
         get => _tunnel;
@@ -110,9 +113,39 @@ public sealed class MainViewModel : ObservableObject
             Raise(nameof(PrimaryActionLabel));
         }
     }
- 
+
     public bool IsConnected => State == TunnelState.Connected;
- 
+
+    // ===================== режим сессии =====================
+
+    /// <summary>Режим запущенной сессии; если ядро не работает — то, что выбрано в настройках.</summary>
+    private bool EffectiveTun => _sessionTun ?? Settings.TunEnabled;
+
+    public string ModeTitle => EffectiveTun ? "TUN" : "Системный прокси";
+
+    public string ModeDetail => EffectiveTun
+        ? "весь трафик системы"
+        : $"127.0.0.1:{Settings.MixedPort}";
+
+    /// <summary>Режим активен только при живом туннеле — иначе это просто настройка.</summary>
+    public bool ModeActive => _sessionTun is not null;
+
+    /// <summary>Настройку поменяли на ходу: к текущей сессии она не относится.</summary>
+    public bool ModePending => _sessionTun is not null && _sessionTun != Settings.TunEnabled;
+
+    public string ModePendingHint => Settings.TunEnabled
+        ? "после переподключения: TUN"
+        : "после переподключения: прокси";
+
+    private void RaiseMode()
+    {
+        Raise(nameof(ModeTitle));
+        Raise(nameof(ModeDetail));
+        Raise(nameof(ModeActive));
+        Raise(nameof(ModePending));
+        Raise(nameof(ModePendingHint));
+    }
+
     public string StateLabel => State switch
     {
         TunnelState.Connected => "ПОДКЛЮЧЕНО",
@@ -120,11 +153,11 @@ public sealed class MainViewModel : ObservableObject
         TunnelState.Failing => "ОШИБКА",
         _ => "ОТКЛЮЧЕНО"
     };
- 
+
     public string PrimaryActionLabel => State is TunnelState.Connected or TunnelState.Connecting
         ? "Отключить"
         : "Подключить";
- 
+
     public ServerProfile? Active
     {
         get => _active;
@@ -136,7 +169,7 @@ public sealed class MainViewModel : ObservableObject
             _state.ActiveProfileName = _active?.Name;
         }
     }
- 
+
     public string Uptime { get => _uptime; private set => Set(ref _uptime, value); }
     public string Download { get => _download; private set => Set(ref _download, value); }
     public string Upload { get => _upload; private set => Set(ref _upload, value); }
@@ -145,11 +178,11 @@ public sealed class MainViewModel : ObservableObject
     public string SingBoxVersion { get => _singBoxVersion; private set => Set(ref _singBoxVersion, value); }
     public string LinkText { get => _importLink; set => Set(ref _importLink, value); }
     public string Status { get => _status; private set => Set(ref _status, value); }
- 
+
     public int ActiveRuleCount => Rules.Count(r => r.Enabled);
- 
+
     // ===================== подключение =====================
- 
+
     private async Task ToggleAsync()
     {
         if (State is TunnelState.Connected or TunnelState.Connecting)
@@ -157,10 +190,10 @@ public sealed class MainViewModel : ObservableObject
             await DisconnectAsync();
             return;
         }
- 
+
         await ConnectAsync();
     }
- 
+
     private async Task ConnectAsync()
     {
         if (Active is null)
@@ -172,20 +205,20 @@ public sealed class MainViewModel : ObservableObject
             Append($"[cvpn] {Status}");
             return;
         }
- 
+
         if (!File.Exists(Settings.CorePath))
         {
             Fail($"sing-box.exe не найден: {Settings.CorePath}");
             return;
         }
- 
+
         // TUN не поднимется без прав администратора. Раньше здесь была просто ошибка —
         // теперь предлагаем повышение, потому что иначе перехватывать трафик нечем.
         if (Settings.TunEnabled && !Elevation.IsElevated && !RequestElevation()) return;
- 
+
         State = TunnelState.Connecting;
         Append("[cvpn] сборка конфигурации");
- 
+
         string configPath;
         try
         {
@@ -196,11 +229,11 @@ public sealed class MainViewModel : ObservableObject
             Fail($"не удалось собрать конфигурацию: {ex.Message}");
             return;
         }
- 
+
         _core = new SingBoxService(Settings.CorePath);
         _core.LineReceived += OnCoreLine;
         _core.Exited += OnCoreExited;
- 
+
         var (ok, message) = await _core.CheckConfigAsync(configPath);
         if (!ok)
         {
@@ -208,9 +241,9 @@ public sealed class MainViewModel : ObservableObject
             await TeardownAsync();
             return;
         }
- 
+
         _core.Start(configPath);
- 
+
         // Без TUN трафик надо кому-то отдать: прописываем mixed-порт системным прокси
         if (!Settings.TunEnabled)
         {
@@ -224,17 +257,20 @@ public sealed class MainViewModel : ObservableObject
                 Append($"[cvpn] не удалось прописать системный прокси: {ex.Message}");
             }
         }
- 
+
+        _sessionTun = Settings.TunEnabled;
+        RaiseMode();
+
         _stats = new ClashApiClient(Settings.ClashApiPort);
         _stats.TrafficReceived += OnTraffic;
         _stats.Start();
- 
+
         _connectedAt = DateTime.Now;
         _uptimeTimer.Start();
         State = TunnelState.Connected;
         Status = "";
         Append($"[cvpn] подключение к {Active.Name} ({Active.ProtocolLabel})");
- 
+
         // Первый замер с задержкой: ядру нужно поднять Clash API и сам туннель
         _ = Task.Run(async () =>
         {
@@ -242,7 +278,7 @@ public sealed class MainViewModel : ObservableObject
             await MeasureAsync();
         });
     }
- 
+
     private async Task DisconnectAsync()
     {
         SystemProxy.Restore();
@@ -253,34 +289,37 @@ public sealed class MainViewModel : ObservableObject
         Upload = "0.0";
         DownloadUnit = "КБ/с";
         UploadUnit = "КБ/с";
- 
+
         await TeardownAsync();
- 
+
         State = TunnelState.Disconnected;
         Append("[cvpn] отключено");
     }
- 
+
     private async Task TeardownAsync()
     {
+        _sessionTun = null;
+        RaiseMode();
+
         if (_stats is not null)
         {
             _stats.TrafficReceived -= OnTraffic;
             await _stats.StopAsync();
             _stats = null;
         }
- 
+
         if (_core is null) return;
- 
+
         _core.LineReceived -= OnCoreLine;
         _core.Exited -= OnCoreExited;
         await _core.StopAsync();
         _core = null;
     }
- 
+
     private async Task CheckAsync()
     {
         if (Active is null) return;
- 
+
         try
         {
             var path = ConfigBuilder.Write(Active, Rules, Settings);
@@ -294,7 +333,7 @@ public sealed class MainViewModel : ObservableObject
             Fail(ex.Message);
         }
     }
- 
+
     private async Task DetectCoreAsync()
     {
         if (!File.Exists(Settings.CorePath))
@@ -302,7 +341,7 @@ public sealed class MainViewModel : ObservableObject
             SingBoxVersion = "ядро не найдено";
             return;
         }
- 
+
         try
         {
             var service = new SingBoxService(Settings.CorePath);
@@ -313,7 +352,7 @@ public sealed class MainViewModel : ObservableObject
             SingBoxVersion = "ядро не отвечает";
         }
     }
- 
+
     /// <summary>
     /// Повышение прав возможно только перезапуском процесса: UAC нельзя запросить
     /// для уже работающего приложения.
@@ -326,25 +365,25 @@ public sealed class MainViewModel : ObservableObject
             "Если отказаться, можно выключить TUN в настройках — тогда трафик пойдёт " +
             "через системный прокси, но только для приложений, которые его учитывают.",
             "CVPN", MessageBoxButton.YesNo, MessageBoxImage.Question);
- 
+
         if (answer != MessageBoxResult.Yes)
         {
             Status = "Подключение отменено: для TUN нужны права администратора";
             State = TunnelState.Disconnected;
             return false;
         }
- 
+
         if (!Elevation.RelaunchElevated())
         {
             Fail("Windows отклонила запрос на повышение прав");
             return false;
         }
- 
+
         Persist();
         Application.Current?.Shutdown();
         return false;
     }
- 
+
     /// <summary>Вызывается при закрытии окна: нельзя оставить систему с чужим прокси.</summary>
     public async Task ShutdownAsync()
     {
@@ -352,63 +391,63 @@ public sealed class MainViewModel : ObservableObject
         Persist();
         await TeardownAsync();
     }
- 
+
     // ===================== события ядра =====================
- 
+
     private void OnCoreLine(string line) => Dispatch(() => Append(line));
- 
+
     private void OnCoreExited(int exitCode, bool graceful) => Dispatch(() =>
     {
         if (graceful) return;
- 
+
         SystemProxy.Restore();
         _uptimeTimer.Stop();
         State = TunnelState.Failing;
         Status = $"Ядро завершилось с кодом {exitCode}. Подробности в логах.";
         Append($"[cvpn] ядро остановлено, код {exitCode}");
     });
- 
+
     /// <summary>Задержку меряет само ядро через Clash API — свой пинг мимо туннеля бессмыслен.</summary>
     private async Task MeasureAsync()
     {
         if (_stats is null || Active is null) return;
- 
+
         var ms = await _stats.MeasureDelayAsync();
- 
+
         Dispatch(() =>
         {
             if (Active is null) return;
- 
+
             Active.LatencyMs = ms;
             if (ms < 0) Append("[cvpn] проверка задержки не прошла");
         });
     }
- 
+
     private void OnRulePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(RouteRule.Enabled)) Dispatch(() => Raise(nameof(ActiveRuleCount)));
     }
- 
+
     private void OnTraffic(long up, long down) => Dispatch(() =>
     {
         (Upload, UploadUnit) = FormatRate(up);
         (Download, DownloadUnit) = FormatRate(down);
     });
- 
+
     /// <summary>Килобайты до мегабайта, дальше мегабайты — иначе на медленном канале одни нули.</summary>
     private static (string Value, string Unit) FormatRate(long bytesPerSecond)
     {
         const double kb = 1024;
         const double mb = kb * 1024;
- 
+
         if (bytesPerSecond >= mb)
             return ((bytesPerSecond / mb).ToString("0.0"), "МБ/с");
- 
+
         return ((bytesPerSecond / kb).ToString("0.0"), "КБ/с");
     }
- 
+
     // ===================== профили и правила =====================
- 
+
     private void Import()
     {
         if (!LinkParser.TryParse(LinkText, out var profile, out var error))
@@ -416,30 +455,30 @@ public sealed class MainViewModel : ObservableObject
             Status = error;
             return;
         }
- 
+
         Profiles.Add(profile);
         Active ??= profile;
         LinkText = "";
         Status = $"Профиль «{profile.Name}» добавлен";
         Persist();
     }
- 
+
     private void DeleteProfile(ServerProfile profile)
     {
         Profiles.Remove(profile);
         if (ReferenceEquals(Active, profile)) Active = Profiles.FirstOrDefault();
         Persist();
     }
- 
+
     public void AddRule(MatchKind match, string value, RouteAction action)
     {
         if (string.IsNullOrWhiteSpace(value)) return;
- 
+
         Rules.Add(new RouteRule { Match = match, Value = value.Trim(), Action = action });
         Raise(nameof(ActiveRuleCount));
         Persist();
     }
- 
+
     public void Persist()
     {
         _state.Profiles = [.. Profiles];
@@ -447,7 +486,7 @@ public sealed class MainViewModel : ObservableObject
         _state.Settings = Settings;
         ProfileStore.Save(_state);
     }
- 
+
     /// <summary>Импорт из файла: конфиг sing-box, массив outbound'ов или один outbound.</summary>
     private void ImportFromFile()
     {
@@ -457,37 +496,37 @@ public sealed class MainViewModel : ObservableObject
             Filter = "Конфигурации (*.json)|*.json|Все файлы (*.*)|*.*",
             CheckFileExists = true
         };
- 
+
         if (dialog.ShowDialog() != true) return;
- 
+
         if (!ConfigImporter.TryImportFile(dialog.FileName, out var imported, out var error))
         {
             Status = error;
             return;
         }
- 
+
         foreach (var profile in imported) Profiles.Add(profile);
- 
+
         Active ??= Profiles.FirstOrDefault();
         Status = imported.Count == 1
             ? $"Профиль «{imported[0].Name}» добавлен"
             : $"Добавлено профилей: {imported.Count}";
         Persist();
     }
- 
+
     /// <summary>Открывает сгенерированный config.json — удобно сверить с рабочим вручную.</summary>
     private void ShowGeneratedConfig()
     {
         try
         {
             if (Active is not null) ConfigBuilder.Write(Active, Rules, Settings);
- 
+
             if (!File.Exists(AppPaths.GeneratedConfig))
             {
                 Status = "Конфигурация ещё не собрана";
                 return;
             }
- 
+
             Process.Start(new ProcessStartInfo(AppPaths.GeneratedConfig) { UseShellExecute = true });
         }
         catch (Exception ex)
@@ -495,7 +534,7 @@ public sealed class MainViewModel : ObservableObject
             Status = $"Не удалось открыть конфигурацию: {ex.Message}";
         }
     }
- 
+
     private void PickCore()
     {
         var dialog = new OpenFileDialog
@@ -507,15 +546,15 @@ public sealed class MainViewModel : ObservableObject
                 ? Path.GetDirectoryName(Settings.CorePath)!
                 : AppContext.BaseDirectory
         };
- 
+
         if (dialog.ShowDialog() != true) return;
- 
+
         Settings.CorePath = dialog.FileName;
         Persist();
         _ = DetectCoreAsync();
         Status = "";
     }
- 
+
     /// <summary>
     /// Буфер обмена — общесистемный ресурс: пока его держит другой процесс,
     /// запись падает с COMException. Перегрузки с повторами у WPF нет
@@ -525,7 +564,7 @@ public sealed class MainViewModel : ObservableObject
     {
         const int attempts = 5;
         var text = string.Join(Environment.NewLine, Log);
- 
+
         for (var attempt = 1; attempt <= attempts; attempt++)
         {
             try
@@ -545,27 +584,27 @@ public sealed class MainViewModel : ObservableObject
             }
         }
     }
- 
+
     /// <summary>Отметка о нажатии на круг — для диагностики привязок.</summary>
     public void NoteDialClick() => Append($"[cvpn] нажатие: состояние {StateLabel}, профиль {Active?.Name ?? "не выбран"}");
- 
+
     // ===================== служебное =====================
- 
+
     private void Fail(string message)
     {
         State = TunnelState.Failing;
         Status = message;
         Append($"[cvpn] {message}");
     }
- 
+
     private void Append(string line)
     {
         if (string.IsNullOrWhiteSpace(line)) return;
- 
+
         Log.Add(line);
         while (Log.Count > MaxLogLines) Log.RemoveAt(0);
     }
- 
+
     /// <summary>Вывод ядра приходит из фонового потока, коллекции WPF этого не прощают.</summary>
     private static void Dispatch(Action action)
     {
