@@ -1,0 +1,97 @@
+﻿<Window x:Class="CVPN.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:vm="clr-namespace:CVPN.ViewModels"
+        xmlns:views="clr-namespace:CVPN.Views"
+        Title="CVPN" Width="980" Height="660" MinWidth="860" MinHeight="580"
+        Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
+        TextOptions.TextFormattingMode="Ideal">
+ <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="38" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Border BorderBrush="{StaticResource Line}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- ============ Заголовок окна ============ -->
+            <Grid Grid.Row="0" Background="{StaticResource Bg}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <Rectangle Width="14" Height="14" Fill="{StaticResource Accent}" RadiusX="4" RadiusY="4" />
+                    <TextBlock Text="CVPN" Style="{StaticResource T.Body}" Margin="10,0,0,0"
+                               FontSize="{StaticResource Size.Small}" />
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" Text="{Binding SingBoxVersion}" Style="{StaticResource T.Label}"
+                           HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="&#xE921;" Style="{StaticResource Btn.Caption}" Click="OnMinimize" />
+                    <Button Content="&#xE922;" Style="{StaticResource Btn.Caption}" Click="OnMaximize" />
+                    <Button Content="&#xE8BB;" Style="{StaticResource Btn.CaptionClose}" Click="OnClose" />
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="1" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="186" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- ============ Навигация ============ -->
+                    <Border Grid.Column="0" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Margin="0,12,0,0">
+                                <RadioButton x:Name="NavConnection" Style="{StaticResource NavItem}"
+                                             Content="Соединение" IsChecked="True" Checked="OnNavChanged" Tag="connection" />
+                                <RadioButton Style="{StaticResource NavItem}" Content="Профили"
+                                             Checked="OnNavChanged" Tag="profiles" />
+                                <RadioButton Style="{StaticResource NavItem}" Content="Маршруты"
+                                             Checked="OnNavChanged" Tag="routing" />
+                                <RadioButton Style="{StaticResource NavItem}" Content="Логи"
+                                             Checked="OnNavChanged" Tag="logs" />
+                                <RadioButton Style="{StaticResource NavItem}" Content="Настройки"
+                                             Checked="OnNavChanged" Tag="settings" />
+                            </StackPanel>
+
+                            <Border Grid.Row="2" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0"
+                                    Padding="18,12">
+                                <StackPanel>
+                                    <TextBlock Text="режим" Style="{StaticResource T.Label}" />
+                                    <TextBlock Text="TUN · системный" Style="{StaticResource T.Mono}"
+                                               FontSize="{StaticResource Size.Small}" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- ============ Страница ============ -->
+                    <ContentControl x:Name="PageHost" Grid.Column="1">
+                        <views:ConnectionView />
+                    </ContentControl>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

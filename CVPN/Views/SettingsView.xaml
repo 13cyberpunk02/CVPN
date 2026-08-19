@@ -1,0 +1,89 @@
+<UserControl x:Class="CVPN.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:CVPN.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
+
+      <Grid Margin="28,22,28,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Настройки" Style="{StaticResource T.Title}" />
+            <TextBlock Text="Ядро, режим перехвата трафика и запуск" Style="{StaticResource T.Secondary}"
+                       Margin="0,4,0,0" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Margin="0,18,0,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="путь к ядру" Style="{StaticResource T.Label}" />
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Style="{StaticResource Input}"
+                                     Text="{Binding Settings.CorePath, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Grid.Column="1" Content="Обзор" Style="{StaticResource Btn.Base}"
+                                    Margin="8,0,0,0" Command="{Binding BrowseCore}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Режим TUN" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="Перехватывает весь системный трафик. Требует прав администратора — CVPN предложит перезапуск."
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.TunEnabled}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Смешанный порт" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="Когда TUN выключен, этот порт прописывается системным прокси Windows"
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <TextBox Style="{StaticResource Input}" Text="{Binding Settings.MixedPort, UpdateSourceTrigger=PropertyChanged}" Width="96"
+                                     HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Запуск вместе с Windows" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="Свернуться в трей и подключиться к последнему профилю"
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+                    <StackPanel>
+                        <TextBlock Text="dns" Style="{StaticResource T.Label}" />
+                        <TextBox Style="{StaticResource Input}" Text="{Binding Settings.RemoteDns, UpdateSourceTrigger=PropertyChanged}" Margin="0,8,0,0" />
+                        <TextBlock Text="Запросы вне правил уходят на этот резолвер через туннель."
+                                   Style="{StaticResource T.Caption}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
