@@ -21,6 +21,7 @@ public sealed class MainViewModel : ObservableObject
     private SingBoxService? _core;
     private bool? _sessionTun;
     private bool _busy;
+    private RoutingProfile _routing;
     private ClashApiClient? _stats;
     private DateTime _connectedAt;
  
@@ -40,8 +41,11 @@ public sealed class MainViewModel : ObservableObject
         _state = ProfileStore.Load();
  
         Profiles = new ObservableCollection<ServerProfile>(_state.Profiles);
-        Rules = new ObservableCollection<RouteRule>(_state.Rules);
+        RoutingProfiles = new ObservableCollection<RoutingProfile>(_state.RoutingProfiles);
         Settings = _state.Settings;
+ 
+        _routing = RoutingProfiles.FirstOrDefault(r => r.Name == _state.ActiveRoutingProfile)
+                   ?? RoutingProfiles[0];
  
         Active = Profiles.FirstOrDefault(p => p.Name == _state.ActiveProfileName)
                  ?? Profiles.FirstOrDefault();
@@ -51,18 +55,7 @@ public sealed class MainViewModel : ObservableObject
  
         Settings.PropertyChanged += (_, _) => RaiseMode();
  
-        // Счётчик активных правил зависит и от состава списка, и от галочки в каждом правиле
-        Rules.CollectionChanged += (_, e) =>
-        {
-            foreach (var rule in e.NewItems?.OfType<RouteRule>() ?? [])
-                rule.PropertyChanged += OnRulePropertyChanged;
-            foreach (var rule in e.OldItems?.OfType<RouteRule>() ?? [])
-                rule.PropertyChanged -= OnRulePropertyChanged;
- 
-            Raise(nameof(ActiveRuleCount));
-        };
- 
-        foreach (var rule in Rules) rule.PropertyChanged += OnRulePropertyChanged;
+        SubscribeRules();
  
         ToggleConnection = new RelayCommand(async () => await ToggleAsync());
         ImportLink = new RelayCommand(Import);
@@ -74,6 +67,10 @@ public sealed class MainViewModel : ObservableObject
         EditProfileCommand = new RelayCommand(p => { if (p is ServerProfile sp) EditProfile(sp); });
         BrowseCore = new RelayCommand(PickCore);
         OpenConfig = new RelayCommand(ShowGeneratedConfig);
+        AddRouting = new RelayCommand(AddRoutingProfile);
+        RemoveRouting = new RelayCommand(RemoveRoutingProfile, () => RoutingProfiles.Count > 1);
+        ExportProfile = new RelayCommand(p => { if (p is ServerProfile sp) ShowExport(sp); });
+        ExportAll = new RelayCommand(ShowExportAll, () => Profiles.Count > 0);
         MeasureDelay = new RelayCommand(async () => await MeasureAsync(), () => IsConnected);
         PingAll = new RelayCommand(async () => await PingAllAsync(), () => !IsBusy);
         UpdateSubscription = new RelayCommand(async () => await UpdateSubscriptionAsync(), () => !IsBusy);
@@ -96,7 +93,35 @@ public sealed class MainViewModel : ObservableObject
     }
  
     public ObservableCollection<ServerProfile> Profiles { get; }
-    public ObservableCollection<RouteRule> Rules { get; }
+    public ObservableCollection<RoutingProfile> RoutingProfiles { get; }
+ 
+    /// <summary>Правила активного набора. При смене набора коллекция подменяется целиком.</summary>
+    public ObservableCollection<RouteRule> Rules => ActiveRouting.Rules;
+ 
+    /// <summary>
+    /// Активный набор правил. Смена на лету требует перезапуска ядра:
+    /// маршруты живут в конфиге, а не в Clash API, в отличие от выбора сервера.
+    /// </summary>
+    public RoutingProfile ActiveRouting
+    {
+        get => _routing;
+        set
+        {
+            if (value is null || ReferenceEquals(value, _routing)) return;
+ 
+            UnsubscribeRules();
+            Set(ref _routing, value);
+            SubscribeRules();
+ 
+            _state.ActiveRoutingProfile = value.Name;
+ 
+            Raise(nameof(Rules));
+            Raise(nameof(ActiveRuleCount));
+            Persist();
+ 
+            if (IsConnected) Status = "Набор правил применится после переподключения";
+        }
+    }
     public ObservableCollection<string> Log { get; } = [];
     public AppSettings Settings { get; }
  
@@ -109,6 +134,10 @@ public sealed class MainViewModel : ObservableObject
     public ICommand EditProfileCommand { get; }
     public ICommand BrowseCore { get; }
     public ICommand OpenConfig { get; }
+    public ICommand AddRouting { get; }
+    public ICommand RemoveRouting { get; }
+    public ICommand ExportProfile { get; }
+    public ICommand ExportAll { get; }
     public ICommand MeasureDelay { get; }
     public ICommand PingAll { get; }
     public ICommand UpdateSubscription { get; }
@@ -246,7 +275,7 @@ public sealed class MainViewModel : ObservableObject
         string configPath;
         try
         {
-            configPath = ConfigBuilder.Write([.. Profiles], Active, Rules, Settings);
+            configPath = ConfigBuilder.Write([.. Profiles], Active, ActiveRouting, Settings);
         }
         catch (Exception ex)
         {
@@ -350,7 +379,7 @@ public sealed class MainViewModel : ObservableObject
  
         try
         {
-            var path = ConfigBuilder.Write([.. Profiles], Active, Rules, Settings);
+            var path = ConfigBuilder.Write([.. Profiles], Active, ActiveRouting, Settings);
             var service = new SingBoxService(Settings.CorePath);
             var (ok, message) = await service.CheckConfigAsync(path);
             Status = ok ? "Конфигурация корректна" : message;
@@ -451,6 +480,29 @@ public sealed class MainViewModel : ObservableObject
         });
     }
  
+    /// <summary>Счётчик активных правил зависит и от состава списка, и от галочки в каждом правиле.</summary>
+    private void SubscribeRules()
+    {
+        Rules.CollectionChanged += OnRulesChanged;
+        foreach (var rule in Rules) rule.PropertyChanged += OnRulePropertyChanged;
+    }
+ 
+    private void UnsubscribeRules()
+    {
+        Rules.CollectionChanged -= OnRulesChanged;
+        foreach (var rule in Rules) rule.PropertyChanged -= OnRulePropertyChanged;
+    }
+ 
+    private void OnRulesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        foreach (var rule in e.NewItems?.OfType<RouteRule>() ?? [])
+            rule.PropertyChanged += OnRulePropertyChanged;
+        foreach (var rule in e.OldItems?.OfType<RouteRule>() ?? [])
+            rule.PropertyChanged -= OnRulePropertyChanged;
+ 
+        Raise(nameof(ActiveRuleCount));
+    }
+ 
     private void OnRulePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(RouteRule.Enabled)) Dispatch(() => Raise(nameof(ActiveRuleCount)));
@@ -510,7 +562,8 @@ public sealed class MainViewModel : ObservableObject
     public void Persist()
     {
         _state.Profiles = [.. Profiles];
-        _state.Rules = [.. Rules];
+        _state.RoutingProfiles = [.. RoutingProfiles];
+        _state.ActiveRoutingProfile = ActiveRouting.Name;
         _state.Settings = Settings;
         ProfileStore.Save(_state);
     }
@@ -547,7 +600,7 @@ public sealed class MainViewModel : ObservableObject
     {
         try
         {
-            if (Active is not null) ConfigBuilder.Write([.. Profiles], Active, Rules, Settings);
+            if (Active is not null) ConfigBuilder.Write([.. Profiles], Active, ActiveRouting, Settings);
  
             if (!File.Exists(AppPaths.GeneratedConfig))
             {
@@ -679,8 +732,9 @@ public sealed class MainViewModel : ObservableObject
         var direct = active.Count(r => r.Action == RouteAction.Direct);
         var blocked = active.Count(r => r.Action == RouteAction.Block);
  
-        Append($"[cvpn] правил: {active.Count} (напрямую {direct}, блок {blocked}), " +
-               $"остальное {(Settings.ProxyByDefault ? "через прокси" : "напрямую")}");
+        Append($"[cvpn] набор «{ActiveRouting.Name}»: правил {active.Count} " +
+               $"(напрямую {direct}, блок {blocked}), " +
+               $"остальное {(ActiveRouting.ProxyByDefault ? "через прокси" : "напрямую")}");
  
         // geoip сопоставляется по адресу, а на момент DNS-запроса его ещё нет
         var geoipDirect = active
@@ -811,7 +865,7 @@ public sealed class MainViewModel : ObservableObject
         if (await _stats.SelectAsync(tag))
         {
             Append($"[cvpn] переключение на {profile.Name} без перезапуска ядра");
-            ConfigBuilder.Write([.. Profiles], profile, Rules, Settings);
+            ConfigBuilder.Write([.. Profiles], profile, ActiveRouting, Settings);
             await MeasureAsync();
         }
         else
@@ -819,6 +873,74 @@ public sealed class MainViewModel : ObservableObject
             Status = "Не удалось переключить сервер. Переподключитесь вручную.";
             Append($"[cvpn] селектор не ответил, нужно переподключение");
         }
+    }
+ 
+    // ===================== наборы правил =====================
+ 
+    private void AddRoutingProfile()
+    {
+        var name = UniqueRoutingName("Новый набор");
+ 
+        var profile = new RoutingProfile { Name = name, ProxyByDefault = ActiveRouting.ProxyByDefault };
+ 
+        RoutingProfiles.Add(profile);
+        ActiveRouting = profile;
+        Status = $"Создан набор «{name}». Правила пока пусты.";
+    }
+ 
+    private void RemoveRoutingProfile()
+    {
+        if (RoutingProfiles.Count < 2) return;
+ 
+        var doomed = ActiveRouting;
+        var fallback = RoutingProfiles.First(r => !ReferenceEquals(r, doomed));
+ 
+        ActiveRouting = fallback;
+        RoutingProfiles.Remove(doomed);
+        Persist();
+ 
+        Status = $"Набор «{doomed.Name}» удалён";
+    }
+ 
+    private string UniqueRoutingName(string basis)
+    {
+        if (RoutingProfiles.All(r => r.Name != basis)) return basis;
+ 
+        for (var n = 2; ; n++)
+        {
+            var candidate = $"{basis} {n}";
+            if (RoutingProfiles.All(r => r.Name != candidate)) return candidate;
+        }
+    }
+ 
+    // ===================== экспорт =====================
+ 
+    private void ShowExport(ServerProfile profile)
+    {
+        var link = ProfileLink.Build(profile);
+ 
+        if (link.Length == 0)
+        {
+            Status = "Для этого протокола ссылка не поддерживается";
+            return;
+        }
+ 
+        new Views.ExportWindow(link, profile.Name, $"{profile.ProtocolLabel} · {profile.Endpoint}")
+        {
+            Owner = Application.Current?.MainWindow
+        }.ShowDialog();
+    }
+ 
+    /// <summary>Весь список одной строкой подписки — её можно скормить другому клиенту.</summary>
+    private void ShowExportAll()
+    {
+        var payload = ProfileLink.BuildSubscription(Profiles);
+ 
+        new Views.ExportWindow(payload, "Все профили",
+            $"Список из {Profiles.Count} серверов в формате подписки (base64)")
+        {
+            Owner = Application.Current?.MainWindow
+        }.ShowDialog();
     }
  
     /// <summary>Отметка о нажатии на круг — для диагностики привязок.</summary>

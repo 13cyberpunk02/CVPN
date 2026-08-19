@@ -27,6 +27,8 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                 <Button Content="Проверить все" Style="{StaticResource Btn.Ghost}"
                         Command="{Binding PingAll}" />
+                <Button Content="Экспорт всех" Style="{StaticResource Btn.Ghost}"
+                        Command="{Binding ExportAll}" />
                 <Button Content="Импорт из файла" Style="{StaticResource Btn.Base}"
                         Margin="8,0,0,0" Command="{Binding ImportFile}" />
                 <Button Content="Создать вручную" Style="{StaticResource Btn.Primary}"
@@ -149,6 +151,10 @@
                             </TextBlock>
 
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="Поделиться" Style="{StaticResource Btn.Ghost}" Padding="10,6"
+                                        Command="{Binding DataContext.ExportProfile,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
                                 <Button Content="Изменить" Style="{StaticResource Btn.Ghost}" Padding="10,6"
                                         Command="{Binding DataContext.EditProfileCommand,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"

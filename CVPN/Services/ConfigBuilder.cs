@@ -42,7 +42,7 @@ public static class ConfigBuilder
     public static string Build(
         IReadOnlyList<ServerProfile> profiles,
         ServerProfile active,
-        IEnumerable<RouteRule> rules,
+        RoutingProfile routing,
         AppSettings settings)
     {
         var servers = profiles.Count > 0 ? profiles : [active];
@@ -50,12 +50,12 @@ public static class ConfigBuilder
 
         var activeTag = tags.TryGetValue(active, out var t) ? t : tags.Values.First();
 
-        var rulesList = rules.Where(r => r.Enabled).ToList();
+        var rulesList = routing.Rules.Where(r => r.Enabled).ToList();
         var ruleSets = new JsonArray();
         var seenSets = new HashSet<string>(StringComparer.Ordinal);
 
         var dns = BuildDns(rulesList, settings, ruleSets, seenSets);
-        var route = BuildRoute(rulesList, settings, ruleSets, seenSets);
+        var route = BuildRoute(rulesList, routing, ruleSets, seenSets);
 
         var outbounds = new JsonArray();
 
@@ -80,8 +80,6 @@ public static class ConfigBuilder
                 ["outbounds"] = new JsonArray(servers.Select(x => (JsonNode)tags[x]!).ToArray()),
                 ["url"] = "https://cp.cloudflare.com/generate_204",
                 ["interval"] = "3m",
-                // Меняем сервер, только если новый заметно быстрее - иначе туннель
-                // будет прыгать между узлами с близкой задержкой
                 ["tolerance"] = 50
             });
         }
@@ -91,9 +89,8 @@ public static class ConfigBuilder
         outbounds.Add(new JsonObject
         {
             ["type"] = "selector",
-            ["outbounds"] = members,
+                ["outbounds"] = members,
             ["default"] = settings.AutoSelectFastest && hasAuto ? AutoTag : activeTag,
-            // Живые соединения не рвём: переключение затронет только новые
             ["interrupt_exist_connections"] = false
         });
 
@@ -130,11 +127,11 @@ public static class ConfigBuilder
     public static string Write(
         IReadOnlyList<ServerProfile> profiles,
         ServerProfile active,
-        IEnumerable<RouteRule> rules,
+        RoutingProfile routing,
         AppSettings settings)
     {
         AppPaths.EnsureCreated();
-        File.WriteAllText(AppPaths.GeneratedConfig, Build(profiles, active, rules, settings));
+        File.WriteAllText(AppPaths.GeneratedConfig, Build(profiles, active, routing, settings));
         return AppPaths.GeneratedConfig;
     }
 
@@ -223,13 +220,12 @@ public static class ConfigBuilder
         var outbound = new JsonObject
         {
             ["type"] = "vless",
-            ["server"] = p.Host,
+                ["server"] = p.Host,
             ["server_port"] = p.Port,
             ["uuid"] = p.Uuid,
             ["tls"] = tls
         };
 
-        // flow имеет смысл только с Reality/XTLS; на ws он сломает соединение
         if (reality && !string.IsNullOrWhiteSpace(p.Flow))
             outbound["flow"] = p.Flow;
 
@@ -319,12 +315,10 @@ public static class ConfigBuilder
     // ===================== route =====================
 
     private static JsonObject BuildRoute(
-        List<RouteRule> rules, AppSettings s, JsonArray ruleSets, HashSet<string> seen)
+        List<RouteRule> rules, RoutingProfile routing, JsonArray ruleSets, HashSet<string> seen)
     {
         var routeRules = new JsonArray
         {
-            // Определяем протокол до маршрутизации - иначе доменные правила
-            // не сработают для соединений, пришедших по IP из TUN
             new JsonObject { ["action"] = "sniff" },
             new JsonObject { ["protocol"] = "dns", ["action"] = "hijack-dns" },
             new JsonObject { ["ip_is_private"] = true, ["outbound"] = DirectTag }
@@ -340,7 +334,7 @@ public static class ConfigBuilder
         {
             ["rules"] = routeRules,
             ["rule_set"] = ruleSets,
-            ["final"] = s.ProxyByDefault ? ProxyTag : DirectTag,
+            ["final"] = routing.ProxyByDefault ? ProxyTag : DirectTag,
             ["auto_detect_interface"] = true,
             ["default_domain_resolver"] = "dns-local"
         };
@@ -401,7 +395,6 @@ public static class ConfigBuilder
                 return null;
         }
 
-        // reject - действие правила: спецвыход block удалён из ядра
         if (rule.Action == RouteAction.Block)
             node["action"] = "reject";
         else
@@ -449,8 +442,6 @@ public static class ConfigBuilder
             ["tag"] = tag,
             ["format"] = "binary",
             ["url"] = url,
-            // Наборы качаются через туннель: raw.githubusercontent.com часто недоступен напрямую.
-            // Результат кладётся в cache_file, так что скачивание разовое.
             ["download_detour"] = ProxyTag,
             ["update_interval"] = "7d"
         });

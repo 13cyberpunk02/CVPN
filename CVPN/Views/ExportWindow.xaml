@@ -1,0 +1,34 @@
+<Window x:Class="CVPN.Views.ExportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Экспорт профиля" Width="420" SizeToContent="Height"
+        Background="{StaticResource Bg}" WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" ShowInTaskbar="False">
+
+    <Border BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="24,20">
+        <StackPanel>
+            <TextBlock x:Name="HeaderText" Text="Экспорт профиля" Style="{StaticResource T.Title}" />
+            <TextBlock x:Name="SubtitleText" Style="{StaticResource T.Secondary}" Margin="0,4,0,0"
+                       TextWrapping="Wrap" />
+
+            <!-- Белая подложка обязательна: сканеры плохо читают инвертированный код -->
+            <Border Background="White" CornerRadius="{StaticResource RadiusCard}" Padding="12"
+                    HorizontalAlignment="Center" Margin="0,20,0,0">
+                <Image x:Name="QrImage" Width="260" Height="260"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+            </Border>
+
+            <TextBlock Text="ссылка" Style="{StaticResource T.Label}" Margin="0,20,0,7" />
+            <TextBox x:Name="LinkBox" Style="{StaticResource Input}" IsReadOnly="True"
+                     MinHeight="72" TextWrapping="Wrap" AcceptsReturn="True"
+                     VerticalContentAlignment="Top" />
+
+            <Grid Margin="0,18,0,0">
+                <Button Content="Закрыть" Style="{StaticResource Btn.Ghost}"
+                        HorizontalAlignment="Left" Click="OnClose" />
+                <Button x:Name="CopyButton" Content="Копировать ссылку" Style="{StaticResource Btn.Primary}"
+                        HorizontalAlignment="Right" Click="OnCopy" />
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>
