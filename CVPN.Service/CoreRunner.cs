@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace CVPN.Service;
 
@@ -68,9 +69,19 @@ public sealed class CoreRunner : IDisposable
 
             try
             {
-                // Дерево целиком: sing-box может оставить дочерние процессы
-                _process.Kill(entireProcessTree: true);
-                _process.WaitForExit(5000);
+                // Сначала мягко: sing-box по Ctrl+Break снимает TUN-интерфейс сам.
+                // Принудительное завершение оставляет адаптер в системе, и следующий
+                // запуск падает с «create adapter: file already exists».
+                if (TrySignalBreak(_process.Id) && _process.WaitForExit(4000))
+                {
+                    Append("[service] ядро завершилось штатно");
+                }
+                else
+                {
+                    Append("[service] ядро не ответило на сигнал, завершаем принудительно");
+                    _process.Kill(entireProcessTree: true);
+                    _process.WaitForExit(5000);
+                }
             }
             catch (Exception ex)
             {
@@ -98,8 +109,44 @@ public sealed class CoreRunner : IDisposable
 
         _log.Enqueue(line);
 
-        // Клиент может долго не приходить — очередь не должна расти бесконечно
+        // Клиент может долго не приходить - очередь не должна расти бесконечно
         while (_log.Count > MaxLog) _log.TryDequeue(out _);
+    }
+
+    // ===================== мягкая остановка =====================
+
+    private const int CtrlBreakEvent = 1;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool AttachConsole(uint processId);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool FreeConsole();
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetConsoleCtrlHandler(IntPtr handler, bool add);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GenerateConsoleCtrlEvent(uint ctrlEvent, uint processGroupId);
+
+    /// <summary>
+    /// Посылает ядру Ctrl+Break. Для этого приходится присоединиться к его консоли,
+    /// временно отключив собственный обработчик - иначе сигнал прилетит и нам.
+    /// </summary>
+    private static bool TrySignalBreak(int processId)
+    {
+        if (!AttachConsole((uint)processId)) return false;
+
+        try
+        {
+            SetConsoleCtrlHandler(IntPtr.Zero, true);
+            return GenerateConsoleCtrlEvent(CtrlBreakEvent, 0);
+        }
+        finally
+        {
+            FreeConsole();
+            SetConsoleCtrlHandler(IntPtr.Zero, false);
+        }
     }
 
     public void Dispose()
