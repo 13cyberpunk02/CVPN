@@ -127,6 +127,47 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,10,0,0">
                     <StackPanel>
+                        <TextBlock Text="служба туннеля" Style="{StaticResource T.Label}" />
+                        <TextBlock Text="Служба работает под системной учётной записью и поднимает TUN без запроса прав администратора. Устанавливается один раз."
+                                   Style="{StaticResource T.Caption}" Margin="0,8,0,0" TextWrapping="Wrap" />
+
+                        <Grid Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Использовать службу" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="{Binding ServiceStatus}" Style="{StaticResource T.Caption}"
+                                           Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.UseService}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="Установить службу" Style="{StaticResource Btn.Base}"
+                                    Command="{Binding InstallService}" />
+                            <Button Content="Удалить службу" Style="{StaticResource Btn.Ghost}"
+                                    Margin="8,0,0,0" Command="{Binding UninstallService}" />
+                        </StackPanel>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,16" />
+
+                        <TextBlock Text="или задача планировщика" Style="{StaticResource T.Label}" />
+                        <TextBlock Text="Проще службы: отдельный проект не нужен. Приложение целиком запускается с правами администратора, а туннель живёт только внутри вашего сеанса."
+                                   Style="{StaticResource T.Caption}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding TaskStatus}" Style="{StaticResource T.Caption}"
+                                   Margin="0,6,0,0" Foreground="{StaticResource TextSecondary}"
+                                   TextWrapping="Wrap" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="Создать задачу" Style="{StaticResource Btn.Base}"
+                                    Command="{Binding InstallTask}" />
+                            <Button Content="Удалить задачу" Style="{StaticResource Btn.Ghost}"
+                                    Margin="8,0,0,0" Command="{Binding UninstallTask}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+                    <StackPanel>
                         <TextBlock Text="dns" Style="{StaticResource T.Label}" />
                         <TextBox Style="{StaticResource Input}" Text="{Binding Settings.RemoteDns, UpdateSourceTrigger=PropertyChanged}" Margin="0,8,0,0" />
                         <TextBlock Text="Запросы вне правил уходят на этот резолвер через туннель. Схема задаёт транспорт: https:// (DoH, по 443 — надёжнее всего), tls:// (DoT, порт 853 часто блокируется), quic://, udp://."

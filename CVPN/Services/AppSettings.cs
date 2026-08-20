@@ -17,6 +17,7 @@ public sealed class AppSettings : ObservableObject
     private bool _autoConnect;
     private string _subscriptionUrl = "";
     private bool _autoSelectFastest;
+    private bool _useService = true;
  
     /// <summary>Полный путь к sing-box.exe.</summary>
     public string CorePath { get => _corePath; set => Set(ref _corePath, value); }
@@ -67,4 +68,10 @@ public sealed class AppSettings : ObservableObject
  
     /// <summary>Ядро само держит соединение на быстрейшем сервере и перепроверяет раз в три минуты.</summary>
     public bool AutoSelectFastest { get => _autoSelectFastest; set => Set(ref _autoSelectFastest, value); }
+ 
+    /// <summary>
+    /// Поднимать туннель через службу, если она установлена. Так TUN работает
+    /// без запроса прав администратора при каждом запуске.
+    /// </summary>
+    public bool UseService { get => _useService; set => Set(ref _useService, value); }
 }

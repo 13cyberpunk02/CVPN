@@ -10,10 +10,10 @@ namespace CVPN.Services;
 /// Собирает config.json под sing-box 1.12+.
 ///
 /// Что важно знать про эту версию:
-///  • geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
-///  • спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
-///  • legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
-///  • DNS-серверы описываются новым форматом с полями type/server.
+///  1) geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
+///  2) спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
+///  3) legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
+///  4) DNS-серверы описываются новым форматом с полями type/server.
 /// </summary>
 public static class ConfigBuilder
 {
@@ -89,7 +89,8 @@ public static class ConfigBuilder
         outbounds.Add(new JsonObject
         {
             ["type"] = "selector",
-                ["outbounds"] = members,
+            ["tag"] = ProxyTag,
+            ["outbounds"] = members,
             ["default"] = settings.AutoSelectFastest && hasAuto ? AutoTag : activeTag,
             ["interrupt_exist_connections"] = false
         });
@@ -226,6 +227,7 @@ public static class ConfigBuilder
             ["tls"] = tls
         };
 
+        // flow имеет смысл только с Reality/XTLS; на ws он сломает соединение
         if (reality && !string.IsNullOrWhiteSpace(p.Flow))
             outbound["flow"] = p.Flow;
 
@@ -319,6 +321,8 @@ public static class ConfigBuilder
     {
         var routeRules = new JsonArray
         {
+            // Определяем протокол до маршрутизации - иначе доменные правила
+            // не сработают для соединений, пришедших по IP из TUN
             new JsonObject { ["action"] = "sniff" },
             new JsonObject { ["protocol"] = "dns", ["action"] = "hijack-dns" },
             new JsonObject { ["ip_is_private"] = true, ["outbound"] = DirectTag }
@@ -395,6 +399,7 @@ public static class ConfigBuilder
                 return null;
         }
 
+        // reject - действие правила: спецвыход block удалён из ядра
         if (rule.Action == RouteAction.Block)
             node["action"] = "reject";
         else
@@ -442,6 +447,8 @@ public static class ConfigBuilder
             ["tag"] = tag,
             ["format"] = "binary",
             ["url"] = url,
+            // Наборы качаются через туннель: raw.githubusercontent.com часто недоступен напрямую.
+            // Результат кладётся в cache_file, так что скачивание разовое.
             ["download_detour"] = ProxyTag,
             ["update_interval"] = "7d"
         });
@@ -472,6 +479,7 @@ public static class ConfigBuilder
             ["servers"] = new JsonArray
             {
                 RemoteDnsServer(s),
+                // type "local" берёт системные резолверы - работает и в отеле, и за корпоративным NAT
                 new JsonObject
                 {
                     ["tag"] = "dns-local",
@@ -579,6 +587,7 @@ public static class ConfigBuilder
                 break;
             }
             default:
+                // geoip и process_name на этапе резолва неприменимы
                 return null;
         }
 
