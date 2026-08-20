@@ -1,0 +1,105 @@
+name: release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия без префикса v'
+        required: true
+        default: '1.0.0'
+
+env:
+  SINGBOX_VERSION: '1.13.19'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Определить версию
+        id: version
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            $env:GITHUB_REF -replace 'refs/tags/v', ''
+          } else {
+            '${{ github.event.inputs.version }}'
+          }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Публикация приложения
+        run: >
+          dotnet publish CVPN/CVPN.csproj -c Release -r win-x64
+          --self-contained true
+          -p:Version=${{ steps.version.outputs.value }}
+          -o installer/payload
+
+      - name: Публикация службы
+        run: >
+          dotnet publish CVPN.Service/CVPN.Service.csproj -c Release -r win-x64
+          --self-contained true
+          -p:Version=${{ steps.version.outputs.value }}
+          -o installer/payload/service
+
+      - name: Загрузка sing-box
+        shell: pwsh
+        run: |
+          $url = "https://github.com/SagerNet/sing-box/releases/download/v$env:SINGBOX_VERSION/sing-box-$env:SINGBOX_VERSION-windows-amd64.zip"
+          Invoke-WebRequest -Uri $url -OutFile sing-box.zip
+          Expand-Archive sing-box.zip -DestinationPath sing-box -Force
+
+          $core = Get-ChildItem sing-box -Filter sing-box.exe -Recurse | Select-Object -First 1
+
+          foreach ($dir in @('installer/payload/core', 'installer/payload/service/core')) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            Copy-Item $core.FullName -Destination $dir
+          }
+
+          # GPL-3.0: текст лицензии обязан ехать вместе с бинарником
+          Get-ChildItem sing-box -Filter LICENSE -Recurse |
+            Select-Object -First 1 |
+            Copy-Item -Destination installer/payload/LICENSE.sing-box.txt
+
+      # На образе Windows Server 2022 Inno Setup был предустановлен, на Server 2025
+      # его убрали — а windows-latest указывает именно на 2025. Ставим сами.
+      - name: Установка Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Сборка установщика
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          )
+
+          $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) { throw "ISCC.exe не найден. Проверьте установку Inno Setup." }
+
+          & $iscc "/DAppVersion=${{ steps.version.outputs.value }}" installer\CVPN.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup вернул код $LASTEXITCODE" }
+
+      - name: Портативный архив
+        shell: pwsh
+        run: |
+          Compress-Archive -Path installer/payload/* `
+            -DestinationPath "dist/CVPN-${{ steps.version.outputs.value }}-portable.zip"
+
+      - name: Публикация релиза
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
