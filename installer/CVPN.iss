@@ -1,9 +1,6 @@
-; Установщик CVPN. Собирается Inno Setup 6: iscc installer\CVPN.iss
-; Предполагается, что publish уже выполнен и файлы лежат в installer\payload\
-
 #define AppName "CVPN"
 #define AppPublisher "CVPN"
-#define AppUrl "https://github.com/13CyberPunk02/CVPN"
+#define AppUrl "https://github.com/OWNER/CVPN"
 #define AppExe "CVPN.exe"
 #ifndef AppVersion
   #define AppVersion "1.0.0"
@@ -22,8 +19,6 @@ OutputBaseFilename=CVPN-{#AppVersion}-setup
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
-; Program Files обязателен: под SYSTEM запускается sing-box, и каталог
-; не должен быть доступен обычному пользователю на запись
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible
 ArchitecturesAllowed=x64compatible
@@ -45,8 +40,10 @@ Name: "app"; Description: "Приложение CVPN"; Types: full compact custo
 Name: "service"; Description: "Служба туннеля (TUN без запроса прав при каждом запуске)"; Types: full
 
 [Files]
-Source: "payload\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
-Source: "payload\service\*"; DestDir: "{app}\service"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: service
+Source: "payload\*"; DestDir: "{app}"; Excludes: "service\*"; \
+    Flags: ignoreversion recursesubdirs createallsubdirs; Components: app
+Source: "payload\service\*"; DestDir: "{app}\service"; \
+    Flags: ignoreversion recursesubdirs createallsubdirs; Components: service
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
@@ -62,7 +59,11 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
     Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
-; Служба ставится и стартует сразу — установщик уже работает с правами администратора
+#ifdef NeedsRuntime
+Filename: "{tmp}\windowsdesktop-runtime.exe"; Parameters: "/install /quiet /norestart"; \
+    StatusMsg: "Установка среды .NET…"; Check: not DesktopRuntimeInstalled; Flags: waituntilterminated
+#endif
+
 Filename: "{sys}\sc.exe"; Parameters: "create CVPNTunnel binPath= ""{app}\service\CVPN.Service.exe"" start= auto DisplayName= ""CVPN Tunnel"""; \
     Flags: runhidden; Components: service
 Filename: "{sys}\sc.exe"; Parameters: "description CVPNTunnel ""Туннель CVPN: запускает sing-box и поднимает TUN"""; \
@@ -72,7 +73,6 @@ Filename: "{sys}\sc.exe"; Parameters: "start CVPNTunnel"; Flags: runhidden; Comp
 Filename: "{app}\{#AppExe}"; Description: "Запустить {#AppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-; Порядок важен: сначала остановить, потом удалять файлы
 Filename: "{sys}\sc.exe"; Parameters: "stop CVPNTunnel"; Flags: runhidden; RunOnceId: "StopService"
 Filename: "{sys}\sc.exe"; Parameters: "delete CVPNTunnel"; Flags: runhidden; RunOnceId: "DeleteService"
 Filename: "{sys}\schtasks.exe"; Parameters: "/delete /tn ""CVPN Tunnel"" /f"; Flags: runhidden; RunOnceId: "DeleteTask"
@@ -81,8 +81,89 @@ Filename: "{sys}\schtasks.exe"; Parameters: "/delete /tn ""CVPN Tunnel"" /f"; Fl
 Type: filesandordirs; Name: "{commonappdata}\CVPN"
 
 [Code]
-{ Данные пользователя лежат в APPDATA и при удалении сохраняются:
-  профили и правила — не мусор, а результат работы. Спрашиваем явно. }
+var
+  DownloadPage: TDownloadWizardPage;
+
+function GetSubDirsFromDir(const Dir: string; var Names: TArrayOfString): Boolean;
+var
+  Rec: TFindRec;
+  Count: Integer;
+begin
+  Count := 0;
+  SetArrayLength(Names, 0);
+  Result := False;
+
+  if FindFirst(AddBackslash(Dir) + '*', Rec) then
+  try
+    repeat
+      if (Rec.Attributes and FILE_ATTRIBUTE_DIRECTORY <> 0)
+         and (Rec.Name <> '.') and (Rec.Name <> '..') then
+      begin
+        SetArrayLength(Names, Count + 1);
+        Names[Count] := Rec.Name;
+        Count := Count + 1;
+      end;
+    until not FindNext(Rec);
+
+    Result := Count > 0;
+  finally
+    FindClose(Rec);
+  end;
+end;
+
+function DesktopRuntimeInstalled: Boolean;
+var
+  Names: TArrayOfString;
+  Base: string;
+  I: Integer;
+begin
+  Result := False;
+  Base := ExpandConstant('{commonpf}\dotnet\shared\Microsoft.WindowsDesktop.App');
+
+  if not DirExists(Base) then Exit;
+
+  if GetSubDirsFromDir(Base, Names) then
+    for I := 0 to GetArrayLength(Names) - 1 do
+      if Pos('10.', Names[I]) = 1 then
+      begin
+        Result := True;
+        Exit;
+      end;
+end;
+
+procedure InitializeWizard;
+begin
+  DownloadPage := CreateDownloadPage(
+    SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), nil);
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+
+#ifdef NeedsRuntime
+  if (CurPageID = wpReady) and not DesktopRuntimeInstalled then
+  begin
+    DownloadPage.Clear;
+    DownloadPage.Add(
+      'https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe',
+      'windowsdesktop-runtime.exe', '');
+    DownloadPage.Show;
+
+    try
+      try
+        DownloadPage.Download;
+      except
+        SuppressibleMsgBox(AddPeriod(GetExceptionMessage), mbCriticalError, MB_OK, IDOK);
+        Result := False;
+      end;
+    finally
+      DownloadPage.Hide;
+    end;
+  end;
+#endif
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   DataDir: string;

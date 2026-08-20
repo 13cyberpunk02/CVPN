@@ -8,6 +8,9 @@
         <RootNamespace>CVPN.Service</RootNamespace>
         <AssemblyName>CVPN.Service</AssemblyName>
         <UserSecretsId>cvpn-tunnel-service</UserSecretsId>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     </PropertyGroup>
 
     <ItemGroup>

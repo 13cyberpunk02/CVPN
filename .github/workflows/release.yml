@@ -37,18 +37,18 @@ jobs:
             '${{ github.event.inputs.version }}'
           }
           "value=$version" >> $env:GITHUB_OUTPUT
-
+                
       - name: Публикация приложения
         run: >
           dotnet publish CVPN/CVPN.csproj -c Release -r win-x64
-          --self-contained true
+          --self-contained false
           -p:Version=${{ steps.version.outputs.value }}
           -o installer/payload
 
       - name: Публикация службы
         run: >
           dotnet publish CVPN.Service/CVPN.Service.csproj -c Release -r win-x64
-          --self-contained true
+          --self-contained false
           -p:Version=${{ steps.version.outputs.value }}
           -o installer/payload/service
 
@@ -61,10 +61,9 @@ jobs:
 
           $core = Get-ChildItem sing-box -Filter sing-box.exe -Recurse | Select-Object -First 1
 
-          foreach ($dir in @('installer/payload/core', 'installer/payload/service/core')) {
-            New-Item -ItemType Directory -Path $dir -Force | Out-Null
-            Copy-Item $core.FullName -Destination $dir
-          }
+          # Одна копия на обе программы: служба ищет ядро на уровень выше своей папки
+          New-Item -ItemType Directory -Path installer/payload/core -Force | Out-Null
+          Copy-Item $core.FullName -Destination installer/payload/core
 
           # GPL-3.0: текст лицензии обязан ехать вместе с бинарником
           Get-ChildItem sing-box -Filter LICENSE -Recurse |
@@ -86,13 +85,24 @@ jobs:
           $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (-not $iscc) { throw "ISCC.exe не найден. Проверьте установку Inno Setup." }
 
-          & $iscc "/DAppVersion=${{ steps.version.outputs.value }}" installer\CVPN.iss
+          & $iscc "/DAppVersion=${{ steps.version.outputs.value }}" /DNeedsRuntime installer\CVPN.iss
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup вернул код $LASTEXITCODE" }
 
-      - name: Портативный архив
+      - name: Портативная сборка
         shell: pwsh
         run: |
-          Compress-Archive -Path installer/payload/* `
+          $out = "portable"
+
+          dotnet publish CVPN/CVPN.csproj -c Release -r win-x64 --self-contained true `
+            -p:Version=${{ steps.version.outputs.value }} -o $out
+          dotnet publish CVPN.Service/CVPN.Service.csproj -c Release -r win-x64 --self-contained true `
+            -p:Version=${{ steps.version.outputs.value }} -o "$out/service"
+
+          Copy-Item installer/payload/core -Destination $out -Recurse
+          Copy-Item installer/payload/LICENSE.sing-box.txt -Destination $out
+
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Compress-Archive -Path "$out/*" `
             -DestinationPath "dist/CVPN-${{ steps.version.outputs.value }}-portable.zip"
 
       - name: Публикация релиза

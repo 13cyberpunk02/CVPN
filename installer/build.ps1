@@ -1,33 +1,27 @@
-<#
-  Локальная сборка релиза. Делает то же, что и CI, чтобы установщик
-  можно было проверить до пуша тега.
-
-  Пример:  .\installer\build.ps1 -Version 1.0.0 -SingBoxVersion 1.13.19
-#>
 param(
     [string]$Version = "1.0.0",
-    [string]$SingBoxVersion = "1.13.19"
+    [string]$SingBoxVersion = "1.13.19",
+    [switch]$SelfContained
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $payload = Join-Path $PSScriptRoot "payload"
+$mode = if ($SelfContained) { "true" } else { "false" }
 
 Write-Host "== Очистка ==" -ForegroundColor Cyan
 if (Test-Path $payload) { Remove-Item $payload -Recurse -Force }
 New-Item -ItemType Directory -Path $payload | Out-Null
 
-Write-Host "== Публикация приложения ==" -ForegroundColor Cyan
-# self-contained: пользователю не нужно ставить .NET отдельно
+Write-Host "== Публикация приложения (self-contained: $mode) ==" -ForegroundColor Cyan
 dotnet publish "$root\CVPN\CVPN.csproj" -c Release -r win-x64 `
-    --self-contained true `
-    -p:PublishSingleFile=false `
+    --self-contained $mode `
     -p:Version=$Version `
     -o $payload
 
 Write-Host "== Публикация службы ==" -ForegroundColor Cyan
 dotnet publish "$root\CVPN.Service\CVPN.Service.csproj" -c Release -r win-x64 `
-    --self-contained true `
+    --self-contained $mode `
     -p:Version=$Version `
     -o "$payload\service"
 
@@ -42,24 +36,20 @@ Expand-Archive -Path $archive -DestinationPath $extract -Force
 
 $core = Get-ChildItem -Path $extract -Filter "sing-box.exe" -Recurse | Select-Object -First 1
 
-# Две копии ядра: одна для запуска из приложения, вторая для службы.
-# У службы своя, потому что она исполняется под SYSTEM и каталог
-# не должен быть доступен обычному пользователю на запись.
-foreach ($dir in @("$payload\core", "$payload\service\core")) {
-    New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    Copy-Item $core.FullName -Destination $dir
-}
+New-Item -ItemType Directory -Path "$payload\core" -Force | Out-Null
+Copy-Item $core.FullName -Destination "$payload\core"
 
-# GPL требует передавать текст лицензии вместе с бинарником
 Get-ChildItem -Path $extract -Filter "LICENSE" -Recurse |
     Select-Object -First 1 |
     Copy-Item -Destination "$payload\LICENSE.sing-box.txt"
 
+$size = "{0:N0}" -f ((Get-ChildItem $payload -Recurse | Measure-Object Length -Sum).Sum / 1MB)
+Write-Host "Размер payload: $size МБ" -ForegroundColor Yellow
+
 Write-Host "== Сборка установщика ==" -ForegroundColor Cyan
-# Inno Setup ставится и в Program Files, и в Program Files (x86) — ищем в обоих
 $candidates = @(
-    "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-    "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+    "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe",
+    "$env:ProgramFiles\Inno Setup 7\ISCC.exe"
 )
 
 $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
@@ -67,6 +57,10 @@ if (-not $iscc) {
     throw "Не найден ISCC.exe. Установите Inno Setup 6: https://jrsoftware.org/isdl.php"
 }
 
-& $iscc "/DAppVersion=$Version" "$PSScriptRoot\CVPN.iss"
+$defines = @("/DAppVersion=$Version")
+if (-not $SelfContained) { $defines += "/DNeedsRuntime" }
+
+& $iscc @defines "$PSScriptRoot\CVPN.iss"
+if ($LASTEXITCODE -ne 0) { throw "Inno Setup вернул код $LASTEXITCODE" }
 
 Write-Host "Готово: dist\CVPN-$Version-setup.exe" -ForegroundColor Green

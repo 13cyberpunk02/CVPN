@@ -11,6 +11,7 @@
         <AssemblyName>CVPN</AssemblyName>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Assets\cvpn.ico</ApplicationIcon>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     </PropertyGroup>
 
     <ItemGroup>
