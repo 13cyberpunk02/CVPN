@@ -430,7 +430,7 @@ outbound/direct[direct]: outbound connection to 87.240.185.168:443
 ## Сборка из исходников
 
 ```bash
-git clone https://github.com/OWNER/CVPN.git
+git clone https://github.com/13CyberPunk02/CVPN.git
 cd CVPN
 dotnet restore
 dotnet build -c Release
