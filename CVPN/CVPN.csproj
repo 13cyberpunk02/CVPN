@@ -20,10 +20,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <!-- UseWindowsForms добавляет эти пространства имён в глобальные using на весь
-             проект, из-за чего UserControl, Application и подобные типы становятся
-             неоднозначными с WPF. WinForms нужен ровно в одном файле — TrayIcon.cs,
-             где он подключается явно. -->
         <Using Remove="System.Windows.Forms" />
         <Using Remove="System.Drawing" />
     </ItemGroup>
