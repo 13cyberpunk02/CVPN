@@ -23,6 +23,7 @@
 
     <ItemGroup>
         <Compile Include="..\CVPN\Ipc\IpcContract.cs" Link="IpcContract.cs" />
+        <Compile Include="..\CVPN\Core\ConsoleSignal.cs" Link="ConsoleSignal.cs" />
     </ItemGroup>
 
 </Project>

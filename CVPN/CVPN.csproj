@@ -16,7 +16,6 @@
 
     <ItemGroup>
       <PackageReference Include="QRCoder" Version="1.8.0" />
-      <PackageReference Include="SolimusWrapper" Version="1.0.2" />
     </ItemGroup>
 
     <ItemGroup>

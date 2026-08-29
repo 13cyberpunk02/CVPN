@@ -2,22 +2,23 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using CVPN.Core;
-using SolimusWrapper.Core;
 
 namespace CVPN.Services;
 
 /// <summary>
 /// Запускает и останавливает ядро sing-box, отдавая его вывод построчно.
 ///
-/// Разовые команды (version, check) идут через SolimusWrapper, а долгоживущий
-/// процесс ядра запускается напрямую: обёртка снимает его принудительно,
-/// из-за чего в системе остаётся TUN-интерфейс.
+/// Процесс ведётся напрямую через System.Diagnostics.Process: нужен контроль
+/// над завершением, иначе sing-box не успевает снять TUN-интерфейс.
 /// </summary>
-public sealed class SingBoxService(string corePath) : IAsyncDisposable
+public sealed class SingBoxService : IAsyncDisposable
 {
+    private readonly string _corePath;
     private Process? _process;
     private bool _stopping;
-
+ 
+    public SingBoxService(string corePath) => _corePath = corePath;
+ 
     /// <summary>Строка лога от ядра. Приходит из фонового потока - маршалить в UI самостоятельно.</summary>
     public event Action<string>? LineReceived;
  
@@ -26,56 +27,80 @@ public sealed class SingBoxService(string corePath) : IAsyncDisposable
  
     public bool IsRunning => _process is { HasExited: false };
  
+    /// <summary>Разовая команда: запускает ядро, собирает вывод, возвращает код возврата.</summary>
+    private async Task<(int Code, string Output)> RunAsync(
+        TimeSpan timeout, CancellationToken ct, params string[] arguments)
+    {
+        var info = new ProcessStartInfo
+        {
+            FileName = _corePath,
+            WorkingDirectory = Path.GetDirectoryName(_corePath) ?? Environment.CurrentDirectory,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+ 
+        foreach (var argument in arguments) info.ArgumentList.Add(argument);
+ 
+        using var process = Process.Start(info)
+                            ?? throw new InvalidOperationException("Не удалось запустить ядро");
+ 
+        // Оба потока читаются параллельно: последовательное чтение способно
+        // заблокироваться, если один из буферов заполнится
+        var stdout = process.StandardOutput.ReadToEndAsync(ct);
+        var stderr = process.StandardError.ReadToEndAsync(ct);
+ 
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(timeout);
+ 
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(entireProcessTree: true); } catch { /* уже завершился */ }
+            throw new TimeoutException($"Ядро не ответило за {timeout.TotalSeconds:0} с");
+        }
+ 
+        var text = new StringBuilder()
+            .AppendLine(await stdout)
+            .AppendLine(await stderr)
+            .ToString()
+            .Trim();
+ 
+        return (process.ExitCode, text);
+    }
+ 
     public async Task<string> GetVersionAsync(CancellationToken ct = default)
     {
-        var output = new StringBuilder();
+        var (_, output) = await RunAsync(TimeSpan.FromSeconds(5), ct, "version");
  
-        await Command.Run(corePath)
-            .WithArguments("version")
-            .WithStandardOutputPipe(PipeTarget.ToDelegate(line => output.AppendLine(line)))
-            .WithTimeout(TimeSpan.FromSeconds(5))
-            .ExecuteAsync(ct);
- 
-        var first = output.ToString()
-            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        var first = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .FirstOrDefault();
  
         return first ?? "sing-box";
     }
  
     /// <summary>
-    /// Проверяет конфиг до запуска. Ядро пишет причину отказа в stderr, а обёртка
-    /// бросает исключение на ненулевом коде - поэтому оба потока собираются вручную,
-    /// и текст возвращается даже когда команда упала.
+    /// Проверяет конфиг до запуска. Причину отказа ядро пишет в stderr, поэтому
+    /// собираются оба потока, а текст возвращается даже при ненулевом коде.
     /// </summary>
     public async Task<(bool Ok, string Message)> CheckConfigAsync(string configPath, CancellationToken ct = default)
     {
-        var output = new StringBuilder();
- 
-        void Capture(string line)
-        {
-            if (!string.IsNullOrWhiteSpace(line)) output.AppendLine(line.Trim());
-        }
- 
         try
         {
-            var result = await Command.Run(corePath)
-                .WithArguments("check", "-c", configPath)
-                .WithStandardOutputPipe(PipeTarget.ToDelegate(Capture))
-                .WithStandardErrorPipe(PipeTarget.ToDelegate(Capture))
-                .WithTimeout(TimeSpan.FromSeconds(15))
-                .ExecuteAsync(ct);
+            var (code, output) = await RunAsync(TimeSpan.FromSeconds(15), ct, "check", "-c", configPath);
  
-            var text = output.ToString().Trim();
+            if (code == 0)
+                return (true, output.Length == 0 ? "Конфигурация корректна" : output);
  
-            return result.ExitCode == 0
-                ? (true, text.Length == 0 ? "Конфигурация корректна" : text)
-                : (false, text.Length == 0 ? $"Ядро вернуло код {result.ExitCode}" : text);
+            return (false, output.Length == 0 ? $"Ядро вернуло код {code}" : output);
         }
         catch (Exception ex)
         {
-            var text = output.ToString().Trim();
-            return (false, text.Length > 0 ? text : ex.Message);
+            return (false, ex.Message);
         }
     }
  
@@ -90,8 +115,8 @@ public sealed class SingBoxService(string corePath) : IAsyncDisposable
  
         var info = new ProcessStartInfo
         {
-            FileName = corePath,
-            WorkingDirectory = Path.GetDirectoryName(corePath) ?? Environment.CurrentDirectory,
+            FileName = _corePath,
+            WorkingDirectory = Path.GetDirectoryName(_corePath) ?? Environment.CurrentDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
@@ -146,11 +171,8 @@ public sealed class SingBoxService(string corePath) : IAsyncDisposable
         {
             if (process.HasExited) return;
  
-            // Сначала мягко: по Ctrl+Break ядро снимает TUN-интерфейс само
-            if (ConsoleSignal.TryBreak(process.Id))
-            {
-                if (await WaitAsync(process, TimeSpan.FromSeconds(4))) return;
-            }
+            // Сначала мягко: по Ctrl+C ядро снимает TUN-интерфейс само
+            if (ConsoleSignal.TryGracefulStop(process, TimeSpan.FromSeconds(5))) return;
  
             LineReceived?.Invoke("[cvpn] ядро не ответило на сигнал, завершаем принудительно");
             process.Kill(entireProcessTree: true);
