@@ -7,7 +7,7 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
 
-    <Grid Margin="28,22,28,24">
+  <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -16,12 +16,17 @@
         <Grid Grid.Row="0">
             <StackPanel>
                 <TextBlock Text="Логи" Style="{StaticResource T.Title}" />
-                <TextBlock Text="Живой вывод ядра sing-box" Style="{StaticResource T.Secondary}" Margin="0,4,0,0" />
+                <TextBlock Text="Живой вывод ядра. Полная история пишется в файл — кнопка «Папка логов»."
+                           Style="{StaticResource T.Secondary}" Margin="0,4,0,0" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding Status}" Style="{StaticResource T.Caption}" Margin="0,6,0,0"
                            Foreground="{StaticResource Warning}" TextWrapping="Wrap" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                <Button Content="Копировать" Style="{StaticResource Btn.Base}" Command="{Binding CopyLog}" />
+                <Button Content="Папка логов" Style="{StaticResource Btn.Ghost}"
+                        ToolTip="Файлы за последние 7 дней — их удобно приложить к сообщению об ошибке"
+                        Command="{Binding OpenLogFolder}" />
+                <Button Content="Копировать" Style="{StaticResource Btn.Base}" Margin="8,0,0,0"
+                        Command="{Binding CopyLog}" />
                 <Button Content="Очистить" Style="{StaticResource Btn.Ghost}" Margin="8,0,0,0"
                         Command="{Binding ClearLog}" />
             </StackPanel>
