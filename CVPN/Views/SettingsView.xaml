@@ -7,7 +7,7 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
 
-    <Grid Margin="28,22,28,24">
+      <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -60,6 +60,28 @@
                             <TextBox Style="{StaticResource Input}" Text="{Binding Settings.MixedPort, UpdateSourceTrigger=PropertyChanged}" Width="96"
                                      HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Запрещать трафик мимо туннеля" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="Kill switch: при обрыве соединения интернет не уйдёт в обход. Требует прав администратора."
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                           MaxWidth="380" HorizontalAlignment="Left" />
+                                <TextBlock Text="Если приложение завершится аварийно, правила снимутся при следующем запуске. Кнопка ниже — на случай, когда интернет нужен прямо сейчас."
+                                           Style="{StaticResource T.Caption}" Margin="0,5,0,0" TextWrapping="Wrap"
+                                           MaxWidth="380" HorizontalAlignment="Left"
+                                           Foreground="{StaticResource Warning}" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.KillSwitch}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,0,0" />
+                        </Grid>
+
+                        <Button Content="Восстановить сеть" Style="{StaticResource Btn.Base}"
+                                HorizontalAlignment="Left" Margin="0,12,0,0"
+                                ToolTip="Снимает правила брандмауэра, если интернет пропал вместе с туннелем"
+                                Command="{Binding RestoreNetwork}" />
 
                         <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
 

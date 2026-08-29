@@ -10,7 +10,7 @@ namespace CVPN;
 /// </summary>
 public partial class App : Application
 {
-    protected override void OnStartup(StartupEventArgs e)
+     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
  
@@ -18,6 +18,10 @@ public partial class App : Application
  
         var version = Assembly.GetExecutingAssembly().GetName().Version;
         FileLog.Current.Write($"=== запуск CVPN {version} · {Environment.ProcessPath}");
+ 
+        // Если прошлый запуск завершился аварийно с включённым kill switch,
+        // система осталась без интернета. Чиним до всего остального.
+        _ = RestoreNetworkAsync();
  
         // Исключение в UI-потоке: приложение можно оставить живым
         DispatcherUnhandledException += OnDispatcherException;
@@ -55,6 +59,19 @@ public partial class App : Application
         e.Handled = answer == MessageBoxResult.Yes;
  
         if (!e.Handled) Shutdown(1);
+    }
+ 
+    private static async Task RestoreNetworkAsync()
+    {
+        if (!KillSwitch.IsActive) return;
+ 
+        FileLog.Current.Write("[cvpn] обнаружены правила kill switch от прошлого запуска, снимаем");
+ 
+        var problem = await KillSwitch.DisableAsync();
+ 
+        FileLog.Current.Write(problem.Length > 0
+            ? $"[cvpn] снять правила не удалось: {problem}"
+            : "[cvpn] правила сняты, сеть восстановлена");
     }
  
     private static void Record(string title, Exception? exception)

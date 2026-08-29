@@ -92,6 +92,7 @@ public sealed class MainViewModel : ObservableObject
         ClearLog = new RelayCommand(Log.Clear, () => Log.Count > 0);
         CopyLog = new RelayCommand(CopyLogToClipboard, () => Log.Count > 0);
         OpenLogFolder = new RelayCommand(ShowLogFolder);
+        RestoreNetwork = new RelayCommand(async () => await RestoreNetworkAsync());
         CheckConfig = new RelayCommand(async () => await CheckAsync());
  
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -174,6 +175,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand ClearLog { get; }
     public ICommand CopyLog { get; }
     public ICommand OpenLogFolder { get; }
+    public ICommand RestoreNetwork { get; }
     public ICommand CheckConfig { get; }
  
     // ===================== состояние =====================
@@ -341,7 +343,7 @@ public sealed class MainViewModel : ObservableObject
         {
             Append("[cvpn] запуск через службу CVPN Tunnel");
  
-            var response = await ServiceClient.StartAsync(File.ReadAllText(configPath));
+            var response = await ServiceClient.StartAsync(await File.ReadAllTextAsync(configPath));
  
             if (response?.Ok != true)
             {
@@ -389,6 +391,21 @@ public sealed class MainViewModel : ObservableObject
         _stats.TrafficReceived += OnTraffic;
         _stats.Start();
  
+        if (Settings.KillSwitch)
+        {
+            var problem = await KillSwitch.EnableAsync(Settings.CorePath);
+ 
+            if (problem.Length > 0)
+            {
+                Append($"[cvpn] {problem}");
+                Status = problem;
+            }
+            else
+            {
+                Append("[cvpn] kill switch включён: трафик мимо туннеля запрещён");
+            }
+        }
+ 
         _adapterErrorSeen = false;
         _connectedAt = DateTime.Now;
         _uptimeTimer.Start();
@@ -428,6 +445,14 @@ public sealed class MainViewModel : ObservableObject
  
     private async Task TeardownAsync()
     {
+        if (KillSwitch.IsActive)
+        {
+            var problem = await KillSwitch.DisableAsync();
+            Append(problem.Length > 0
+                ? $"[cvpn] не удалось снять kill switch: {problem}"
+                : "[cvpn] kill switch снят");
+        }
+ 
         StopWatchingConnections();
         Connections.Clear();
         _sessionTun = null;
@@ -1240,6 +1265,21 @@ public sealed class MainViewModel : ObservableObject
         {
             Owner = Application.Current?.MainWindow
         }.ShowDialog();
+    }
+ 
+    /// <summary>
+    /// Аварийная кнопка: снимает правила брандмауэра, если что-то пошло не так
+    /// и интернет пропал вместе с туннелем.
+    /// </summary>
+    private async Task RestoreNetworkAsync()
+    {
+        var problem = await KillSwitch.DisableAsync();
+ 
+        Status = problem.Length > 0
+            ? $"Не удалось снять правила: {problem}"
+            : "Правила брандмауэра сняты, сеть восстановлена";
+ 
+        Append($"[cvpn] {Status.ToLowerInvariant()}");
     }
  
     /// <summary>Открывает папку с логами - то, что просят приложить к issue.</summary>

@@ -18,6 +18,7 @@ public sealed class AppSettings : ObservableObject
     private string _subscriptionUrl = "";
     private bool _autoSelectFastest;
     private bool _useService = true;
+    private bool _killSwitch;
  
     /// <summary>Полный путь к sing-box.exe.</summary>
     public string CorePath { get => _corePath; set => Set(ref _corePath, value); }
@@ -74,4 +75,11 @@ public sealed class AppSettings : ObservableObject
     /// без запроса прав администратора при каждом запуске.
     /// </summary>
     public bool UseService { get => _useService; set => Set(ref _useService, value); }
+ 
+    /// <summary>
+    /// Запрещать трафик мимо туннеля. Защищает от утечки при обрыве, но при
+    /// сбое приложения может оставить систему без интернета - снимается
+    /// автоматически при следующем запуске.
+    /// </summary>
+    public bool KillSwitch { get => _killSwitch; set => Set(ref _killSwitch, value); }
 }
