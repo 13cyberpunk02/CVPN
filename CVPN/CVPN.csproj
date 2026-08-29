@@ -19,6 +19,27 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\CVPN.Service\CVPN.Service.csproj"
+                          ReferenceOutputAssembly="false"
+                          Private="false" />
+    </ItemGroup>
+
+    <Target Name="CopyServiceOutput" AfterTargets="Build">
+        <ItemGroup>
+            <ServiceFiles Include="..\CVPN.Service\bin\$(Configuration)\$(TargetFramework)\**\*"
+                          Exclude="..\CVPN.Service\bin\$(Configuration)\$(TargetFramework)\**\*.pdb" />
+        </ItemGroup>
+
+        <Copy SourceFiles="@(ServiceFiles)"
+              DestinationFolder="$(OutDir)service\%(RecursiveDir)"
+              SkipUnchangedFiles="true"
+              Condition="'@(ServiceFiles)' != ''" />
+
+        <Message Importance="normal"
+                 Text="Служба скопирована в $(OutDir)service (файлов: @(ServiceFiles->Count()))" />
+    </Target>
+
+    <ItemGroup>
         <Using Remove="System.Windows.Forms" />
         <Using Remove="System.Drawing" />
     </ItemGroup>

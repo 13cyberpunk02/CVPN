@@ -99,6 +99,7 @@ public sealed class MainViewModel : ObservableObject
             if (e.PropertyName == nameof(AppSettings.AutoStart)) AutoStart.Apply(Settings.AutoStart);
         };
  
+        StampBuild();
         _ = DetectCoreAsync();
         _ = RefreshServiceStatusAsync();
         RefreshTaskStatus();
@@ -770,6 +771,7 @@ public sealed class MainViewModel : ObservableObject
             if (e.PropertyName == nameof(AppSettings.AutoStart)) AutoStart.Apply(Settings.AutoStart);
         };
  
+        StampBuild();
         _ = DetectCoreAsync();
         _ = RefreshServiceStatusAsync();
         RefreshTaskStatus();
@@ -927,6 +929,7 @@ public sealed class MainViewModel : ObservableObject
  
             foreach (var profile in fetched) Profiles.Add(profile);
  
+            // Возвращаем выбор на сервер с тем же именем, если он ещё есть
             Active = Profiles.FirstOrDefault(p => p.Name == activeName) ?? Profiles.FirstOrDefault();
  
             Status = $"Из подписки загружено серверов: {fetched.Count}";
@@ -1011,13 +1014,38 @@ public sealed class MainViewModel : ObservableObject
             ? "служба установлена и отвечает"
             : ServiceInstaller.IsInstalledOnDisk
                 ? "служба не установлена - нажмите «Установить службу»"
-                : "файлы службы не найдены: соберите проект CVPN.Service";
+                : $"файлы службы не найдены: {ServiceInstaller.ExecutablePath}";
     }
  
-    private void RefreshTaskStatus() =>
-        TaskStatus = ElevatedTask.Exists
+    /// <summary>
+    /// Версия и путь к запущенному файлу - первое, что нужно знать при разборе
+    /// «правка не подействовала»: часто работает не та сборка, которую собрали.
+    /// </summary>
+    private void StampBuild()
+    {
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+ 
+        Append($"[cvpn] сборка {version} · {Environment.ProcessPath}");
+ 
+        if (ElevatedTask.Exists && !ElevatedTask.PathMatchesCurrent())
+        {
+            Append($"[cvpn] внимание: задача планировщика запускает другой файл - {ElevatedTask.RegisteredPath()}");
+            Append("[cvpn] пересоздайте задачу в настройках, иначе изменения не применятся");
+        }
+    }
+ 
+    private void RefreshTaskStatus()
+    {
+        if (!ElevatedTask.Exists)
+        {
+            TaskStatus = "задача не создана - при включении TUN появится окно UAC";
+            return;
+        }
+ 
+        TaskStatus = ElevatedTask.PathMatchesCurrent()
             ? "задача создана - права выдаются без запроса"
-            : "задача не создана - при включении TUN появится окно UAC";
+            : "задача указывает на другой файл - пересоздайте её";
+    }
  
     private void InstallElevatedTask()
     {
