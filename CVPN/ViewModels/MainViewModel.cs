@@ -25,6 +25,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _adapterErrorSeen;
     private bool _adapterRetryUsed;
     private DispatcherTimer? _serviceLogTimer;
+    private DispatcherTimer? _connectionsTimer;
     private bool _busy;
     private RoutingProfile _routing;
     private ClashApiClient? _stats;
@@ -78,6 +79,9 @@ public sealed class MainViewModel : ObservableObject
         RemoveRouting = new RelayCommand(RemoveRoutingProfile, () => RoutingProfiles.Count > 1);
         ExportProfile = new RelayCommand(p => { if (p is ServerProfile sp) ShowExport(sp); });
         ExportAll = new RelayCommand(ShowExportAll, () => Profiles.Count > 0);
+        RuleDirect = new RelayCommand(p => { if (p is ConnectionInfo c) AddRuleFor(c, RouteAction.Direct); });
+        RuleBlock = new RelayCommand(p => { if (p is ConnectionInfo c) AddRuleFor(c, RouteAction.Block); });
+        CloseConnection = new RelayCommand(p => { if (p is ConnectionInfo c) _ = CloseAsync(c); });
         InstallService = new RelayCommand(InstallTunnelService);
         UninstallService = new RelayCommand(UninstallTunnelService);
         InstallTask = new RelayCommand(InstallElevatedTask);
@@ -137,6 +141,9 @@ public sealed class MainViewModel : ObservableObject
         }
     }
     public ObservableCollection<string> Log { get; } = [];
+ 
+    /// <summary>Живые соединения. Обновляются, пока открыта страница «Соединения».</summary>
+    public ObservableCollection<ConnectionInfo> Connections { get; } = [];
     public AppSettings Settings { get; }
  
     public ICommand ToggleConnection { get; }
@@ -152,6 +159,9 @@ public sealed class MainViewModel : ObservableObject
     public ICommand RemoveRouting { get; }
     public ICommand ExportProfile { get; }
     public ICommand ExportAll { get; }
+    public ICommand RuleDirect { get; }
+    public ICommand RuleBlock { get; }
+    public ICommand CloseConnection { get; }
     public ICommand InstallService { get; }
     public ICommand UninstallService { get; }
     public ICommand InstallTask { get; }
@@ -189,7 +199,7 @@ public sealed class MainViewModel : ObservableObject
  
     // ===================== режим сессии =====================
  
-    /// <summary>Режим запущенной сессии; если ядро не работает - то, что выбрано в настройках.</summary>
+    /// <summary>Режим запущенной сессии; если ядро не работает — то, что выбрано в настройках.</summary>
     private bool EffectiveTun => _sessionTun ?? Settings.TunEnabled;
  
     public string ModeTitle => EffectiveTun
@@ -200,7 +210,7 @@ public sealed class MainViewModel : ObservableObject
         ? "весь трафик системы"
         : $"127.0.0.1:{Settings.MixedPort}";
  
-    /// <summary>Режим активен только при живом туннеле - иначе это просто настройка.</summary>
+    /// <summary>Режим активен только при живом туннеле — иначе это просто настройка.</summary>
     public bool ModeActive => _sessionTun is not null;
  
     /// <summary>Настройку поменяли на ходу: к текущей сессии она не относится.</summary>
@@ -264,7 +274,7 @@ public sealed class MainViewModel : ObservableObject
  
     private async Task ToggleAsync()
     {
-        // Ручное нажатие - новая попытка: прошлый неудачный запуск не должен
+        // Ручное нажатие — новая попытка: прошлый неудачный запуск не должен
         // блокировать автоповтор навсегда
         _adapterRetryUsed = false;
  
@@ -295,11 +305,11 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
  
-        // TUN не поднимется без прав администратора. Раньше здесь была просто ошибка -
+        // TUN не поднимется без прав администратора. Раньше здесь была просто ошибка —
         // теперь предлагаем повышение, потому что иначе перехватывать трафик нечем.
         _viaService = Settings.UseService && await ServiceClient.IsAvailableAsync();
  
-        // Служба сама работает под LocalSystem - прав у приложения не требуется
+        // Служба сама работает под LocalSystem — прав у приложения не требуется
         if (Settings.TunEnabled && !_viaService && !Elevation.IsElevated && !RequestElevation()) return;
  
         State = TunnelState.Connecting;
@@ -318,7 +328,7 @@ public sealed class MainViewModel : ObservableObject
  
         ExplainRouting();
  
-        // Зависший адаптер от прошлого сеанса - самая частая причина отказа TUN
+        // Зависший адаптер от прошлого сеанса — самая частая причина отказа TUN
         if (Settings.TunEnabled && !_viaService)
         {
             var cleaned = await TunAdapterCleaner.RemoveStaleAsync();
@@ -416,6 +426,8 @@ public sealed class MainViewModel : ObservableObject
  
     private async Task TeardownAsync()
     {
+        StopWatchingConnections();
+        Connections.Clear();
         _sessionTun = null;
         RaiseMode();
  
@@ -485,7 +497,7 @@ public sealed class MainViewModel : ObservableObject
     /// </summary>
     private bool RequestElevation()
     {
-        // Задача планировщика уже несёт нужные права - окно UAC не понадобится
+        // Задача планировщика уже несёт нужные права — окно UAC не понадобится
         if (ElevatedTask.Exists)
         {
             if (ElevatedTask.Launch(out var launchError))
@@ -501,7 +513,7 @@ public sealed class MainViewModel : ObservableObject
         var answer = MessageBox.Show(
             "Режим TUN перехватывает весь системный трафик и требует прав администратора.\n\n" +
             "Перезапустить CVPN с повышением прав?\n\n" +
-            "Если отказаться, можно выключить TUN в настройках - тогда трафик пойдёт " +
+            "Если отказаться, можно выключить TUN в настройках — тогда трафик пойдёт " +
             "через системный прокси, но только для приложений, которые его учитывают.",
             "CVPN", MessageBoxButton.YesNo, MessageBoxImage.Question);
  
@@ -565,7 +577,7 @@ public sealed class MainViewModel : ObservableObject
         Append($"[cvpn] ядро остановлено, код {exitCode}");
     });
  
-    /// <summary>Задержку меряет само ядро через Clash API - свой пинг мимо туннеля бессмыслен.</summary>
+    /// <summary>Задержку меряет само ядро через Clash API — свой пинг мимо туннеля бессмыслен.</summary>
     private async Task MeasureAsync()
     {
         if (_stats is null || Active is null) return;
@@ -615,7 +627,7 @@ public sealed class MainViewModel : ObservableObject
         (Download, DownloadUnit) = FormatRate(down);
     });
  
-    /// <summary>Килобайты до мегабайта, дальше мегабайты - иначе на медленном канале одни нули.</summary>
+    /// <summary>Килобайты до мегабайта, дальше мегабайты — иначе на медленном канале одни нули.</summary>
     private static (string Value, string Unit) FormatRate(long bytesPerSecond)
     {
         const double kb = 1024;
@@ -696,7 +708,7 @@ public sealed class MainViewModel : ObservableObject
         Persist();
     }
  
-    /// <summary>Открывает сгенерированный config.json - удобно сверить с рабочим вручную.</summary>
+    /// <summary>Открывает сгенерированный config.json — удобно сверить с рабочим вручную.</summary>
     private void ShowGeneratedConfig()
     {
         try
@@ -780,7 +792,7 @@ public sealed class MainViewModel : ObservableObject
     }
  
     /// <summary>
-    /// Буфер обмена - общесистемный ресурс: пока его держит другой процесс,
+    /// Буфер обмена — общесистемный ресурс: пока его держит другой процесс,
     /// запись падает с COMException. Перегрузки с повторами у WPF нет
     /// (она только в System.Windows.Forms.Clipboard), поэтому цикл здесь свой.
     /// </summary>
@@ -942,7 +954,7 @@ public sealed class MainViewModel : ObservableObject
         }
     }
  
-    /// <summary>Автоподключение при старте - вызывается окном после загрузки.</summary>
+    /// <summary>Автоподключение при старте — вызывается окном после загрузки.</summary>
     public async Task StartupAsync()
     {
         if (!Settings.AutoConnect || Active is null) return;
@@ -952,7 +964,7 @@ public sealed class MainViewModel : ObservableObject
     }
  
     /// <summary>
-    /// Смена сервера. При живом туннеле идёт через селектор Clash API -
+    /// Смена сервера. При живом туннеле идёт через селектор Clash API —
     /// ядро не перезапускается, существующие соединения не рвутся.
     /// Перегенерировать конфиг нужно только чтобы выбор пережил перезапуск.
     /// </summary>
@@ -1013,12 +1025,12 @@ public sealed class MainViewModel : ObservableObject
         ServiceStatus = await ServiceClient.IsAvailableAsync()
             ? "служба установлена и отвечает"
             : ServiceInstaller.IsInstalledOnDisk
-                ? "служба не установлена - нажмите «Установить службу»"
+                ? "служба не установлена — нажмите «Установить службу»"
                 : $"файлы службы не найдены: {ServiceInstaller.ExecutablePath}";
     }
  
     /// <summary>
-    /// Версия и путь к запущенному файлу - первое, что нужно знать при разборе
+    /// Версия и путь к запущенному файлу — первое, что нужно знать при разборе
     /// «правка не подействовала»: часто работает не та сборка, которую собрали.
     /// </summary>
     private void StampBuild()
@@ -1029,7 +1041,7 @@ public sealed class MainViewModel : ObservableObject
  
         if (ElevatedTask.Exists && !ElevatedTask.PathMatchesCurrent())
         {
-            Append($"[cvpn] внимание: задача планировщика запускает другой файл - {ElevatedTask.RegisteredPath()}");
+            Append($"[cvpn] внимание: задача планировщика запускает другой файл — {ElevatedTask.RegisteredPath()}");
             Append("[cvpn] пересоздайте задачу в настройках, иначе изменения не применятся");
         }
     }
@@ -1038,13 +1050,13 @@ public sealed class MainViewModel : ObservableObject
     {
         if (!ElevatedTask.Exists)
         {
-            TaskStatus = "задача не создана - при включении TUN появится окно UAC";
+            TaskStatus = "задача не создана — при включении TUN появится окно UAC";
             return;
         }
  
         TaskStatus = ElevatedTask.PathMatchesCurrent()
-            ? "задача создана - права выдаются без запроса"
-            : "задача указывает на другой файл - пересоздайте её";
+            ? "задача создана — права выдаются без запроса"
+            : "задача указывает на другой файл — пересоздайте её";
     }
  
     private void InstallElevatedTask()
@@ -1085,6 +1097,79 @@ public sealed class MainViewModel : ObservableObject
  
         Append($"[cvpn] {Status.ToLowerInvariant()}");
         _ = RefreshServiceStatusAsync();
+    }
+ 
+    // ===================== соединения =====================
+ 
+    /// <summary>
+    /// Опрос запускается при открытии страницы и останавливается при уходе:
+    /// держать его постоянно незачем, а секунда — предел, за которым список
+    /// уже не воспринимается как живой.
+    /// </summary>
+    public void StartWatchingConnections()
+    {
+        if (_connectionsTimer is not null) return;
+ 
+        _connectionsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _connectionsTimer.Tick += async (_, _) => await RefreshConnectionsAsync();
+        _connectionsTimer.Start();
+ 
+        _ = RefreshConnectionsAsync();
+    }
+ 
+    public void StopWatchingConnections()
+    {
+        _connectionsTimer?.Stop();
+        _connectionsTimer = null;
+    }
+ 
+    private async Task RefreshConnectionsAsync()
+    {
+        if (_stats is null || !IsConnected)
+        {
+            if (Connections.Count > 0) Connections.Clear();
+            return;
+        }
+ 
+        var fresh = await _stats.GetConnectionsAsync();
+ 
+        // Список перерисовывается целиком: соединения живут секунды,
+        // и точечная синхронизация тут дороже полной замены
+        Connections.Clear();
+ 
+        foreach (var item in fresh.OrderByDescending(c => c.Download + c.Upload))
+            Connections.Add(item);
+    }
+ 
+    /// <summary>
+    /// Правило прямо из списка соединений — ради этого страница и нужна:
+    /// увидел домен не в том выходе, тут же его и починил.
+    /// </summary>
+    private void AddRuleFor(ConnectionInfo connection, RouteAction action)
+    {
+        var domain = connection.RuleCandidate;
+ 
+        if (Rules.Any(r => r.Match == MatchKind.DomainSuffix && r.Value == domain))
+        {
+            Status = $"Правило для {domain} уже есть";
+            return;
+        }
+ 
+        AddRule(MatchKind.DomainSuffix, domain, action);
+ 
+        Status = action == RouteAction.Block
+            ? $"{domain} добавлен в блок. Применится после переподключения."
+            : $"{domain} пойдёт напрямую. Применится после переподключения.";
+ 
+        Append($"[cvpn] {Status.ToLowerInvariant()}");
+    }
+ 
+    private async Task CloseAsync(ConnectionInfo connection)
+    {
+        if (_stats is null) return;
+ 
+        await _stats.CloseConnectionAsync(connection.Id);
+        await RefreshConnectionsAsync();
     }
  
     // ===================== наборы правил =====================
@@ -1143,7 +1228,7 @@ public sealed class MainViewModel : ObservableObject
         }.ShowDialog();
     }
  
-    /// <summary>Весь список одной строкой подписки - её можно скормить другому клиенту.</summary>
+    /// <summary>Весь список одной строкой подписки — её можно скормить другому клиенту.</summary>
     private void ShowExportAll()
     {
         var payload = ProfileLink.BuildSubscription(Profiles);
@@ -1155,7 +1240,7 @@ public sealed class MainViewModel : ObservableObject
         }.ShowDialog();
     }
  
-    /// <summary>Отметка о нажатии на круг - для диагностики привязок.</summary>
+    /// <summary>Отметка о нажатии на круг — для диагностики привязок.</summary>
     public void NoteDialClick() => Append($"[cvpn] нажатие: состояние {StateLabel}, профиль {Active?.Name ?? "не выбран"}");
  
     // ===================== служебное =====================
@@ -1169,8 +1254,8 @@ public sealed class MainViewModel : ObservableObject
  
     /// <summary>
     /// Признак «осиротевшего» TUN-адаптера: прошлый процесс sing-box был снят
-    /// принудительно и не успел удалить интерфейс. Создать новый нельзя -
-    /// он уже есть, открыть существующий тоже нельзя - запись повреждена.
+    /// принудительно и не успел удалить интерфейс. Создать новый нельзя —
+    /// он уже есть, открыть существующий тоже нельзя — запись повреждена.
     /// </summary>
     private static bool IsStaleAdapterError(string line) =>
         line.Contains("configure tun interface", StringComparison.OrdinalIgnoreCase)

@@ -6,7 +6,7 @@ namespace CVPN.Models;
 
 /// <summary>
 /// Именованный набор правил маршрутизации. Позволяет держать разные комплекты
-/// под разные задачи - например «всё через прокси» и «только заблокированное» -
+/// под разные задачи — например «всё через прокси» и «только заблокированное» —
 /// и переключаться между ними, не переписывая правила заново.
 /// </summary>
 public sealed class RoutingProfile : ObservableObject
@@ -16,7 +16,7 @@ public sealed class RoutingProfile : ObservableObject
  
     public string Name { get => _name; set => Set(ref _name, value); }
  
-    /// <summary>Что делать с трафиком вне правил: true - через прокси, false - напрямую.</summary>
+    /// <summary>Что делать с трафиком вне правил: true — через прокси, false — напрямую.</summary>
     public bool ProxyByDefault { get => _proxyByDefault; set => Set(ref _proxyByDefault, value); }
  
     public ObservableCollection<RouteRule> Rules { get; set; } = [];

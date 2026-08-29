@@ -8,7 +8,7 @@
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
         TextOptions.TextFormattingMode="Ideal">
 
-    <Window.DataContext>
+     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
@@ -70,6 +70,8 @@
                                              Checked="OnNavChanged" Tag="profiles" />
                                 <RadioButton Style="{StaticResource NavItem}" Content="Маршруты"
                                              Checked="OnNavChanged" Tag="routing" />
+                                <RadioButton Style="{StaticResource NavItem}" Content="Соединения"
+                                             Checked="OnNavChanged" Tag="connections" />
                                 <RadioButton Style="{StaticResource NavItem}" Content="Логи"
                                              Checked="OnNavChanged" Tag="logs" />
                                 <RadioButton Style="{StaticResource NavItem}" Content="Настройки"
