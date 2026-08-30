@@ -7,7 +7,7 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
 
-      <Grid Margin="28,22,28,24">
+    <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -42,8 +42,9 @@
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="Режим TUN" Style="{StaticResource T.Body}" />
-                                <TextBlock Text="Перехватывает весь системный трафик. Требует прав администратора — CVPN предложит перезапуск."
-                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                                <TextBlock
+                                    Text="Перехватывает весь системный трафик. Требует прав администратора — CVPN предложит перезапуск."
+                                    Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
                             </StackPanel>
                             <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.TunEnabled}"
                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
@@ -57,7 +58,9 @@
                                 <TextBlock Text="Когда TUN выключен, этот порт прописывается системным прокси Windows"
                                            Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
                             </StackPanel>
-                            <TextBox Style="{StaticResource Input}" Text="{Binding Settings.MixedPort, UpdateSourceTrigger=PropertyChanged}" Width="96"
+                            <TextBox Style="{StaticResource Input}"
+                                     Text="{Binding Settings.MixedPort, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="96"
                                      HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
 
@@ -66,13 +69,15 @@
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="Запрещать трафик мимо туннеля" Style="{StaticResource T.Body}" />
-                                <TextBlock Text="Kill switch: при обрыве соединения интернет не уйдёт в обход. Требует прав администратора."
-                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
-                                           MaxWidth="380" HorizontalAlignment="Left" />
-                                <TextBlock Text="Если приложение завершится аварийно, правила снимутся при следующем запуске. Кнопка ниже — на случай, когда интернет нужен прямо сейчас."
-                                           Style="{StaticResource T.Caption}" Margin="0,5,0,0" TextWrapping="Wrap"
-                                           MaxWidth="380" HorizontalAlignment="Left"
-                                           Foreground="{StaticResource Warning}" />
+                                <TextBlock
+                                    Text="Kill switch: при обрыве соединения интернет не уйдёт в обход. Требует прав администратора."
+                                    Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                    MaxWidth="380" HorizontalAlignment="Left" />
+                                <TextBlock
+                                    Text="Если приложение завершится аварийно, правила снимутся при следующем запуске. Кнопка ниже — на случай, когда интернет нужен прямо сейчас."
+                                    Style="{StaticResource T.Caption}" Margin="0,5,0,0" TextWrapping="Wrap"
+                                    MaxWidth="380" HorizontalAlignment="Left"
+                                    Foreground="{StaticResource Warning}" />
                             </StackPanel>
                             <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.KillSwitch}"
                                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,0,0" />
@@ -88,11 +93,13 @@
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="Автовыбор быстрого сервера" Style="{StaticResource T.Body}" />
-                                <TextBlock Text="Ядро само держит соединение на быстрейшем сервере и перепроверяет раз в три минуты."
-                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
-                                           MaxWidth="380" HorizontalAlignment="Left" />
+                                <TextBlock
+                                    Text="Ядро само держит соединение на быстрейшем сервере и перепроверяет раз в три минуты."
+                                    Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                    MaxWidth="380" HorizontalAlignment="Left" />
                             </StackPanel>
-                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoSelectFastest}"
+                            <ToggleButton Style="{StaticResource Switch}"
+                                          IsChecked="{Binding Settings.AutoSelectFastest}"
                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
 
@@ -101,9 +108,10 @@
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="Подробный лог" Style="{StaticResource T.Body}" />
-                                <TextBlock Text="Ядро пишет, какое правило сработало для каждого соединения. Помогает понять, почему сайт идёт не туда."
-                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
-                                           MaxWidth="380" HorizontalAlignment="Left" />
+                                <TextBlock
+                                    Text="Ядро пишет, какое правило сработало для каждого соединения. Помогает понять, почему сайт идёт не туда."
+                                    Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                    MaxWidth="380" HorizontalAlignment="Left" />
                             </StackPanel>
                             <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.VerboseLog}"
                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
@@ -149,9 +157,54 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,10,0,0">
                     <StackPanel>
+                        <TextBlock Text="версия" Style="{StaticResource T.Label}" />
+
+                        <Grid Margin="0,10,0,0">
+                            <StackPanel>
+                                <TextBlock Text="{Binding UpdateLabel}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource T.Body}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="Проверять при запуске" Style="{StaticResource T.Caption}"
+                                           Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.CheckUpdates}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="Проверить сейчас" Style="{StaticResource Btn.Base}"
+                                    Command="{Binding CheckUpdate}" />
+                            <Button Content="Открыть страницу релиза"
+                                    Margin="8,0,0,0" Command="{Binding OpenRelease}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource Btn.Primary}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+                    <StackPanel>
                         <TextBlock Text="служба туннеля" Style="{StaticResource T.Label}" />
-                        <TextBlock Text="Служба работает под системной учётной записью и поднимает TUN без запроса прав администратора. Устанавливается один раз."
-                                   Style="{StaticResource T.Caption}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                        <TextBlock
+                            Text="Служба работает под системной учётной записью и поднимает TUN без запроса прав администратора. Устанавливается один раз."
+                            Style="{StaticResource T.Caption}" Margin="0,8,0,0" TextWrapping="Wrap" />
 
                         <Grid Margin="0,12,0,0">
                             <StackPanel>
@@ -173,8 +226,9 @@
                         <Border Height="1" Background="{StaticResource Line}" Margin="0,16" />
 
                         <TextBlock Text="или задача планировщика" Style="{StaticResource T.Label}" />
-                        <TextBlock Text="Проще службы: отдельный проект не нужен. Приложение целиком запускается с правами администратора, а туннель живёт только внутри вашего сеанса."
-                                   Style="{StaticResource T.Caption}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                        <TextBlock
+                            Text="Проще службы: отдельный проект не нужен. Приложение целиком запускается с правами администратора, а туннель живёт только внутри вашего сеанса."
+                            Style="{StaticResource T.Caption}" Margin="0,8,0,0" TextWrapping="Wrap" />
                         <TextBlock Text="{Binding TaskStatus}" Style="{StaticResource T.Caption}"
                                    Margin="0,6,0,0" Foreground="{StaticResource TextSecondary}"
                                    TextWrapping="Wrap" />
@@ -191,9 +245,12 @@
                 <Border Style="{StaticResource Card}" Margin="0,10,0,0">
                     <StackPanel>
                         <TextBlock Text="dns" Style="{StaticResource T.Label}" />
-                        <TextBox Style="{StaticResource Input}" Text="{Binding Settings.RemoteDns, UpdateSourceTrigger=PropertyChanged}" Margin="0,8,0,0" />
-                        <TextBlock Text="Запросы вне правил уходят на этот резолвер через туннель. Схема задаёт транспорт: https:// (DoH, по 443 — надёжнее всего), tls:// (DoT, порт 853 часто блокируется), quic://, udp://."
-                                   Style="{StaticResource T.Caption}" Margin="0,8,0,0" />
+                        <TextBox Style="{StaticResource Input}"
+                                 Text="{Binding Settings.RemoteDns, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,8,0,0" />
+                        <TextBlock
+                            Text="Запросы вне правил уходят на этот резолвер через туннель. Схема задаёт транспорт: https:// (DoH, по 443 — надёжнее всего), tls:// (DoT, порт 853 часто блокируется), quic://, udp://."
+                            Style="{StaticResource T.Caption}" Margin="0,8,0,0" />
                     </StackPanel>
                 </Border>
             </StackPanel>

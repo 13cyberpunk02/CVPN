@@ -43,6 +43,7 @@ public sealed class MainViewModel : ObservableObject
     private string _status = "";
     private string _serviceStatus = "проверка…";
     private string _taskStatus = "";
+    private ReleaseInfo? _update;
 
     public MainViewModel()
     {
@@ -121,6 +122,8 @@ public sealed class MainViewModel : ObservableObject
         CopyLog = new RelayCommand(CopyLogToClipboard, () => Log.Count > 0);
         OpenLogFolder = new RelayCommand(ShowLogFolder);
         RestoreNetwork = new RelayCommand(async () => await RestoreNetworkAsync());
+        CheckUpdate = new RelayCommand(async () => await CheckUpdateAsync(manual: true));
+        OpenRelease = new RelayCommand(OpenReleasePage, () => Update is not null);
         CheckConfig = new RelayCommand(async () => await CheckAsync());
 
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -145,6 +148,15 @@ public sealed class MainViewModel : ObservableObject
         _ = RefreshServiceStatusAsync();
         RefreshTaskStatus();
         ReportMissingFlags();
+
+        if (Settings.CheckUpdates)
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5));
+                await CheckUpdateAsync(manual: false);
+            });
+        }
     }
 
     public ObservableCollection<ServerProfile> Profiles { get; }
@@ -213,6 +225,8 @@ public sealed class MainViewModel : ObservableObject
     public ICommand CopyLog { get; }
     public ICommand OpenLogFolder { get; }
     public ICommand RestoreNetwork { get; }
+    public ICommand CheckUpdate { get; }
+    public ICommand OpenRelease { get; }
     public ICommand CheckConfig { get; }
 
     // ===================== состояние =====================
@@ -355,6 +369,24 @@ public sealed class MainViewModel : ObservableObject
         get => _taskStatus;
         private set => Set(ref _taskStatus, value);
     }
+
+    /// <summary>Найденное обновление; null — установлена последняя версия.</summary>
+    public ReleaseInfo? Update
+    {
+        get => _update;
+        private set
+        {
+            Set(ref _update, value);
+            Raise(nameof(HasUpdate));
+            Raise(nameof(UpdateLabel));
+        }
+    }
+
+    public bool HasUpdate => Update is not null;
+
+    public string UpdateLabel => Update is null
+        ? $"установлена версия {UpdateChecker.CurrentVersion.ToString(3)}"
+        : $"доступна версия {Update.Version}";
 
     public int ActiveRuleCount => Rules.Count(r => r.Enabled);
 
@@ -893,18 +925,7 @@ public sealed class MainViewModel : ObservableObject
 
         Settings.CorePath = dialog.FileName;
         Persist();
-        // Реестр мог разойтись с настройкой, если приложение перенесли
-        AutoStart.Sync(Settings.AutoStart);
-        Settings.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(AppSettings.AutoStart)) AutoStart.Apply(Settings.AutoStart);
-        };
-
-        StampBuild();
         _ = DetectCoreAsync();
-        _ = RefreshServiceStatusAsync();
-        RefreshTaskStatus();
-        ReportMissingFlags();
         Status = "";
     }
 
@@ -971,7 +992,7 @@ public sealed class MainViewModel : ObservableObject
 
         // geoip сопоставляется по адресу, а на момент DNS-запроса его ещё нет
         var geoipDirect = active
-            .Where(r => r.Action == RouteAction.Direct && r.Match == MatchKind.Geoip)
+            .Where(r => r is { Action: RouteAction.Direct, Match: MatchKind.Geoip })
             .Select(r => r.Value)
             .ToList();
 
@@ -1142,6 +1163,44 @@ public sealed class MainViewModel : ObservableObject
         };
 
         _serviceLogTimer.Start();
+    }
+
+    // ===================== обновления =====================
+
+    private async Task CheckUpdateAsync(bool manual)
+    {
+        var release = await UpdateChecker.CheckAsync();
+
+        Dispatch(() =>
+        {
+            Update = release;
+
+            if (release is not null)
+            {
+                Append($"[cvpn] доступна версия {release.Version}");
+                Status = $"Доступна версия {release.Version} — откройте страницу релиза";
+            }
+            else if (manual)
+            {
+                // При автоматической проверке молчим: сообщать «обновлений нет»
+                // на каждом запуске — лишний шум
+                Status = "Установлена последняя версия";
+            }
+        });
+    }
+
+    private void OpenReleasePage()
+    {
+        if (Update is null) return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(Update.Url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Status = $"Не удалось открыть страницу: {ex.Message}";
+        }
     }
 
     // ===================== служба =====================
