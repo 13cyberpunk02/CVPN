@@ -19,6 +19,10 @@
         <DataTemplate DataType="{x:Type vm:ConnectionsViewModel}">
             <views:ConnectionsView />
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:LogsViewModel}">
+            <views:LogsView />
+        </DataTemplate>
     </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
@@ -146,6 +150,7 @@
                         </Grid>
                     </Border>
 
+                    <!-- ============ Страница ============ -->
                     <ContentControl x:Name="PageHost" Grid.Column="1">
                         <views:ConnectionView />
                     </ContentControl>

@@ -17,13 +17,10 @@ namespace CVPN.ViewModels;
 /// </summary>
 public sealed class ConnectionsViewModel : PageViewModel
 {
-    private readonly MainViewModel _shell;
     private DispatcherTimer? _timer;
 
-    public ConnectionsViewModel(MainViewModel shell)
+    public ConnectionsViewModel(MainViewModel shell) : base(shell)
     {
-        _shell = shell;
-
         RuleDirect = new RelayCommand(p =>
         {
             if (p is ConnectionInfo c) AddRule(c, RouteAction.Direct);
@@ -43,9 +40,6 @@ public sealed class ConnectionsViewModel : PageViewModel
     public ICommand RuleDirect { get; }
     public ICommand RuleBlock { get; }
     public ICommand CloseConnection { get; }
-
-    /// <summary>Строка состояния общая с оболочкой: сообщения там ждут глазами.</summary>
-    public string Status => _shell.Status;
 
     /// <summary>
     /// Опрос идёт, только пока страница открыта: держать его постоянно незачем,
@@ -70,13 +64,13 @@ public sealed class ConnectionsViewModel : PageViewModel
 
     private async Task RefreshAsync()
     {
-        if (_shell.Api is null || !_shell.IsConnected)
+        if (Shell.Api is null || !Shell.IsConnected)
         {
             if (Connections.Count > 0) Connections.Clear();
             return;
         }
 
-        var fresh = await _shell.Api.GetConnectionsAsync();
+        var fresh = await Shell.Api.GetConnectionsAsync();
 
         // Список перерисовывается целиком: соединения живут секунды,
         // и точечная синхронизация тут дороже полной замены
@@ -94,27 +88,24 @@ public sealed class ConnectionsViewModel : PageViewModel
     {
         var domain = connection.RuleCandidate;
 
-        if (_shell.Rules.Any(r => r.Match == MatchKind.DomainSuffix && r.Value == domain))
+        if (Shell.Rules.Any(r => r.Match == MatchKind.DomainSuffix && r.Value == domain))
         {
-            _shell.Notify($"Правило для {domain} уже есть");
-            Raise(nameof(Status));
+            Shell.Notify($"Правило для {domain} уже есть");
             return;
         }
 
-        _shell.AddRule(MatchKind.DomainSuffix, domain, action);
+        Shell.AddRule(MatchKind.DomainSuffix, domain, action);
 
-        _shell.Notify(action == RouteAction.Block
+        Shell.Notify(action == RouteAction.Block
             ? $"{domain} добавлен в блок. Применится после переподключения."
             : $"{domain} пойдёт напрямую. Применится после переподключения.");
-
-        Raise(nameof(Status));
     }
 
     private async Task CloseAsync(ConnectionInfo connection)
     {
-        if (_shell.Api is null) return;
+        if (Shell.Api is null) return;
 
-        await _shell.Api.CloseConnectionAsync(connection.Id);
+        await Shell.Api.CloseConnectionAsync(connection.Id);
         await RefreshAsync();
     }
 }

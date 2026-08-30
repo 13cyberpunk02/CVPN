@@ -65,6 +65,7 @@ public sealed class MainViewModel : ObservableObject
         Settings.PropertyChanged += (_, _) => RaiseMode();
 
         ConnectionsPage = new ConnectionsViewModel(this);
+        LogsPage = new LogsViewModel(this);
 
         SubscribeRules();
 
@@ -116,9 +117,6 @@ public sealed class MainViewModel : ObservableObject
         MeasureDelay = new RelayCommand(async () => await MeasureAsync(), () => IsConnected);
         PingAll = new RelayCommand(async () => await PingAllAsync(), () => !IsBusy);
         UpdateSubscription = new RelayCommand(async () => await UpdateSubscriptionAsync(), () => !IsBusy);
-        ClearLog = new RelayCommand(Log.Clear, () => Log.Count > 0);
-        CopyLog = new RelayCommand(CopyLogToClipboard, () => Log.Count > 0);
-        OpenLogFolder = new RelayCommand(ShowLogFolder);
         RestoreNetwork = new RelayCommand(async () => await RestoreNetworkAsync());
         CheckUpdate = new RelayCommand(async () => await CheckUpdateAsync(manual: true));
         OpenRelease = new RelayCommand(OpenReleasePage, () => Update is not null);
@@ -164,6 +162,8 @@ public sealed class MainViewModel : ObservableObject
     /// но состояние страницы должно переживать переходы.
     /// </summary>
     public ConnectionsViewModel ConnectionsPage { get; }
+
+    public LogsViewModel LogsPage { get; }
 
     public ObservableCollection<RoutingProfile> RoutingProfiles { get; }
 
@@ -223,9 +223,6 @@ public sealed class MainViewModel : ObservableObject
     public ICommand PingAll { get; }
     public ICommand UpdateSubscription { get; }
     public ICommand SelectProfile { get; }
-    public ICommand ClearLog { get; }
-    public ICommand CopyLog { get; }
-    public ICommand OpenLogFolder { get; }
     public ICommand RestoreNetwork { get; }
     public ICommand CheckUpdate { get; }
     public ICommand OpenRelease { get; }
@@ -943,88 +940,123 @@ public sealed class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Буфер обмена - общесистемный ресурс: пока его держит другой процесс,
-    /// запись падает с COMException. Перегрузки с повторами у WPF нет
-    /// (она только в System.Windows.Forms.Clipboard), поэтому цикл здесь свой.
+    /// Аварийная кнопка: снимает правила брандмауэра, если что-то пошло не так
+    /// и интернет пропал вместе с туннелем.
     /// </summary>
-    private void CopyLogToClipboard()
+    private async Task RestoreNetworkAsync()
     {
-        const int attempts = 5;
-        var text = string.Join(Environment.NewLine, Log);
+        var problem = await KillSwitch.DisableAsync();
 
-        for (var attempt = 1; attempt <= attempts; attempt++)
+        Status = problem.Length > 0
+            ? $"Не удалось снять правила: {problem}"
+            : "Правила брандмауэра сняты, сеть восстановлена";
+
+        Append($"[cvpn] {Status.ToLowerInvariant()}");
+    }
+
+    // ===================== обновления =====================
+
+    private async Task CheckUpdateAsync(bool manual)
+    {
+        var release = await UpdateChecker.CheckAsync();
+
+        Dispatch(() =>
         {
-            try
+            Update = release;
+
+            if (release is not null)
             {
-                Clipboard.SetDataObject(text, true);
-                Status = $"Скопировано строк: {Log.Count}";
-                return;
+                Append($"[cvpn] доступна версия {release.Version}");
+                Status = $"Доступна версия {release.Version} - откройте страницу релиза";
             }
-            catch (Exception ex) when (attempt < attempts)
+            else if (manual)
             {
-                _ = ex;
-                Thread.Sleep(100);
+                // При автоматической проверке молчим: сообщать «обновлений нет»
+                // на каждом запуске - лишний шум
+                Status = "Установлена последняя версия";
             }
-            catch (Exception ex)
-            {
-                Status = $"Не удалось скопировать: {ex.Message}";
-            }
+        });
+    }
+
+    private void OpenReleasePage()
+    {
+        if (Update is null) return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(Update.Url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Status = $"Не удалось открыть страницу: {ex.Message}";
         }
     }
 
-    /// <summary>
-    /// Если флаг не загрузился, об этом надо сказать: молча пустое место
-    /// выглядит как ошибка вёрстки, хотя дело в отсутствующем файле ресурса.
-    /// </summary>
-    private void ReportMissingFlags()
+    // ===================== служба и задача =====================
+
+    private async Task RefreshServiceStatusAsync()
     {
-        foreach (var profile in Profiles)
-        {
-            _ = profile.FlagImage;
-        }
-
-        if (FlagCatalog.Missing.Count == 0) return;
-
-        Append($"[cvpn] флаги не загружены: {string.Join(", ", FlagCatalog.Missing)}");
-        Append("[cvpn] проверьте, что файлы Assets/Flags/*.png добавлены в проект с действием Resource");
+        ServiceStatus = await ServiceClient.IsAvailableAsync()
+            ? "служба установлена и отвечает"
+            : ServiceInstaller.IsInstalledOnDisk
+                ? "служба не установлена - нажмите «Установить службу»"
+                : $"файлы службы не найдены: {ServiceInstaller.ExecutablePath}";
     }
 
-    /// <summary>
-    /// Пишет в лог, как разошлись правила. Помогает понять, почему сайт всё ещё
-    /// идёт через прокси: чаще всего домена просто нет в наборе.
-    /// </summary>
-    private void ExplainRouting()
+    private void RefreshTaskStatus()
     {
-        var active = Rules.Where(r => r.Enabled).ToList();
-        var direct = active.Count(r => r.Action == RouteAction.Direct);
-        var blocked = active.Count(r => r.Action == RouteAction.Block);
-
-        Append($"[cvpn] набор «{ActiveRouting.Name}»: правил {active.Count} " +
-               $"(напрямую {direct}, блок {blocked}), " +
-               $"остальное {(ActiveRouting.ProxyByDefault ? "через прокси" : "напрямую")}");
-
-        // geoip сопоставляется по адресу, а на момент DNS-запроса его ещё нет
-        var geoipDirect = active
-            .Where(r => r is { Action: RouteAction.Direct, Match: MatchKind.Geoip })
-            .Select(r => r.Value)
-            .ToList();
-
-        // В DNS переносятся только доменные условия и локальные наборы:
-        // остальное на момент инициализации ядру недоступно
-        var dnsUnfriendly = active
-            .Where(r => r.Action == RouteAction.Direct)
-            .Where(r => r.Match is MatchKind.Geoip or MatchKind.Geosite
-                or MatchKind.RuleSetRemote or MatchKind.Process)
-            .Select(r => $"{r.MatchLabel} {r.DisplayValue}")
-            .ToList();
-
-        if (dnsUnfriendly.Count > 0)
+        if (!ElevatedTask.Exists)
         {
-            Append($"[cvpn] правила «напрямую» ({string.Join(", ", dnsUnfriendly)}) действуют " +
-                   "только для соединений, но не для DNS: домены резолвятся через туннель. " +
-                   "Для сайтов с геобалансировкой добавьте правило по домену.");
+            TaskStatus = "задача не создана - при включении TUN появится окно UAC";
+            return;
         }
+
+        TaskStatus = ElevatedTask.PathMatchesCurrent()
+            ? "задача создана - права выдаются без запроса"
+            : "задача указывает на другой файл - пересоздайте её";
     }
+
+    private void InstallElevatedTask()
+    {
+        Status = ElevatedTask.Install(Settings.AutoStart, out var error)
+            ? "Задача планировщика создана"
+            : $"Не удалось создать задачу: {error}";
+
+        Append($"[cvpn] {Status.ToLowerInvariant()}");
+        RefreshTaskStatus();
+    }
+
+    private void UninstallElevatedTask()
+    {
+        Status = ElevatedTask.Uninstall(out var error)
+            ? "Задача планировщика удалена"
+            : $"Не удалось удалить задачу: {error}";
+
+        Append($"[cvpn] {Status.ToLowerInvariant()}");
+        RefreshTaskStatus();
+    }
+
+    private void InstallTunnelService()
+    {
+        Status = ServiceInstaller.Install(out var error)
+            ? "Служба установлена"
+            : $"Не удалось установить службу: {error}";
+
+        Append($"[cvpn] {Status.ToLowerInvariant()}");
+        _ = RefreshServiceStatusAsync();
+    }
+
+    private void UninstallTunnelService()
+    {
+        Status = ServiceInstaller.Uninstall(out var error)
+            ? "Служба удалена"
+            : $"Не удалось удалить службу: {error}";
+
+        Append($"[cvpn] {Status.ToLowerInvariant()}");
+        _ = RefreshServiceStatusAsync();
+    }
+
+    // ===================== проверка серверов и подписка =====================
 
     /// <summary>
     /// Замеряет только те профили, которые ещё не проверялись. Вызывается при
@@ -1123,179 +1155,7 @@ public sealed class MainViewModel : ObservableObject
         await ConnectAsync();
     }
 
-    /// <summary>
-    /// Смена сервера. При живом туннеле идёт через селектор Clash API -
-    /// ядро не перезапускается, существующие соединения не рвутся.
-    /// Перегенерировать конфиг нужно только чтобы выбор пережил перезапуск.
-    /// </summary>
-    private async Task SelectServerAsync(ServerProfile profile)
-    {
-        Active = profile;
-        Persist();
-
-        if (!IsConnected || _stats is null) return;
-
-        var tag = ConfigBuilder.BuildTags([.. Profiles]).GetValueOrDefault(profile);
-        if (tag is null) return;
-
-        if (await _stats.SelectAsync(tag))
-        {
-            Append($"[cvpn] переключение на {profile.Name} без перезапуска ядра");
-            ConfigBuilder.Write([.. Profiles], profile, ActiveRouting, Settings);
-            await MeasureAsync();
-        }
-        else
-        {
-            Status = "Не удалось переключить сервер. Переподключитесь вручную.";
-            Append($"[cvpn] селектор не ответил, нужно переподключение");
-        }
-    }
-
-    /// <summary>
-    /// Служба не может писать в наш лог напрямую, поэтому раз в секунду
-    /// забираем накопленные строки. Очередь на стороне службы ограничена,
-    /// так что при простое ничего не растёт.
-    /// </summary>
-    private void StartServiceLogPump()
-    {
-        _serviceLogTimer?.Stop();
-
-        _serviceLogTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _serviceLogTimer.Tick += async (_, _) =>
-        {
-            var status = await ServiceClient.StatusAsync();
-            if (status is null) return;
-
-            foreach (var line in status.Log) Append(line);
-
-            if (!status.Running && State == TunnelState.Connected)
-            {
-                State = TunnelState.Failing;
-                Status = "Служба сообщает, что ядро остановлено";
-            }
-        };
-
-        _serviceLogTimer.Start();
-    }
-
-    // ===================== обновления =====================
-
-    private async Task CheckUpdateAsync(bool manual)
-    {
-        var release = await UpdateChecker.CheckAsync();
-
-        Dispatch(() =>
-        {
-            Update = release;
-
-            if (release is not null)
-            {
-                Append($"[cvpn] доступна версия {release.Version}");
-                Status = $"Доступна версия {release.Version} - откройте страницу релиза";
-            }
-            else if (manual)
-            {
-                // При автоматической проверке молчим: сообщать «обновлений нет»
-                // на каждом запуске - лишний шум
-                Status = "Установлена последняя версия";
-            }
-        });
-    }
-
-    private void OpenReleasePage()
-    {
-        if (Update is null) return;
-
-        try
-        {
-            Process.Start(new ProcessStartInfo(Update.Url) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            Status = $"Не удалось открыть страницу: {ex.Message}";
-        }
-    }
-
-    // ===================== служба =====================
-
-    private async Task RefreshServiceStatusAsync()
-    {
-        ServiceStatus = await ServiceClient.IsAvailableAsync()
-            ? "служба установлена и отвечает"
-            : ServiceInstaller.IsInstalledOnDisk
-                ? "служба не установлена - нажмите «Установить службу»"
-                : $"файлы службы не найдены: {ServiceInstaller.ExecutablePath}";
-    }
-
-    /// <summary>
-    /// Версия и путь к запущенному файлу - первое, что нужно знать при разборе
-    /// «правка не подействовала»: часто работает не та сборка, которую собрали.
-    /// </summary>
-    private void StampBuild()
-    {
-        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-
-        Append($"[cvpn] сборка {version} · {Environment.ProcessPath}");
-
-        if (ElevatedTask.Exists && !ElevatedTask.PathMatchesCurrent())
-        {
-            Append($"[cvpn] внимание: задача планировщика запускает другой файл - {ElevatedTask.RegisteredPath()}");
-            Append("[cvpn] пересоздайте задачу в настройках, иначе изменения не применятся");
-        }
-    }
-
-    private void RefreshTaskStatus()
-    {
-        if (!ElevatedTask.Exists)
-        {
-            TaskStatus = "задача не создана - при включении TUN появится окно UAC";
-            return;
-        }
-
-        TaskStatus = ElevatedTask.PathMatchesCurrent()
-            ? "задача создана - права выдаются без запроса"
-            : "задача указывает на другой файл - пересоздайте её";
-    }
-
-    private void InstallElevatedTask()
-    {
-        Status = ElevatedTask.Install(Settings.AutoStart, out var error)
-            ? "Задача планировщика создана"
-            : $"Не удалось создать задачу: {error}";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-        RefreshTaskStatus();
-    }
-
-    private void UninstallElevatedTask()
-    {
-        Status = ElevatedTask.Uninstall(out var error)
-            ? "Задача планировщика удалена"
-            : $"Не удалось удалить задачу: {error}";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-        RefreshTaskStatus();
-    }
-
-    private void InstallTunnelService()
-    {
-        Status = ServiceInstaller.Install(out var error)
-            ? "Служба установлена"
-            : $"Не удалось установить службу: {error}";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-        _ = RefreshServiceStatusAsync();
-    }
-
-    private void UninstallTunnelService()
-    {
-        Status = ServiceInstaller.Uninstall(out var error)
-            ? "Служба удалена"
-            : $"Не удалось удалить службу: {error}";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-        _ = RefreshServiceStatusAsync();
-    }
+    // ===================== правила и наборы =====================
 
     /// <summary>
     /// Порядок правил определяет поведение: ядро берёт первое совпадение.
@@ -1316,12 +1176,9 @@ public sealed class MainViewModel : ObservableObject
         if (IsConnected) Status = "Порядок правил применится после переподключения";
     }
 
-    // ===================== наборы правил =====================
-
     private void AddRoutingProfile()
     {
         var name = UniqueRoutingName("Новый набор");
-
         var profile = new RoutingProfile { Name = name, ProxyByDefault = ActiveRouting.ProxyByDefault };
 
         RoutingProfiles.Add(profile);
@@ -1385,32 +1242,122 @@ public sealed class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Аварийная кнопка: снимает правила брандмауэра, если что-то пошло не так
-    /// и интернет пропал вместе с туннелем.
+    /// Служба не может писать в наш лог напрямую, поэтому раз в секунду
+    /// забираем накопленные строки. Очередь на стороне службы ограничена,
+    /// так что при простое ничего не растёт.
     /// </summary>
-    private async Task RestoreNetworkAsync()
+    private void StartServiceLogPump()
     {
-        var problem = await KillSwitch.DisableAsync();
+        _serviceLogTimer?.Stop();
 
-        Status = problem.Length > 0
-            ? $"Не удалось снять правила: {problem}"
-            : "Правила брандмауэра сняты, сеть восстановлена";
+        _serviceLogTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _serviceLogTimer.Tick += async (_, _) =>
+        {
+            var status = await ServiceClient.StatusAsync();
+            if (status is null) return;
 
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
+            foreach (var line in status.Log) Append(line);
+
+            if (!status.Running && State == TunnelState.Connected)
+            {
+                State = TunnelState.Failing;
+                Status = "Служба сообщает, что ядро остановлено";
+            }
+        };
+
+        _serviceLogTimer.Start();
     }
 
-    /// <summary>Открывает папку с логами - то, что просят приложить к issue.</summary>
-    private void ShowLogFolder()
+    /// <summary>
+    /// Пишет в лог, как разошлись правила. Помогает понять, почему сайт всё ещё
+    /// идёт через прокси: чаще всего домена просто нет в наборе.
+    /// </summary>
+    private void ExplainRouting()
     {
-        try
-        {
-            FileLog.Current.Prepare();
+        var active = Rules.Where(r => r.Enabled).ToList();
+        var direct = active.Count(r => r.Action == RouteAction.Direct);
+        var blocked = active.Count(r => r.Action == RouteAction.Block);
 
-            Process.Start(new ProcessStartInfo(FileLog.Current.Directory) { UseShellExecute = true });
-        }
-        catch (Exception ex)
+        Append($"[cvpn] набор «{ActiveRouting.Name}»: правил {active.Count} " +
+               $"(напрямую {direct}, блок {blocked}), " +
+               $"остальное {(ActiveRouting.ProxyByDefault ? "через прокси" : "напрямую")}");
+
+        // В DNS переносятся только доменные условия и локальные наборы:
+        // остальное на момент инициализации ядру недоступно
+        var dnsUnfriendly = active
+            .Where(r => r.Action == RouteAction.Direct)
+            .Where(r => r.Match is MatchKind.Geoip or MatchKind.Geosite
+                or MatchKind.RuleSetRemote or MatchKind.Process)
+            .Select(r => $"{r.MatchLabel} {r.DisplayValue}")
+            .ToList();
+
+        if (dnsUnfriendly.Count > 0)
         {
-            Status = $"Не удалось открыть папку логов: {ex.Message}";
+            Append($"[cvpn] правила «напрямую» ({string.Join(", ", dnsUnfriendly)}) действуют " +
+                   "только для соединений, но не для DNS: домены резолвятся через туннель. " +
+                   "Для сайтов с геобалансировкой добавьте правило по домену.");
+        }
+    }
+
+    /// <summary>
+    /// Смена сервера. При живом туннеле идёт через селектор Clash API -
+    /// ядро не перезапускается, существующие соединения не рвутся.
+    /// Перегенерировать конфиг нужно только чтобы выбор пережил перезапуск.
+    /// </summary>
+    private async Task SelectServerAsync(ServerProfile profile)
+    {
+        Active = profile;
+        Persist();
+
+        if (!IsConnected || _stats is null) return;
+
+        var tag = ConfigBuilder.BuildTags([.. Profiles]).GetValueOrDefault(profile);
+        if (tag is null) return;
+
+        if (await _stats.SelectAsync(tag))
+        {
+            Append($"[cvpn] переключение на {profile.Name} без перезапуска ядра");
+            ConfigBuilder.Write([.. Profiles], profile, ActiveRouting, Settings);
+            await MeasureAsync();
+        }
+        else
+        {
+            Status = "Не удалось переключить сервер. Переподключитесь вручную.";
+            Append("[cvpn] селектор не ответил, нужно переподключение");
+        }
+    }
+
+    /// <summary>
+    /// Если флаг не загрузился, об этом надо сказать: молча пустое место
+    /// выглядит как ошибка вёрстки, хотя дело в отсутствующем файле ресурса.
+    /// </summary>
+    private void ReportMissingFlags()
+    {
+        foreach (var profile in Profiles)
+        {
+            _ = profile.FlagImage;
+        }
+
+        if (FlagCatalog.Missing.Count == 0) return;
+
+        Append($"[cvpn] флаги не загружены: {string.Join(", ", FlagCatalog.Missing)}");
+        Append("[cvpn] проверьте, что файлы Assets/Flags/*.png добавлены в проект с действием Resource");
+    }
+
+    /// <summary>
+    /// Версия и путь к запущенному файлу - первое, что нужно знать при разборе
+    /// «правка не подействовала»: часто работает не та сборка, которую собрали.
+    /// </summary>
+    private void StampBuild()
+    {
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+
+        Append($"[cvpn] сборка {version} · {Environment.ProcessPath}");
+
+        if (ElevatedTask.Exists && !ElevatedTask.PathMatchesCurrent())
+        {
+            Append($"[cvpn] внимание: задача планировщика запускает другой файл - {ElevatedTask.RegisteredPath()}");
+            Append("[cvpn] пересоздайте задачу в настройках, иначе изменения не применятся");
         }
     }
 
