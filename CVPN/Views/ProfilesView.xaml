@@ -18,10 +18,11 @@
 
         <Grid Grid.Row="0">
             <StackPanel>
-                <TextBlock Text="Профили" Style="{StaticResource T.Title}" />
+                <TextBlock Text="Профили" Style="{StaticResource T.Title}" 
+                           Margin="0,0,0,7"/>
                 <TextBlock Text="Вставьте ссылку или импортируйте конфигурацию sing-box"
                            Style="{StaticResource T.Secondary}"
-                           Margin="0,4,0,0" />
+                           Margin="0,7,0,0" />
                 <TextBlock Text="{Binding Status}" Style="{StaticResource T.Caption}" Margin="0,6,0,0"
                            Foreground="{StaticResource Warning}" TextWrapping="Wrap" />
             </StackPanel>
