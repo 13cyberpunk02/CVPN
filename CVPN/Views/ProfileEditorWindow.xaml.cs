@@ -56,7 +56,7 @@ public partial class ProfileEditorWindow : Window
     }
 
     /// <summary>
-    /// Каждый протокол требует своего набора полей. Показывать все сразу —
+    /// Каждый протокол требует своего набора полей. Показывать все сразу -
     /// значит заставлять гадать, какие из них обязательны.
     /// </summary>
     private void ApplyProtocolFields()

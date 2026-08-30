@@ -7,7 +7,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CVPN.ViewModels"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
+             d:DataContext="{d:DesignInstance Type=vm:RoutingViewModel, IsDesignTimeCreatable=False}">
 
     <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
@@ -30,9 +30,9 @@
                           SelectedItem="{Binding ActiveRouting}"
                           DisplayMemberPath="Name" />
                 <Button Content="Новый" Style="{StaticResource Btn.Base}" Margin="8,0,0,0"
-                        Command="{Binding AddRouting}" />
+                        Command="{Binding AddSet}" />
                 <Button Content="Удалить" Style="{StaticResource Btn.Ghost}" Margin="6,0,0,0"
-                        Command="{Binding RemoveRouting}" />
+                        Command="{Binding RemoveSet}" />
             </StackPanel>
         </Grid>
 
@@ -140,12 +140,12 @@
                                 <!-- Порядок решает: первое совпадение выигрывает -->
                                 <Button Content="▲" Style="{StaticResource Btn.Ghost}" Padding="8,4"
                                         ToolTip="Выше по списку — правило сработает раньше"
-                                        Command="{Binding DataContext.MoveRuleUp,
+                                        Command="{Binding DataContext.MoveUp,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" />
                                 <Button Content="▼" Style="{StaticResource Btn.Ghost}" Padding="8,4"
                                         ToolTip="Ниже по списку"
-                                        Command="{Binding DataContext.MoveRuleDown,
+                                        Command="{Binding DataContext.MoveDown,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" />
                                 <Button Content="✕" Style="{StaticResource Btn.Ghost}" Padding="10,4"

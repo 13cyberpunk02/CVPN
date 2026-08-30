@@ -135,7 +135,7 @@ public static class ConfigImporter
                 break;
  
             default:
-                // direct, block, selector, urltest и прочее — не профили
+                // direct, block, selector, urltest и прочее - не профили
                 return null;
         }
  

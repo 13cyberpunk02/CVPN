@@ -8,7 +8,7 @@ namespace CVPN.Services;
 
 /// <summary>
 /// Значок в области уведомлений. В WPF своего нет, поэтому берём NotifyIcon
-/// из WinForms — это дешевле, чем реализовывать Shell_NotifyIcon вручную.
+/// из WinForms - это дешевле, чем реализовывать Shell_NotifyIcon вручную.
 /// </summary>
 public sealed class TrayIcon : IDisposable
 {
@@ -48,7 +48,7 @@ public sealed class TrayIcon : IDisposable
     public event Action? ToggleRequested;
     public event Action? ExitRequested;
 
-    /// <summary>Иконка и подсказка отражают состояние — свёрнутое окно тоже должно быть информативным.</summary>
+    /// <summary>Иконка и подсказка отражают состояние - свёрнутое окно тоже должно быть информативным.</summary>
     public void Update(TunnelState state, string? profileName)
     {
         _icon.Icon = state switch
@@ -67,8 +67,8 @@ public sealed class TrayIcon : IDisposable
         };
 
         var text = profileName is { Length: > 0 }
-            ? $"CVPN — {status} · {profileName}"
-            : $"CVPN — {status}";
+            ? $"CVPN - {status} · {profileName}"
+            : $"CVPN - {status}";
 
         // Windows обрезает подсказку на 63 символах
         _icon.Text = text.Length > 63 ? text[..63] : text;

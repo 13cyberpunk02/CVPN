@@ -7,7 +7,7 @@
             <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
                 <!-- asInvoker, а не requireAdministrator: иначе `dotnet run` и запуск
                      из невозвышенной IDE падают с ошибкой 740 ещё до старта WPF.
-                     Права запрашиваются в рантайме — см. Core/Elevation.cs -->
+                     Права запрашиваются в рантайме - см. Core/Elevation.cs -->
                 <requestedExecutionLevel level="asInvoker" uiAccess="false" />
             </requestedPrivileges>
         </security>

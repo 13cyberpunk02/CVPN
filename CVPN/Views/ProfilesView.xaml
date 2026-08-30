@@ -56,7 +56,7 @@
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" Style="{StaticResource Input}"
                      Text="{Binding Settings.SubscriptionUrl, UpdateSourceTrigger=PropertyChanged}"
-                     Tag="https://…  —  ссылка подписки" />
+                     Tag="https://…  -  ссылка подписки" />
             <Button Grid.Column="1" Content="Обновить подписку" Style="{StaticResource Btn.Base}"
                     Margin="8,0,0,0" Command="{Binding UpdateSubscription}" />
         </Grid>

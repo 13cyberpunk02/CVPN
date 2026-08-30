@@ -8,7 +8,7 @@ namespace CVPN.Services;
 
 /// <summary>
 /// Подписка на счётчики трафика через Clash API ядра.
-/// Эндпоинт /traffic — веб-сокет, раз в секунду присылающий {"up":N,"down":N}
+/// Эндпоинт /traffic - веб-сокет, раз в секунду присылающий {"up":N,"down":N}
 /// в байтах за эту секунду.
 /// </summary>
 public sealed class ClashApiClient : IAsyncDisposable
@@ -67,7 +67,7 @@ public sealed class ClashApiClient : IAsyncDisposable
  
     private async Task RunAsync(CancellationToken ct)
     {
-        // API поднимается не мгновенно после старта ядра — даём ему время
+        // API поднимается не мгновенно после старта ядра - даём ему время
         for (var attempt = 0; attempt < 20 && !ct.IsCancellationRequested; attempt++)
         {
             try
@@ -83,7 +83,7 @@ public sealed class ClashApiClient : IAsyncDisposable
             }
             catch
             {
-                // ядро ещё не слушает или сокет разорвался — пробуем снова
+                // ядро ещё не слушает или сокет разорвался - пробуем снова
             }
  
             try { await Task.Delay(TimeSpan.FromSeconds(1), ct); }
@@ -111,7 +111,7 @@ public sealed class ClashApiClient : IAsyncDisposable
             }
             catch (JsonException)
             {
-                // частичный кадр — пропускаем, следующий придёт через секунду
+                // частичный кадр - пропускаем, следующий придёт через секунду
             }
         }
     }
@@ -158,7 +158,7 @@ public sealed class ClashApiClient : IAsyncDisposable
     }
  
     /// <summary>
-    /// Живые соединения. Формат — стандартный для Clash API: метаданные о хосте
+    /// Живые соединения. Формат - стандартный для Clash API: метаданные о хосте
     /// и цепочка выходов, через которые прошло соединение.
     /// </summary>
     public async Task<List<ConnectionInfo>> GetConnectionsAsync(CancellationToken ct = default)
@@ -184,7 +184,7 @@ public sealed class ClashApiClient : IAsyncDisposable
         }
         catch (Exception)
         {
-            // Ядро могло остановиться между запросами — пустой список, без шума
+            // Ядро могло остановиться между запросами - пустой список, без шума
         }
  
         return result;
@@ -213,10 +213,10 @@ public sealed class ClashApiClient : IAsyncDisposable
         if (host.Length == 0) return null;
  
         // chains перечисляет цепочку выходов; первым идёт тот, через который
-        // соединение реально ушло, дальше — группы, в которые он входит
-        var outbound = "—";
+        // соединение реально ушло, дальше - группы, в которые он входит
+        var outbound = "-";
         if (item.TryGetProperty("chains", out var chains) && chains.ValueKind == JsonValueKind.Array)
-            outbound = chains.EnumerateArray().FirstOrDefault().GetString() ?? "—";
+            outbound = chains.EnumerateArray().FirstOrDefault().GetString() ?? "-";
  
         var rule = Text(item, "rule");
         var payload = Text(item, "rulePayload");
@@ -232,7 +232,7 @@ public sealed class ClashApiClient : IAsyncDisposable
             Port = int.TryParse(Text(meta, "destinationPort"), out var port) ? port : 0,
             Network = Text(meta, "network").ToLowerInvariant(),
             Outbound = outbound,
-            Rule = rule.Length > 0 ? rule : "—",
+            Rule = rule.Length > 0 ? rule : "-",
             Process = process,
             Upload = Number(item, "upload"),
             Download = Number(item, "download"),

@@ -53,12 +53,12 @@ public static class SubscriptionService
             : (profiles, "В подписке не нашлось поддерживаемых серверов");
     }
 
-    /// <summary>Если тело — base64, разворачиваем; иначе возвращаем как есть.</summary>
+    /// <summary>Если тело - base64, разворачиваем; иначе возвращаем как есть.</summary>
     private static string Decode(string body)
     {
         var trimmed = body.Trim();
 
-        // Ссылки в открытом виде начинаются со схемы — декодировать нечего
+        // Ссылки в открытом виде начинаются со схемы - декодировать нечего
         if (trimmed.Contains("://", StringComparison.Ordinal)) return trimmed;
 
         try

@@ -66,6 +66,7 @@ public sealed class MainViewModel : ObservableObject
 
         ConnectionsPage = new ConnectionsViewModel(this);
         LogsPage = new LogsViewModel(this);
+        RoutingPage = new RoutingViewModel(this);
 
         SubscribeRules();
 
@@ -75,22 +76,7 @@ public sealed class MainViewModel : ObservableObject
         {
             if (p is ServerProfile sp) DeleteProfile(sp);
         });
-        RemoveRule = new RelayCommand(p =>
-        {
-            if (p is RouteRule rr)
-            {
-                Rules.Remove(rr);
-                Persist();
-            }
-        });
-        MoveRuleUp = new RelayCommand(p =>
-        {
-            if (p is RouteRule rr) MoveRule(rr, -1);
-        });
-        MoveRuleDown = new RelayCommand(p =>
-        {
-            if (p is RouteRule rr) MoveRule(rr, +1);
-        });
+        
         SelectProfile = new RelayCommand(p =>
         {
             if (p is ServerProfile sp) _ = SelectServerAsync(sp);
@@ -103,8 +89,6 @@ public sealed class MainViewModel : ObservableObject
         });
         BrowseCore = new RelayCommand(PickCore);
         OpenConfig = new RelayCommand(ShowGeneratedConfig);
-        AddRouting = new RelayCommand(AddRoutingProfile);
-        RemoveRouting = new RelayCommand(RemoveRoutingProfile, () => RoutingProfiles.Count > 1);
         ExportProfile = new RelayCommand(p =>
         {
             if (p is ServerProfile sp) ShowExport(sp);
@@ -162,6 +146,8 @@ public sealed class MainViewModel : ObservableObject
     /// но состояние страницы должно переживать переходы.
     /// </summary>
     public ConnectionsViewModel ConnectionsPage { get; }
+    
+    public RoutingViewModel RoutingPage { get; }
 
     public LogsViewModel LogsPage { get; }
 
@@ -203,16 +189,11 @@ public sealed class MainViewModel : ObservableObject
     public ICommand ToggleConnection { get; }
     public ICommand ImportLink { get; }
     public ICommand RemoveProfile { get; }
-    public ICommand RemoveRule { get; }
-    public ICommand MoveRuleUp { get; }
-    public ICommand MoveRuleDown { get; }
     public ICommand ImportFile { get; }
     public ICommand CreateProfile { get; }
     public ICommand EditProfileCommand { get; }
     public ICommand BrowseCore { get; }
     public ICommand OpenConfig { get; }
-    public ICommand AddRouting { get; }
-    public ICommand RemoveRouting { get; }
     public ICommand ExportProfile { get; }
     public ICommand ExportAll { get; }
     public ICommand InstallService { get; }
@@ -1154,62 +1135,7 @@ public sealed class MainViewModel : ObservableObject
         Append("[cvpn] автоподключение");
         await ConnectAsync();
     }
-
-    // ===================== правила и наборы =====================
-
-    /// <summary>
-    /// Порядок правил определяет поведение: ядро берёт первое совпадение.
-    /// Без перестановки единственным способом что-то поправить было бы
-    /// удалить всё и добавить заново.
-    /// </summary>
-    private void MoveRule(RouteRule rule, int offset)
-    {
-        var from = Rules.IndexOf(rule);
-        if (from < 0) return;
-
-        var to = from + offset;
-        if (to < 0 || to >= Rules.Count) return;
-
-        Rules.Move(from, to);
-        Persist();
-
-        if (IsConnected) Status = "Порядок правил применится после переподключения";
-    }
-
-    private void AddRoutingProfile()
-    {
-        var name = UniqueRoutingName("Новый набор");
-        var profile = new RoutingProfile { Name = name, ProxyByDefault = ActiveRouting.ProxyByDefault };
-
-        RoutingProfiles.Add(profile);
-        ActiveRouting = profile;
-        Status = $"Создан набор «{name}». Правила пока пусты.";
-    }
-
-    private void RemoveRoutingProfile()
-    {
-        if (RoutingProfiles.Count < 2) return;
-
-        var doomed = ActiveRouting;
-        var fallback = RoutingProfiles.First(r => !ReferenceEquals(r, doomed));
-
-        ActiveRouting = fallback;
-        RoutingProfiles.Remove(doomed);
-        Persist();
-
-        Status = $"Набор «{doomed.Name}» удалён";
-    }
-
-    private string UniqueRoutingName(string basis)
-    {
-        if (RoutingProfiles.All(r => r.Name != basis)) return basis;
-
-        for (var n = 2;; n++)
-        {
-            var candidate = $"{basis} {n}";
-            if (RoutingProfiles.All(r => r.Name != candidate)) return candidate;
-        }
-    }
+    
 
     // ===================== экспорт =====================
 

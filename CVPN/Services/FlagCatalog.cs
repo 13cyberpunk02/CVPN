@@ -12,7 +12,7 @@ public static class FlagCatalog
 {
     private static readonly Dictionary<string, ImageSource?> Cache = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Коды, для которых загрузка не удалась. Пусто — значит всё на месте.</summary>
+    /// <summary>Коды, для которых загрузка не удалась. Пусто - значит всё на месте.</summary>
     public static IReadOnlyCollection<string> Missing => MissingCodes;
 
     private static readonly HashSet<string> MissingCodes = new(StringComparer.OrdinalIgnoreCase);
@@ -44,7 +44,7 @@ public static class FlagCatalog
         catch (Exception ex)
         {
             MissingCodes.Add(code);
-            LastError = $"{code}.png — {ex.Message}";
+            LastError = $"{code}.png - {ex.Message}";
         }
 
         Cache[code] = image;

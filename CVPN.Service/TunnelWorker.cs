@@ -4,7 +4,7 @@ namespace CVPN.Service;
 
 /// <summary>
 /// Держит именованный канал открытым всё время жизни службы.
-/// Заменяет собой Worker.cs из шаблона — его можно удалить.
+/// Заменяет собой Worker.cs из шаблона - его можно удалить.
 /// </summary>
 public sealed class TunnelWorker(CoreRunner runner, ServiceOptions options, ILogger<TunnelWorker> logger)
     : BackgroundService

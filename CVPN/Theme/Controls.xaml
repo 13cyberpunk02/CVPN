@@ -1,6 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-   
+
     <!-- ===================== Базовый текст ===================== -->
     <Style TargetType="TextBlock" x:Key="T.Body">
         <Setter Property="FontFamily" Value="{StaticResource Font.Sans}" />
@@ -178,7 +178,7 @@
                                 <ColumnDefinition Width="3" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <!-- Маркер выбора: прямой, без скругления — он часть левой кромки -->
+                            <!-- Маркер выбора: прямой, без скругления - он часть левой кромки -->
                             <Rectangle x:Name="Marker" Grid.Column="0" Width="2" Height="16"
                                        Fill="{StaticResource Accent}" Opacity="0" HorizontalAlignment="Left" />
                             <ContentPresenter Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center" />
@@ -201,7 +201,7 @@
 
     <!-- ===================== Поля ввода =====================
          Жёсткая Height + Margin, равный Padding, оставляли содержимому 18px
-         при строке шрифта ~19px — текст обрезался в ноль. Теперь MinHeight
+         при строке шрифта ~19px - текст обрезался в ноль. Теперь MinHeight
          и Padding на самом PART_ContentHost: поле растёт под шрифт. -->
     <Style TargetType="TextBox" x:Key="Input">
         <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
@@ -285,7 +285,8 @@
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="KnobShift" Storyboard.TargetProperty="X"
+                                        <DoubleAnimation Storyboard.TargetName="KnobShift"
+                                                         Storyboard.TargetProperty="X"
                                                          To="16" Duration="0:0:0.14">
                                             <DoubleAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut" />
@@ -297,7 +298,8 @@
                             <Trigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="KnobShift" Storyboard.TargetProperty="X"
+                                        <DoubleAnimation Storyboard.TargetName="KnobShift"
+                                                         Storyboard.TargetProperty="X"
                                                          To="0" Duration="0:0:0.14" />
                                     </Storyboard>
                                 </BeginStoryboard>
@@ -392,7 +394,8 @@
                                             <Setter TargetName="Bd" Property="BorderBrush" Value="#FF39445A" />
                                         </Trigger>
                                         <Trigger Property="IsChecked" Value="True">
-                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}" />
+                                            <Setter TargetName="Bd" Property="BorderBrush"
+                                                    Value="{StaticResource Accent}" />
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -403,7 +406,8 @@
                                           Margin="12,0,32,0" VerticalAlignment="Center" IsHitTestVisible="False" />
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                AllowsTransparency="True" PopupAnimation="Fade" Focusable="False">
-                            <Border Background="{StaticResource SurfaceRaised}" BorderBrush="{StaticResource LineStrong}"
+                            <Border Background="{StaticResource SurfaceRaised}"
+                                    BorderBrush="{StaticResource LineStrong}"
                                     BorderThickness="1" CornerRadius="{StaticResource Radius}" Padding="0,4"
                                     MinWidth="{TemplateBinding ActualWidth}" Margin="0,4,0,0">
                                 <ScrollViewer MaxHeight="260">

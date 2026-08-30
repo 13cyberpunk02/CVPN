@@ -111,7 +111,7 @@
 
         <!-- Кнопка -->
         <!-- Команда вызывается из code-behind: привязка через ElementName внутри
-             контрола — лишняя точка отказа, а Click доходит всегда -->
+             контрола - лишняя точка отказа, а Click доходит всегда -->
         <Button Style="{StaticResource DialCore}" Width="152" Height="152"
                 Background="Transparent" Click="OnCoreClick"
                 ToolTip="{Binding Endpoint, RelativeSource={RelativeSource AncestorType={x:Type ctl:ConnectDial}}}">

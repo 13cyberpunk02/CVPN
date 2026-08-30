@@ -79,7 +79,7 @@ public class LinkParserTests
         Assert.Equal("fi.example.net", profile.Name);
     }
  
-    /// <summary>Reality без публичного ключа не заработает — ловим это на разборе.</summary>
+    /// <summary>Reality без публичного ключа не заработает - ловим это на разборе.</summary>
     [Fact]
     public void Reality_без_ключа_отвергается()
     {

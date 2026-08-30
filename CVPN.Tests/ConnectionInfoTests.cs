@@ -11,7 +11,7 @@ public class ConnectionInfoTests
         Port = 443,
         Network = "tcp",
         Outbound = "proxy",
-        Rule = "—",
+        Rule = "-",
         Process = "firefox.exe",
         Upload = up,
         Download = down,
@@ -29,7 +29,7 @@ public class ConnectionInfoTests
         Assert.Equal(expected, Make(host).RuleCandidate);
     }
  
-    /// <summary>Для соединения по IP резать нечего — вернём адрес как есть.</summary>
+    /// <summary>Для соединения по IP резать нечего - вернём адрес как есть.</summary>
     [Fact]
     public void Адрес_не_превращается_в_домен()
     {
@@ -51,7 +51,7 @@ public class ConnectionInfoTests
         var connection = new ConnectionInfo
         {
             Id = "id", Host = "example.com", Port = 443, Network = "tcp",
-            Outbound = "DIRECT", Rule = "—", Process = "",
+            Outbound = "DIRECT", Rule = "-", Process = "",
             Upload = 0, Download = 0, Started = DateTimeOffset.Now
         };
  

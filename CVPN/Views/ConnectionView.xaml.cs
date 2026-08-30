@@ -9,7 +9,7 @@ public partial class ConnectionView : UserControl
  
     /// <summary>
     /// Клик по кругу фиксируется в логе до всякой логики: если запись есть,
-    /// а состояние не меняется — дело в команде, а не в привязке.
+    /// а состояние не меняется - дело в команде, а не в привязке.
     /// </summary>
     private void OnDialActivated(object? sender, EventArgs e)
     {

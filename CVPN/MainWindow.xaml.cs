@@ -92,38 +92,31 @@ public partial class MainWindow : Window
     /// </summary>
     protected override async void OnClosing(CancelEventArgs e)
     {
-        try
+        if (!_exiting && Vm?.Settings.CloseToTray == true)
         {
-            if (!_exiting && Vm?.Settings.CloseToTray == true)
-            {
-                e.Cancel = true;
-                Hide();
+            e.Cancel = true;
+            Hide();
 
-                if (Vm.IsConnected)
-                    _tray.Notify("CVPN работает", "Приложение свёрнуто в трей. Выход - через меню значка.");
+            if (Vm.IsConnected)
+                _tray.Notify("CVPN работает", "Приложение свёрнуто в трей. Выход - через меню значка.");
 
-                return;
-            }
+            return;
+        }
 
-            if (_exiting && Vm is not null)
-            {
-                e.Cancel = true;
-                _exiting = false;
+        if (_exiting && Vm is not null)
+        {
+            e.Cancel = true;
+            _exiting = false;
 
-                await Vm.ShutdownAsync();
-                _tray.Dispose();
-
-                Application.Current.Shutdown();
-                return;
-            }
-
+            await Vm.ShutdownAsync();
             _tray.Dispose();
-            base.OnClosing(e);
+
+            Application.Current.Shutdown();
+            return;
         }
-        catch (Exception ex)
-        {
-            throw; // TODO handle exception
-        }
+
+        _tray.Dispose();
+        base.OnClosing(e);
     }
 
     private void OnNavChanged(object sender, RoutedEventArgs e)
@@ -136,7 +129,7 @@ public partial class MainWindow : Window
         PageHost.Content = tag switch
         {
             "profiles" => new ProfilesView(),
-            "routing" => new RoutingView(),
+            "routing" => Vm?.RoutingPage,
             "connections" => Vm?.ConnectionsPage,
             "logs" => Vm?.LogsPage,
             "settings" => new SettingsView(),

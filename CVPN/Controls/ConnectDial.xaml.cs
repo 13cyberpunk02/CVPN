@@ -44,7 +44,7 @@ public partial class ConnectDial : UserControl
     public static readonly DependencyProperty CountryProperty = DependencyProperty.Register(
         nameof(Country), typeof(string), typeof(ConnectDial), new PropertyMetadata(""));
 
-    /// <summary>Картинка флага; null — флага для этой страны нет.</summary>
+    /// <summary>Картинка флага; null - флага для этой страны нет.</summary>
     public static readonly DependencyProperty FlagProperty = DependencyProperty.Register(
         nameof(Flag), typeof(ImageSource), typeof(ConnectDial), new PropertyMetadata(null));
 

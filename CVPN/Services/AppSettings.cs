@@ -35,7 +35,7 @@ public sealed class AppSettings : ObservableObject
         set => Set(ref _tunEnabled, value);
     }
 
-    /// <summary>HTTP+SOCKS на одном порту — для приложений, которые настраивают прокси сами.</summary>
+    /// <summary>HTTP+SOCKS на одном порту - для приложений, которые настраивают прокси сами.</summary>
     public int MixedPort
     {
         get => _mixedPort;
@@ -54,14 +54,14 @@ public sealed class AppSettings : ObservableObject
         set => Set(ref _localDns, value);
     }
 
-    /// <summary>Что делать с трафиком вне правил: true — через прокси, false — напрямую.</summary>
+    /// <summary>Что делать с трафиком вне правил: true - через прокси, false - напрямую.</summary>
     public bool ProxyByDefault
     {
         get => _proxyByDefault;
         set => Set(ref _proxyByDefault, value);
     }
 
-    /// <summary>Порт Clash API — через него читаются счётчики трафика и задержки.</summary>
+    /// <summary>Порт Clash API - через него читаются счётчики трафика и задержки.</summary>
     public int ClashApiPort
     {
         get => _clashApiPort;
@@ -147,7 +147,7 @@ public sealed class AppSettings : ObservableObject
 
     /// <summary>
     /// Запрещать трафик мимо туннеля. Защищает от утечки при обрыве, но при
-    /// сбое приложения может оставить систему без интернета — снимается
+    /// сбое приложения может оставить систему без интернета - снимается
     /// автоматически при следующем запуске.
     /// </summary>
     public bool KillSwitch

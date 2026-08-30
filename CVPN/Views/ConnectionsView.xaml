@@ -30,7 +30,7 @@
             </TextBlock>
         </Grid>
 
-        <!-- Пустой список при отключённом туннеле — не ошибка, а нормальное состояние -->
+        <!-- Пустой список при отключённом туннеле - не ошибка, а нормальное состояние -->
         <TextBlock Grid.Row="1" Text="Соединений нет. Список заполняется, пока туннель поднят."
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="320"
@@ -64,7 +64,7 @@
 
                             <StackPanel Grid.Column="0">
                                 <StackPanel Orientation="Horizontal">
-                                    <!-- Цвет метки выхода — главное, что читается взглядом -->
+                                    <!-- Цвет метки выхода - главное, что читается взглядом -->
                                     <Border CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
                                         <Border.Style>
                                             <Style TargetType="Border">
@@ -116,7 +116,7 @@
                                            Margin="0,3,0,0" />
                             </StackPanel>
 
-                            <!-- Внутри DataTemplate контекст — ConnectionInfo, поэтому
+                            <!-- Внутри DataTemplate контекст - ConnectionInfo, поэтому
                                  до команд страницы добираемся через RelativeSource -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Content="Напрямую" Style="{StaticResource Btn.Ghost}" Padding="9,5"
