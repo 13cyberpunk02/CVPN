@@ -96,7 +96,8 @@
                                        FontSize="{StaticResource Size.Small}" Margin="14,0,0,0"
                                        Foreground="{StaticResource TextFaint}" VerticalAlignment="Center" />
 
-                            <TextBlock Grid.Column="2" Text="{Binding DisplayValue}" ToolTip="{Binding Value}" Style="{StaticResource T.Mono}"
+                            <TextBlock Grid.Column="2" Text="{Binding DisplayValue}" ToolTip="{Binding Value}"
+                                       Style="{StaticResource T.Mono}"
                                        Foreground="{StaticResource Text}" VerticalAlignment="Center" />
 
                             <Border Grid.Column="3" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
@@ -135,11 +136,24 @@
                                 </TextBlock>
                             </Border>
 
-                            <Button Grid.Column="4" Content="✕" Style="{StaticResource Btn.Ghost}"
-                                    Padding="10,4" Margin="8,0,0,0"
-                                    Command="{Binding DataContext.RemoveRule,
-                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    CommandParameter="{Binding}" />
+                            <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="8,0,0,0">
+                                <!-- Порядок решает: первое совпадение выигрывает -->
+                                <Button Content="▲" Style="{StaticResource Btn.Ghost}" Padding="8,4"
+                                        ToolTip="Выше по списку — правило сработает раньше"
+                                        Command="{Binding DataContext.MoveRuleUp,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="▼" Style="{StaticResource Btn.Ghost}" Padding="8,4"
+                                        ToolTip="Ниже по списку"
+                                        Command="{Binding DataContext.MoveRuleDown,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="✕" Style="{StaticResource Btn.Ghost}" Padding="10,4"
+                                        Margin="4,0,0,0"
+                                        Command="{Binding DataContext.RemoveRule,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </DataTemplate>

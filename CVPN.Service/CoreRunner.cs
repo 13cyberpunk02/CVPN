@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using CVPN.Core;
+using CVPN.Shared;
 
 namespace CVPN.Service;
 
@@ -8,11 +8,11 @@ namespace CVPN.Service;
 public sealed class CoreRunner : IDisposable
 {
     private const int MaxLog = 300;
- 
+
     private readonly ConcurrentQueue<string> _log = new();
     private readonly object _gate = new();
     private Process? _process;
- 
+
     public bool IsRunning
     {
         get
@@ -20,13 +20,13 @@ public sealed class CoreRunner : IDisposable
             lock (_gate) return _process is { HasExited: false };
         }
     }
- 
+
     public string Start(string corePath, string configPath)
     {
         lock (_gate)
         {
             if (_process is { HasExited: false }) return "Ядро уже запущено";
- 
+
             var info = new ProcessStartInfo
             {
                 FileName = corePath,
@@ -36,27 +36,27 @@ public sealed class CoreRunner : IDisposable
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
- 
+
             info.ArgumentList.Add("run");
             info.ArgumentList.Add("-c");
             info.ArgumentList.Add(configPath);
- 
+
             var process = new Process { StartInfo = info, EnableRaisingEvents = true };
- 
+
             process.OutputDataReceived += (_, e) => Append(e.Data);
             process.ErrorDataReceived += (_, e) => Append(e.Data);
- 
+
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
- 
+
             _process = process;
             Append("[service] ядро запущено");
- 
+
             return "";
         }
     }
- 
+
     public void Stop()
     {
         lock (_gate)
@@ -66,7 +66,7 @@ public sealed class CoreRunner : IDisposable
                 _process = null;
                 return;
             }
- 
+
             try
             {
                 // Сначала мягко: sing-box по Ctrl+C снимает TUN-интерфейс сам.
@@ -87,31 +87,36 @@ public sealed class CoreRunner : IDisposable
             {
                 Append($"[service] остановка: {ex.Message}");
             }
- 
+
             _process = null;
             Append("[service] ядро остановлено");
         }
     }
- 
+
     /// <summary>Забирает накопленные строки и очищает очередь.</summary>
     public List<string> DrainLog()
     {
         var lines = new List<string>();
- 
+
         while (_log.TryDequeue(out var line)) lines.Add(line);
- 
+
         return lines;
     }
- 
+
     private void Append(string? line)
     {
         if (string.IsNullOrWhiteSpace(line)) return;
- 
+
         _log.Enqueue(line);
- 
+
+        // В файл пишем всегда: очередь заберёт приложение, если оно запущено,
+        // а при автозапуске до входа пользователя его ещё нет
+        FileLog.Current.Write(line);
+
+        // Клиент может долго не приходить - очередь не должна расти бесконечно
         while (_log.Count > MaxLog) _log.TryDequeue(out _);
     }
- 
+
     public void Dispose()
     {
         Stop();

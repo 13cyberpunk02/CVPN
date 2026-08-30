@@ -213,6 +213,42 @@ public class ConfigBuilderTests
         Assert.Equal("direct", rule.Str("outbound"));
     }
 
+    /// <summary>
+    /// Ядро берёт первое совпадение, поэтому порядок правил - это поведение,
+    /// а не оформление. Перестановка в интерфейсе должна доходить до конфига.
+    /// </summary>
+    [Fact]
+    public void Порядок_правил_сохраняется()
+    {
+        var routing = TestData.Routing(
+            TestData.Rule(MatchKind.DomainSuffix, "первый.example", RouteAction.Block),
+            TestData.Rule(MatchKind.DomainSuffix, "второй.example", RouteAction.Direct),
+            TestData.Rule(MatchKind.DomainSuffix, "третий.example", RouteAction.Proxy));
+
+        var config = TestData.BuildConfig(routing: routing);
+
+        var domains = config.GetProperty("route").GetProperty("rules").EnumerateArray()
+            .Where(r => r.TryGetProperty("domain_suffix", out _))
+            .Select(r => r.GetProperty("domain_suffix").EnumerateArray().Single().GetString())
+            .ToList();
+
+        Assert.Equal(["первый.example", "второй.example", "третий.example"], domains);
+    }
+
+    /// <summary>Пользовательские правила всегда ниже служебных, иначе sniff не отработает.</summary>
+    [Fact]
+    public void Пользовательские_правила_идут_после_служебных()
+    {
+        var routing = TestData.Routing(
+            TestData.Rule(MatchKind.Domain, "example.com", RouteAction.Direct));
+
+        var config = TestData.BuildConfig(routing: routing);
+        var rules = config.GetProperty("route").GetProperty("rules").EnumerateArray().ToList();
+
+        Assert.Equal(4, rules.Count);
+        Assert.True(rules[3].TryGetProperty("domain", out _));
+    }
+
     [Fact]
     public void Выключенные_правила_в_конфиг_не_попадают()
     {
@@ -355,9 +391,9 @@ public class ConfigBuilderTests
         var referenced = new List<string>();
 
         foreach (var section in new[] { config.GetProperty("route"), config.GetProperty("dns") })
-        foreach (var rule in section.GetProperty("rules").EnumerateArray())
-            if (rule.TryGetProperty("rule_set", out var sets))
-                referenced.AddRange(sets.EnumerateArray().Select(x => x.GetString()!));
+            foreach (var rule in section.GetProperty("rules").EnumerateArray())
+                if (rule.TryGetProperty("rule_set", out var sets))
+                    referenced.AddRange(sets.EnumerateArray().Select(x => x.GetString()!));
 
         Assert.NotEmpty(referenced);
         Assert.All(referenced, tag => Assert.Contains(tag, declared));

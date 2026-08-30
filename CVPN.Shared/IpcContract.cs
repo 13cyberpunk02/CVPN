@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace CVPN.Ipc;
+namespace CVPN.Shared;
 
 /// <summary>
 /// Общий контракт приложения и службы. Файл включён в оба проекта ссылкой,

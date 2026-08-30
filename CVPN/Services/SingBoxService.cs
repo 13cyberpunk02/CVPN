@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using CVPN.Core;
+using CVPN.Shared;
 
 namespace CVPN.Services;
 

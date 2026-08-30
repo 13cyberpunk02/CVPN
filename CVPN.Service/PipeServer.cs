@@ -3,7 +3,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
-using CVPN.Ipc;
+using CVPN.Shared;
 
 namespace CVPN.Service;
 

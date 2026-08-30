@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace CVPN.Core;
+namespace CVPN.Shared;
 
 /// <summary>
 /// Штатная остановка дочернего консольного процесса.
@@ -17,19 +17,19 @@ public static class ConsoleSignal
     // через SetConsoleCtrlHandler(NULL, TRUE) можно только Ctrl+C.
     // С CTRL_BREAK отправитель завершался вместе с ядром.
     private const uint CtrlCEvent = 0;
- 
+
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool AttachConsole(uint processId);
- 
+
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool FreeConsole();
- 
+
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool SetConsoleCtrlHandler(IntPtr handler, bool add);
- 
+
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool GenerateConsoleCtrlEvent(uint ctrlEvent, uint processGroupId);
- 
+
     /// <summary>
     /// Просит процесс завершиться и ждёт указанное время. Возвращает false,
     /// если он не отреагировал - тогда вызывающему коду остаётся Kill.
@@ -37,17 +37,17 @@ public static class ConsoleSignal
     public static bool TryGracefulStop(Process process, TimeSpan timeout)
     {
         if (!AttachConsole((uint)process.Id)) return false;
- 
+
         var handlerDisabled = false;
- 
+
         try
         {
             // Отключаем собственную реакцию на Ctrl+C до отправки сигнала
             handlerDisabled = SetConsoleCtrlHandler(IntPtr.Zero, true);
             if (!handlerDisabled) return false;
- 
+
             if (!GenerateConsoleCtrlEvent(CtrlCEvent, 0)) return false;
- 
+
             // Ждём здесь, а не снаружи: обработчик должен оставаться отключённым,
             // пока сигнал доставляется, иначе отправитель поймает его сам
             return process.WaitForExit((int)timeout.TotalMilliseconds);

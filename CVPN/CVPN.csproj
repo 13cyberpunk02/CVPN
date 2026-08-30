@@ -23,6 +23,7 @@
         <ProjectReference Include="..\CVPN.Service\CVPN.Service.csproj"
                           ReferenceOutputAssembly="false"
                           Private="false" />
+        <ProjectReference Include="..\CVPN.Shared\CVPN.Shared.csproj" />
     </ItemGroup>
 
     <Target Name="CopyServiceOutput" AfterTargets="Build">

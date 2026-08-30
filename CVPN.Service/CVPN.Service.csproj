@@ -22,8 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\CVPN\Ipc\IpcContract.cs" Link="IpcContract.cs" />
-        <Compile Include="..\CVPN\Core\ConsoleSignal.cs" Link="ConsoleSignal.cs" />
+      <ProjectReference Include="..\CVPN.Shared\CVPN.Shared.csproj" />
     </ItemGroup>
 
 </Project>

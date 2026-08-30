@@ -27,7 +27,7 @@ public partial class ExportWindow : Window
     }
  
     /// <summary>
-    /// PngByteQRCode отдаёт готовый PNG и не тянет System.Drawing — в отличие
+    /// PngByteQRCode отдаёт готовый PNG и не тянет System.Drawing - в отличие
     /// от классического QRCode-рендерера из той же библиотеки.
     /// </summary>
     private static BitmapImage? Render(string payload)
@@ -37,7 +37,7 @@ public partial class ExportWindow : Window
         try
         {
             using var generator = new QRCodeGenerator();
-            // Уровень Q переживает до 25% повреждений — запас на переснятое фото экрана
+            // Уровень Q переживает до 25% повреждений - запас на переснятое фото экрана
             using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
             using var png = new PngByteQRCode(data);
  
@@ -54,7 +54,7 @@ public partial class ExportWindow : Window
         }
         catch (Exception)
         {
-            // Слишком длинная подписка может не поместиться в QR — тогда остаётся текст
+            // Слишком длинная подписка может не поместиться в QR - тогда остаётся текст
             return null;
         }
     }

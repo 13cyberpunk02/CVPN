@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="CVPN.Service/CVPN.Service.csproj" />
+  <Project Path="CVPN.Shared/CVPN.Shared.csproj" />
   <Project Path="CVPN.Tests/CVPN.Tests.csproj" />
   <Project Path="CVPN/CVPN.csproj" />
 </Solution>

@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using CVPN.Ipc;
+using CVPN.Shared;
 
 namespace CVPN.Services;
 
