@@ -80,6 +80,8 @@ public static class ConfigBuilder
                 ["outbounds"] = new JsonArray(servers.Select(x => (JsonNode)tags[x]!).ToArray()),
                 ["url"] = "https://cp.cloudflare.com/generate_204",
                 ["interval"] = "3m",
+                // Меняем сервер, только если новый заметно быстрее - иначе туннель
+                // будет прыгать между узлами с близкой задержкой
                 ["tolerance"] = 50
             });
         }
@@ -92,6 +94,7 @@ public static class ConfigBuilder
             ["tag"] = ProxyTag,
             ["outbounds"] = members,
             ["default"] = settings.AutoSelectFastest && hasAuto ? AutoTag : activeTag,
+            // Живые соединения не рвём: переключение затронет только новые
             ["interrupt_exist_connections"] = false
         });
 
@@ -221,7 +224,7 @@ public static class ConfigBuilder
         var outbound = new JsonObject
         {
             ["type"] = "vless",
-                ["server"] = p.Host,
+            ["server"] = p.Host,
             ["server_port"] = p.Port,
             ["uuid"] = p.Uuid,
             ["tls"] = tls
@@ -547,6 +550,17 @@ public static class ConfigBuilder
     /// В DNS-правило можно перенести только доменные условия: на момент запроса
     /// адрес ещё неизвестен, поэтому geoip и process_name здесь бессмысленны.
     /// </summary>
+    /// <summary>
+    /// В DNS-правило переносятся только те условия, которые заведомо доступны
+    /// на старте ядра.
+    ///
+    /// Удалённые наборы (geosite и rule_set по ссылке) сюда не попадают: на момент
+    /// инициализации DNS-правил файл ещё не скачан, и ядро падает с «rule-set not
+    /// found». Маршруты это переживают - они начинают совпадать после загрузки, -
+    /// а DNS-правила требуют набор сразу.
+    ///
+    /// Локальные наборы переносятся: файл лежит на диске и доступен всегда.
+    /// </summary>
     private static JsonObject? ToDnsRule(RouteRule rule, JsonArray ruleSets, HashSet<string> seen)
     {
         var value = rule.Value.Trim();
@@ -556,13 +570,6 @@ public static class ConfigBuilder
 
         switch (rule.Match)
         {
-            case MatchKind.Geosite:
-            {
-                var tag = $"geosite-{value}";
-                AddRemoteRuleSet(ruleSets, seen, tag, $"{GeositeBase}/{tag}.srs");
-                node["rule_set"] = new JsonArray { tag };
-                break;
-            }
             case MatchKind.Domain:
                 node["domain"] = new JsonArray { value };
                 break;
@@ -572,13 +579,6 @@ public static class ConfigBuilder
             case MatchKind.DomainKeyword:
                 node["domain_keyword"] = new JsonArray { value };
                 break;
-            case MatchKind.RuleSetRemote:
-            {
-                var tag = SetTag(value);
-                AddRemoteRuleSet(ruleSets, seen, tag, value);
-                node["rule_set"] = new JsonArray { tag };
-                break;
-            }
             case MatchKind.RuleSetLocal:
             {
                 var tag = SetTag(value);
@@ -587,7 +587,8 @@ public static class ConfigBuilder
                 break;
             }
             default:
-                // geoip и process_name на этапе резолва неприменимы
+                // geosite и rule_set по ссылке - скачиваются, на старте их ещё нет.
+                // geoip и process_name на этапе резолва неприменимы в принципе.
                 return null;
         }
 

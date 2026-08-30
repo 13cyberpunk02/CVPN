@@ -34,8 +34,12 @@ public sealed class ServerProfile : ObservableObject
     [JsonIgnore]
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
  
-    // Учётные данные протокола
+    // Учётные данные протокола. UUID и пароль - секреты, они шифруются
+    // при записи в файл; остальное восстанавливается из ссылки и тайной не является.
+    [JsonConverter(typeof(ProtectedStringConverter))]
     public string Uuid { get; set; } = "";
+ 
+    [JsonConverter(typeof(ProtectedStringConverter))]
     public string Password { get; set; } = "";
     public string Sni { get; set; } = "";
     public string PublicKey { get; set; } = "";
@@ -45,7 +49,7 @@ public sealed class ServerProfile : ObservableObject
     public string Username { get; set; } = "";
  
     /// <summary>
-    /// Ссылка подписки, из которой пришёл профиль. Пусто — создан вручную.
+    /// Ссылка подписки, из которой пришёл профиль. Пусто - создан вручную.
     /// По этому признаку обновление подписки заменяет только свои профили
     /// и не трогает добавленные руками.
     /// </summary>
@@ -74,7 +78,7 @@ public sealed class ServerProfile : ObservableObject
  
     /// <summary>
     /// В файл пишется только явно заданный код. Пустая строка означает
-    /// «определять автоматически» — иначе догадка застыла бы навсегда
+    /// «определять автоматически» - иначе догадка застыла бы навсегда
     /// и переименование профиля перестало бы на неё влиять.
     /// </summary>
     [JsonPropertyName("CountryCode")]
@@ -135,11 +139,11 @@ public sealed class ServerProfile : ObservableObject
         ProtocolKind.VlessWs => "vless · ws + tls",
         ProtocolKind.AnyTls => "anytls",
         ProtocolKind.Naive => "naive",
-        _ => "—"
+        _ => "-"
     };
  
     [JsonIgnore]
-    public string LatencyLabel => LatencyMs < 0 ? "—" : $"{LatencyMs} ms";
+    public string LatencyLabel => LatencyMs < 0 ? "-" : $"{LatencyMs} ms";
  
     /// <summary>Качество канала для подсветки: unknown · good · fair · poor · dead.</summary>
     [JsonIgnore]

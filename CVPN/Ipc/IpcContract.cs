@@ -39,8 +39,25 @@ public sealed class IpcRequest
 {
     public IpcCommand Command { get; set; }
 
-    /// <summary>Содержимое config.json. Служба сохраняет его сама — путь не принимается.</summary>
+    /// <summary>Содержимое config.json. Служба сохраняет его сама - путь не принимается.</summary>
     public string? Config { get; set; }
+
+    /// <summary>
+    /// Локальные наборы правил, на которые ссылается конфиг. Служба работает
+    /// под SYSTEM и не видит каталог пользователя, поэтому файлы приходится
+    /// передавать вместе с конфигом.
+    /// </summary>
+    public List<RuleSetFile> RuleSets { get; set; } = [];
+}
+
+/// <summary>Файл набора правил, переданный вместе с конфигом.</summary>
+public sealed class RuleSetFile
+{
+    /// <summary>Только имя файла. Путь служба назначает сама.</summary>
+    public required string Name { get; set; }
+
+    /// <summary>Содержимое .srs в base64.</summary>
+    public required string Content { get; set; }
 }
 
 public sealed class IpcResponse

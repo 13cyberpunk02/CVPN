@@ -8,7 +8,7 @@ namespace CVPN.Service;
 ///
 /// Служба работает под LocalSystem, а конфиг приходит от обычного пользователя.
 /// Без этой обработки любой локальный пользователь смог бы заставить SYSTEM
-/// писать файлы куда угодно — например, через experimental.cache_file.path
+/// писать файлы куда угодно - например, через experimental.cache_file.path
 /// или log.output. Поэтому все пути в конфиге переписываются на служебные,
 /// а ссылки на локальные файлы разрешены только внутри каталога службы.
 /// </summary>
@@ -27,7 +27,7 @@ public static class ConfigSanitizer
         return root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
     }
 
-    /// <summary>Вывод только в stdout: файл лога — это запись по произвольному пути.</summary>
+    /// <summary>Вывод только в stdout: файл лога - это запись по произвольному пути.</summary>
     private static void ForceLog(JsonObject root)
     {
         if (root["log"] is not JsonObject log)
@@ -47,7 +47,14 @@ public static class ConfigSanitizer
             cache["path"] = Path.Combine(dataDir, "cache.db");
     }
 
-    /// <summary>Локальные наборы правил читаются только из каталога службы.</summary>
+    /// <summary>
+    /// Локальные наборы читаются только из каталога службы. Путь от клиента
+    /// не принимается вовсе: берётся одно имя файла, и набор остаётся, только
+    /// если такой файл действительно лежит у нас.
+    ///
+    /// Если набор отброшен, ссылки на него убираются и из правил - иначе ядро
+    /// падает с «rule-set not found» при инициализации.
+    /// </summary>
     private static void RestrictRuleSets(JsonObject root, string dataDir)
     {
         if (root["route"] is not JsonObject route) return;
@@ -55,6 +62,7 @@ public static class ConfigSanitizer
 
         var rulesDir = Path.Combine(dataDir, "rules");
         var kept = new JsonArray();
+        var dropped = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var node in sets.ToList())
         {
@@ -62,14 +70,20 @@ public static class ConfigSanitizer
 
             sets.Remove(node);
 
+            var tag = set["tag"]?.GetValue<string>() ?? "";
+
             if (set["type"]?.GetValue<string>() == "local")
             {
-                var path = set["path"]?.GetValue<string>() ?? "";
-                var full = Path.GetFullPath(path);
+                // Только имя файла: так «..\..\windows\evil.srs» превращается
+                // в «evil.srs» и никуда за пределы каталога не уводит
+                var name = Path.GetFileName(set["path"]?.GetValue<string>() ?? "");
+                var full = Path.Combine(rulesDir, name);
 
-                // Выход за пределы каталога — набор отбрасывается целиком
-                if (!full.StartsWith(rulesDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                if (name.Length == 0 || !File.Exists(full))
+                {
+                    if (tag.Length > 0) dropped.Add(tag);
                     continue;
+                }
 
                 set["path"] = full;
             }
@@ -78,6 +92,48 @@ public static class ConfigSanitizer
         }
 
         route["rule_set"] = kept;
+
+        if (dropped.Count > 0) RemoveReferences(root, dropped);
+    }
+
+    /// <summary>Убирает из правил ссылки на наборы, которых нет.</summary>
+    private static void RemoveReferences(JsonObject root, HashSet<string> dropped)
+    {
+        foreach (var section in new[] { "route", "dns" })
+        {
+            if (root[section] is not JsonObject node) continue;
+            if (node["rules"] is not JsonArray rules) continue;
+
+            var kept = new JsonArray();
+
+            foreach (var item in rules.ToList())
+            {
+                rules.Remove(item);
+
+                if (item is not JsonObject rule) continue;
+
+                if (rule["rule_set"] is JsonArray tags)
+                {
+                    var remaining = new JsonArray();
+
+                    foreach (var tag in tags.ToList())
+                    {
+                        tags.Remove(tag);
+
+                        if (!dropped.Contains(tag?.GetValue<string>() ?? "")) remaining.Add(tag);
+                    }
+
+                    // У правила не осталось условий - оно совпало бы со всем подряд
+                    if (remaining.Count == 0) continue;
+
+                    rule["rule_set"] = remaining;
+                }
+
+                kept.Add(rule);
+            }
+
+            node["rules"] = kept;
+        }
     }
 
     /// <summary>API остаётся на петле: наружу его выставлять незачем.</summary>

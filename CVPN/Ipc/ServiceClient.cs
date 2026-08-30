@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace CVPN.Ipc;
 
 /// <summary>
-/// Клиент службы туннеля. Каждая команда — отдельное подключение к каналу:
+/// Клиент службы туннеля. Каждая команда - отдельное подключение к каналу:
 /// служба может перезапуститься, и держать соединение постоянно бессмысленно.
 /// </summary>
 public static class ServiceClient
@@ -42,15 +42,17 @@ public static class ServiceClient
         }
     }
 
-    /// <summary>Быстрая проверка доступности — короткий таймаут, чтобы не тормозить запуск.</summary>
+    /// <summary>Быстрая проверка доступности - короткий таймаут, чтобы не тормозить запуск.</summary>
     public static async Task<bool> IsAvailableAsync()
     {
         var response = await SendAsync(new IpcRequest { Command = IpcCommand.Ping }, timeoutMs: 1200);
         return response?.Ok == true;
     }
 
-    public static Task<IpcResponse?> StartAsync(string config) =>
-        SendAsync(new IpcRequest { Command = IpcCommand.Start, Config = config }, timeoutMs: 20000);
+    public static Task<IpcResponse?> StartAsync(string config, List<RuleSetFile> ruleSets) =>
+        SendAsync(
+            new IpcRequest { Command = IpcCommand.Start, Config = config, RuleSets = ruleSets },
+            timeoutMs: 30000);
 
     public static Task<IpcResponse?> StopAsync() =>
         SendAsync(new IpcRequest { Command = IpcCommand.Stop });

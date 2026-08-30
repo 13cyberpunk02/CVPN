@@ -27,7 +27,7 @@ public sealed class RouteRule : ObservableObject
         MatchKind.Process => "process_name",
         MatchKind.RuleSetRemote => "rule_set · ссылка",
         MatchKind.RuleSetLocal => "rule_set · файл",
-        _ => "—"
+        _ => "-"
     };
  
     /// <summary>Для .srs в списке показываем имя набора: путь и ссылка не влезают в строку.</summary>
@@ -52,6 +52,6 @@ public sealed class RouteRule : ObservableObject
         RouteAction.Proxy => "через прокси",
         RouteAction.Direct => "напрямую",
         RouteAction.Block => "блокировать",
-        _ => "—"
+        _ => "-"
     };
 }

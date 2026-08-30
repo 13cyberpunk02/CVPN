@@ -64,7 +64,11 @@ public sealed class AppSettings : ObservableObject
     /// <summary>Подключаться к последнему профилю сразу после запуска.</summary>
     public bool AutoConnect { get => _autoConnect; set => Set(ref _autoConnect, value); }
  
-    /// <summary>Ссылка на подписку со списком серверов.</summary>
+    /// <summary>
+    /// Ссылка на подписку. Шифруется вместе с остальными секретами: в панелях
+    /// её обычно выдают с токеном доступа прямо в адресе.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(ProtectedStringConverter))]
     public string SubscriptionUrl { get => _subscriptionUrl; set => Set(ref _subscriptionUrl, value); }
  
     /// <summary>Ядро само держит соединение на быстрейшем сервере и перепроверяет раз в три минуты.</summary>

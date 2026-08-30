@@ -8,23 +8,34 @@ namespace CVPN.Services;
 
 public static class ProfileStore
 {
+    /// <summary>Заполняется при загрузке, если часть секретов не расшифровалась.</summary>
+    public static string LastLoadWarning { get; private set; } = "";
+
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
         Converters = { new JsonStringEnumConverter() },
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
- 
+
     public static StoredState Load()
     {
         try
         {
             if (!File.Exists(AppPaths.ProfilesFile)) return Seed();
- 
+
+            Core.Secret.ResetFailures();
+
             var json = File.ReadAllText(AppPaths.ProfilesFile);
             var state = JsonSerializer.Deserialize<StoredState>(json, Options) ?? Seed();
             state.Migrate();
- 
+
+            // Файл перенесли с другой машины или из другой учётной записи:
+            // DPAPI привязан к пользователю, и секреты стали нечитаемыми
+            if (Core.Secret.FailureCount > 0)
+                LastLoadWarning = $"Не удалось расшифровать значений: {Core.Secret.FailureCount}. " +
+                                  "Учётные данные придётся ввести заново.";
+
             return state;
         }
         catch
@@ -33,13 +44,13 @@ public static class ProfileStore
             return Seed();
         }
     }
- 
+
     public static void Save(StoredState state)
     {
         AppPaths.EnsureCreated();
         File.WriteAllText(AppPaths.ProfilesFile, JsonSerializer.Serialize(state, Options));
     }
- 
+
     /// <summary>Набор правил, с которого разумно начинать: реклама в блок, частные адреса напрямую.</summary>
     private static StoredState Seed()
     {
@@ -58,7 +69,7 @@ public static class ProfileStore
                 }
             ]
         };
- 
+
         state.Migrate();
         return state;
     }
