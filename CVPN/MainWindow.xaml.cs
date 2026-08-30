@@ -132,7 +132,7 @@ public partial class MainWindow : Window
             "routing" => Vm?.RoutingPage,
             "connections" => Vm?.ConnectionsPage,
             "logs" => Vm?.LogsPage,
-            "settings" => new SettingsView(),
+            "settings" => Vm?.SettingsPage,
             _ => new ConnectionView()
         };
     }

@@ -39,9 +39,6 @@ public sealed class MainViewModel : ObservableObject
     private string _uploadUnit = "КБ/с";
     private string _singBoxVersion = "ядро не найдено";
     private string _status = "";
-    private string _serviceStatus = "проверка…";
-    private string _taskStatus = "";
-    private ReleaseInfo? _update;
 
     public MainViewModel()
     {
@@ -66,22 +63,15 @@ public sealed class MainViewModel : ObservableObject
         LogsPage = new LogsViewModel(this);
         RoutingPage = new RoutingViewModel(this);
         ProfilesPage = new ProfilesViewModel(this);
+        SettingsPage = new SettingsViewModel(this);
 
         SubscribeRules();
 
         ToggleConnection = new RelayCommand(async () => await ToggleAsync());
 
 
-        BrowseCore = new RelayCommand(PickCore);
         OpenConfig = new RelayCommand(ShowGeneratedConfig);
-        InstallService = new RelayCommand(InstallTunnelService);
-        UninstallService = new RelayCommand(UninstallTunnelService);
-        InstallTask = new RelayCommand(InstallElevatedTask);
-        UninstallTask = new RelayCommand(UninstallElevatedTask);
         MeasureDelay = new RelayCommand(async () => await MeasureAsync(), () => IsConnected);
-        RestoreNetwork = new RelayCommand(async () => await RestoreNetworkAsync());
-        CheckUpdate = new RelayCommand(async () => await CheckUpdateAsync(manual: true));
-        OpenRelease = new RelayCommand(OpenReleasePage, () => Update is not null);
         CheckConfig = new RelayCommand(async () => await CheckAsync());
 
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -103,18 +93,9 @@ public sealed class MainViewModel : ObservableObject
         }
 
         _ = DetectCoreAsync();
-        _ = RefreshServiceStatusAsync();
-        RefreshTaskStatus();
         ReportMissingFlags();
 
-        if (Settings.CheckUpdates)
-        {
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(TimeSpan.FromSeconds(5));
-                await CheckUpdateAsync(manual: false);
-            });
-        }
+        _ = SettingsPage.StartupCheckAsync();
     }
 
     public ObservableCollection<ServerProfile> Profiles { get; }
@@ -129,6 +110,7 @@ public sealed class MainViewModel : ObservableObject
 
     public LogsViewModel LogsPage { get; }
     public ProfilesViewModel ProfilesPage { get; }
+    public SettingsViewModel SettingsPage { get; }
 
     public ObservableCollection<RoutingProfile> RoutingProfiles { get; }
 
@@ -166,16 +148,8 @@ public sealed class MainViewModel : ObservableObject
     public AppSettings Settings { get; }
 
     public ICommand ToggleConnection { get; }
-    public ICommand BrowseCore { get; }
     public ICommand OpenConfig { get; }
-    public ICommand InstallService { get; }
-    public ICommand UninstallService { get; }
-    public ICommand InstallTask { get; }
-    public ICommand UninstallTask { get; }
     public ICommand MeasureDelay { get; }
-    public ICommand RestoreNetwork { get; }
-    public ICommand CheckUpdate { get; }
-    public ICommand OpenRelease { get; }
     public ICommand CheckConfig { get; }
 
     // ===================== состояние =====================
@@ -305,38 +279,6 @@ public sealed class MainViewModel : ObservableObject
         get => _status;
         private set => Set(ref _status, value);
     }
-
-    /// <summary>Состояние службы для страницы настроек.</summary>
-    public string ServiceStatus
-    {
-        get => _serviceStatus;
-        private set => Set(ref _serviceStatus, value);
-    }
-
-    /// <summary>Состояние задачи планировщика.</summary>
-    public string TaskStatus
-    {
-        get => _taskStatus;
-        private set => Set(ref _taskStatus, value);
-    }
-
-    /// <summary>Найденное обновление; null - установлена последняя версия.</summary>
-    public ReleaseInfo? Update
-    {
-        get => _update;
-        private set
-        {
-            Set(ref _update, value);
-            Raise(nameof(HasUpdate));
-            Raise(nameof(UpdateLabel));
-        }
-    }
-
-    public bool HasUpdate => Update is not null;
-
-    public string UpdateLabel => Update is null
-        ? $"установлена версия {UpdateChecker.CurrentVersion.ToString(3)}"
-        : $"доступна версия {Update.Version}";
 
     public int ActiveRuleCount => Rules.Count(r => r.Enabled);
 
@@ -569,6 +511,9 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>Перечитать версию ядра - например, после смены пути.</summary>
+    public void RefreshCoreVersion() => _ = DetectCoreAsync();
+
     private async Task DetectCoreAsync()
     {
         if (!File.Exists(Settings.CorePath))
@@ -776,144 +721,6 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-
-    private void PickCore()
-    {
-        var dialog = new OpenFileDialog
-        {
-            Title = "Укажите sing-box.exe",
-            Filter = "sing-box (sing-box.exe)|sing-box.exe|Исполняемые файлы (*.exe)|*.exe",
-            CheckFileExists = true,
-            InitialDirectory = Directory.Exists(Path.GetDirectoryName(Settings.CorePath) ?? "")
-                ? Path.GetDirectoryName(Settings.CorePath)!
-                : AppContext.BaseDirectory
-        };
-
-        if (dialog.ShowDialog() != true) return;
-
-        Settings.CorePath = dialog.FileName;
-        Persist();
-        _ = DetectCoreAsync();
-        Status = "";
-    }
-
-    /// <summary>
-    /// Аварийная кнопка: снимает правила брандмауэра, если что-то пошло не так
-    /// и интернет пропал вместе с туннелем.
-    /// </summary>
-    private async Task RestoreNetworkAsync()
-    {
-        var problem = await KillSwitch.DisableAsync();
-
-        Status = problem.Length > 0
-            ? $"Не удалось снять правила: {problem}"
-            : "Правила брандмауэра сняты, сеть восстановлена";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-    }
-
-    // ===================== обновления =====================
-
-    private async Task CheckUpdateAsync(bool manual)
-    {
-        var release = await UpdateChecker.CheckAsync();
-
-        Dispatch(() =>
-        {
-            Update = release;
-
-            if (release is not null)
-            {
-                Append($"[cvpn] доступна версия {release.Version}");
-                Status = $"Доступна версия {release.Version} - откройте страницу релиза";
-            }
-            else if (manual)
-            {
-                // При автоматической проверке молчим: сообщать «обновлений нет»
-                // на каждом запуске - лишний шум
-                Status = "Установлена последняя версия";
-            }
-        });
-    }
-
-    private void OpenReleasePage()
-    {
-        if (Update is null) return;
-
-        try
-        {
-            Process.Start(new ProcessStartInfo(Update.Url) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            Status = $"Не удалось открыть страницу: {ex.Message}";
-        }
-    }
-
-    // ===================== служба и задача =====================
-
-    private async Task RefreshServiceStatusAsync()
-    {
-        ServiceStatus = await ServiceClient.IsAvailableAsync()
-            ? "служба установлена и отвечает"
-            : ServiceInstaller.IsInstalledOnDisk
-                ? "служба не установлена - нажмите «Установить службу»"
-                : $"файлы службы не найдены: {ServiceInstaller.ExecutablePath}";
-    }
-
-    private void RefreshTaskStatus()
-    {
-        if (!ElevatedTask.Exists)
-        {
-            TaskStatus = "задача не создана - при включении TUN появится окно UAC";
-            return;
-        }
-
-        TaskStatus = ElevatedTask.PathMatchesCurrent()
-            ? "задача создана - права выдаются без запроса"
-            : "задача указывает на другой файл - пересоздайте её";
-    }
-
-    private void InstallElevatedTask()
-    {
-        Status = ElevatedTask.Install(Settings.AutoStart, out var error)
-            ? "Задача планировщика создана"
-            : $"Не удалось создать задачу: {error}";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-        RefreshTaskStatus();
-    }
-
-    private void UninstallElevatedTask()
-    {
-        Status = ElevatedTask.Uninstall(out var error)
-            ? "Задача планировщика удалена"
-            : $"Не удалось удалить задачу: {error}";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-        RefreshTaskStatus();
-    }
-
-    private void InstallTunnelService()
-    {
-        Status = ServiceInstaller.Install(out var error)
-            ? "Служба установлена"
-            : $"Не удалось установить службу: {error}";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-        _ = RefreshServiceStatusAsync();
-    }
-
-    private void UninstallTunnelService()
-    {
-        Status = ServiceInstaller.Uninstall(out var error)
-            ? "Служба удалена"
-            : $"Не удалось удалить службу: {error}";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-        _ = RefreshServiceStatusAsync();
-    }
-
     /// <summary>Автоподключение при старте - вызывается окном после загрузки.</summary>
     public async Task StartupAsync()
     {
@@ -1036,11 +843,9 @@ public sealed class MainViewModel : ObservableObject
 
         Append($"[cvpn] сборка {version} · {Environment.ProcessPath}");
 
-        if (ElevatedTask.Exists && !ElevatedTask.PathMatchesCurrent())
-        {
-            Append($"[cvpn] внимание: задача планировщика запускает другой файл - {ElevatedTask.RegisteredPath()}");
-            Append("[cvpn] пересоздайте задачу в настройках, иначе изменения не применятся");
-        }
+        if (!ElevatedTask.Exists || ElevatedTask.PathMatchesCurrent()) return;
+        Append($"[cvpn] внимание: задача планировщика запускает другой файл - {ElevatedTask.RegisteredPath()}");
+        Append("[cvpn] пересоздайте задачу в настройках, иначе изменения не применятся");
     }
 
     /// <summary>Отметка о нажатии на круг - для диагностики привязок.</summary>

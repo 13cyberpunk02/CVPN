@@ -31,6 +31,10 @@
         <DataTemplate DataType="{x:Type vm:ProfilesViewModel}">
             <views:ProfilesView />
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
     </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>

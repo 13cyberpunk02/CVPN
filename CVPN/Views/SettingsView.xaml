@@ -5,7 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CVPN.ViewModels"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
+             d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel, IsDesignTimeCreatable=False}">
 
     <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
@@ -43,7 +43,7 @@
                             <StackPanel>
                                 <TextBlock Text="Режим TUN" Style="{StaticResource T.Body}" />
                                 <TextBlock
-                                    Text="Перехватывает весь системный трафик. Требует прав администратора - CVPN предложит перезапуск."
+                                    Text="Перехватывает весь системный трафик. Требует прав администратора — CVPN предложит перезапуск."
                                     Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
                             </StackPanel>
                             <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.TunEnabled}"
@@ -74,7 +74,7 @@
                                     Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
                                     MaxWidth="380" HorizontalAlignment="Left" />
                                 <TextBlock
-                                    Text="Если приложение завершится аварийно, правила снимутся при следующем запуске. Кнопка ниже - на случай, когда интернет нужен прямо сейчас."
+                                    Text="Если приложение завершится аварийно, правила снимутся при следующем запуске. Кнопка ниже — на случай, когда интернет нужен прямо сейчас."
                                     Style="{StaticResource T.Caption}" Margin="0,5,0,0" TextWrapping="Wrap"
                                     MaxWidth="380" HorizontalAlignment="Left"
                                     Foreground="{StaticResource Warning}" />
@@ -249,7 +249,7 @@
                                  Text="{Binding Settings.RemoteDns, UpdateSourceTrigger=PropertyChanged}"
                                  Margin="0,8,0,0" />
                         <TextBlock
-                            Text="Запросы вне правил уходят на этот резолвер через туннель. Схема задаёт транспорт: https:// (DoH, по 443 - надёжнее всего), tls:// (DoT, порт 853 часто блокируется), quic://, udp://."
+                            Text="Запросы вне правил уходят на этот резолвер через туннель. Схема задаёт транспорт: https:// (DoH, по 443 — надёжнее всего), tls:// (DoT, порт 853 часто блокируется), quic://, udp://."
                             Style="{StaticResource T.Caption}" Margin="0,8,0,0" />
                     </StackPanel>
                 </Border>
