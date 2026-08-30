@@ -6,9 +6,9 @@
              xmlns:models="clr-namespace:CVPN.Models"
              xmlns:vm="clr-namespace:CVPN.ViewModels"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
-    
-     <Grid Margin="28,22,28,24">
+             d:DataContext="{d:DesignInstance Type=vm:ConnectionsViewModel, IsDesignTimeCreatable=False}">
+
+    <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -71,7 +71,8 @@
                                                 <Setter Property="Background" Value="{StaticResource Tint.Accent}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsDirect}" Value="True">
-                                                        <Setter Property="Background" Value="{StaticResource Tint.Connected}" />
+                                                        <Setter Property="Background"
+                                                                Value="{StaticResource Tint.Connected}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -83,7 +84,8 @@
                                                     <Setter Property="Foreground" Value="{StaticResource Accent}" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsDirect}" Value="True">
-                                                            <Setter Property="Foreground" Value="{StaticResource Connected}" />
+                                                            <Setter Property="Foreground"
+                                                                    Value="{StaticResource Connected}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -114,6 +116,8 @@
                                            Margin="0,3,0,0" />
                             </StackPanel>
 
+                            <!-- Внутри DataTemplate контекст — ConnectionInfo, поэтому
+                                 до команд страницы добираемся через RelativeSource -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Content="Напрямую" Style="{StaticResource Btn.Ghost}" Padding="9,5"
                                         ToolTip="Добавить правило: домен пойдёт мимо туннеля"
@@ -137,5 +141,4 @@
             </ListBox.ItemTemplate>
         </ListBox>
     </Grid>
-    
 </UserControl>

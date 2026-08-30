@@ -8,9 +8,18 @@
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
         TextOptions.TextFormattingMode="Ideal">
 
-     <Window.DataContext>
+    <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
+
+    <Window.Resources>
+        <!-- Страница задаётся вьюмоделью, разметку WPF подбирает по типу.
+             Так состояние страницы переживает переходы: пересоздаётся
+             только визуальное дерево. -->
+        <DataTemplate DataType="{x:Type vm:ConnectionsViewModel}">
+            <views:ConnectionsView />
+        </DataTemplate>
+    </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="38" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0" />
@@ -65,7 +74,8 @@
 
                             <StackPanel Grid.Row="0" Margin="0,12,0,0">
                                 <RadioButton x:Name="NavConnection" Style="{StaticResource NavItem}"
-                                             Content="Соединение" IsChecked="True" Checked="OnNavChanged" Tag="connection" />
+                                             Content="Соединение" IsChecked="True" Checked="OnNavChanged"
+                                             Tag="connection" />
                                 <RadioButton Style="{StaticResource NavItem}" Content="Профили"
                                              Checked="OnNavChanged" Tag="profiles" />
                                 <RadioButton Style="{StaticResource NavItem}" Content="Маршруты"
@@ -136,7 +146,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- ============ Страница ============ -->
                     <ContentControl x:Name="PageHost" Grid.Column="1">
                         <views:ConnectionView />
                     </ContentControl>

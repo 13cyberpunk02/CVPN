@@ -8,8 +8,8 @@ public partial class ConnectionsView : UserControl
     public ConnectionsView()
     {
         InitializeComponent();
-        Loaded += (_, _) => (DataContext as MainViewModel)?.StartWatchingConnections();
-        Unloaded += (_, _) => (DataContext as MainViewModel)?.StopWatchingConnections();
-    }
 
+        Loaded += (_, _) => (DataContext as PageViewModel)?.Activate();
+        Unloaded += (_, _) => (DataContext as PageViewModel)?.Deactivate();
+    }
 }

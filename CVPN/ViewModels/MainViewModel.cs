@@ -26,7 +26,6 @@ public sealed class MainViewModel : ObservableObject
     private bool _adapterErrorSeen;
     private bool _adapterRetryUsed;
     private DispatcherTimer? _serviceLogTimer;
-    private DispatcherTimer? _connectionsTimer;
     private bool _busy;
     private RoutingProfile _routing;
     private ClashApiClient? _stats;
@@ -64,6 +63,8 @@ public sealed class MainViewModel : ObservableObject
         Profiles.CollectionChanged += (_, _) => Active ??= Profiles.FirstOrDefault();
 
         Settings.PropertyChanged += (_, _) => RaiseMode();
+
+        ConnectionsPage = new ConnectionsViewModel(this);
 
         SubscribeRules();
 
@@ -108,18 +109,6 @@ public sealed class MainViewModel : ObservableObject
             if (p is ServerProfile sp) ShowExport(sp);
         });
         ExportAll = new RelayCommand(ShowExportAll, () => Profiles.Count > 0);
-        RuleDirect = new RelayCommand(p =>
-        {
-            if (p is ConnectionInfo c) AddRuleFor(c, RouteAction.Direct);
-        });
-        RuleBlock = new RelayCommand(p =>
-        {
-            if (p is ConnectionInfo c) AddRuleFor(c, RouteAction.Block);
-        });
-        CloseConnection = new RelayCommand(p =>
-        {
-            if (p is ConnectionInfo c) _ = CloseAsync(c);
-        });
         InstallService = new RelayCommand(InstallTunnelService);
         UninstallService = new RelayCommand(UninstallTunnelService);
         InstallTask = new RelayCommand(InstallElevatedTask);
@@ -169,6 +158,13 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public ObservableCollection<ServerProfile> Profiles { get; }
+
+    /// <summary>
+    /// Страница соединений. Экземпляр один: навигация пересоздаёт разметку,
+    /// но состояние страницы должно переживать переходы.
+    /// </summary>
+    public ConnectionsViewModel ConnectionsPage { get; }
+
     public ObservableCollection<RoutingProfile> RoutingProfiles { get; }
 
     /// <summary>Правила активного набора. При смене набора коллекция подменяется целиком.</summary>
@@ -202,8 +198,6 @@ public sealed class MainViewModel : ObservableObject
     public ObservableCollection<string> Log { get; } = [];
 
     /// <summary>Живые соединения. Обновляются, пока открыта страница «Соединения».</summary>
-    public ObservableCollection<ConnectionInfo> Connections { get; } = [];
-
     public AppSettings Settings { get; }
 
     public ICommand ToggleConnection { get; }
@@ -221,9 +215,6 @@ public sealed class MainViewModel : ObservableObject
     public ICommand RemoveRouting { get; }
     public ICommand ExportProfile { get; }
     public ICommand ExportAll { get; }
-    public ICommand RuleDirect { get; }
-    public ICommand RuleBlock { get; }
-    public ICommand CloseConnection { get; }
     public ICommand InstallService { get; }
     public ICommand UninstallService { get; }
     public ICommand InstallTask { get; }
@@ -255,6 +246,19 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public bool IsConnected => State == TunnelState.Connected;
+
+    /// <summary>
+    /// Доступ к Clash API для страниц. Временный мостик: состояние туннеля
+    /// просится в отдельный сервис, но пока живёт здесь.
+    /// </summary>
+    public ClashApiClient? Api => _stats;
+
+    /// <summary>Сообщение в строке состояния и в логе - общая точка для страниц.</summary>
+    public void Notify(string message)
+    {
+        Status = message;
+        Append($"[cvpn] {message.ToLowerInvariant()}");
+    }
 
     /// <summary>Идёт долгая операция: пинг всех серверов или загрузка подписки.</summary>
     public bool IsBusy
@@ -586,8 +590,6 @@ public sealed class MainViewModel : ObservableObject
                 : "[cvpn] kill switch снят");
         }
 
-        StopWatchingConnections();
-        Connections.Clear();
         _sessionTun = null;
         RaiseMode();
 
@@ -1293,79 +1295,6 @@ public sealed class MainViewModel : ObservableObject
 
         Append($"[cvpn] {Status.ToLowerInvariant()}");
         _ = RefreshServiceStatusAsync();
-    }
-
-    // ===================== соединения =====================
-
-    /// <summary>
-    /// Опрос запускается при открытии страницы и останавливается при уходе:
-    /// держать его постоянно незачем, а секунда - предел, за которым список
-    /// уже не воспринимается как живой.
-    /// </summary>
-    public void StartWatchingConnections()
-    {
-        if (_connectionsTimer is not null) return;
-
-        _connectionsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _connectionsTimer.Tick += async (_, _) => await RefreshConnectionsAsync();
-        _connectionsTimer.Start();
-
-        _ = RefreshConnectionsAsync();
-    }
-
-    public void StopWatchingConnections()
-    {
-        _connectionsTimer?.Stop();
-        _connectionsTimer = null;
-    }
-
-    private async Task RefreshConnectionsAsync()
-    {
-        if (_stats is null || !IsConnected)
-        {
-            if (Connections.Count > 0) Connections.Clear();
-            return;
-        }
-
-        var fresh = await _stats.GetConnectionsAsync();
-
-        // Список перерисовывается целиком: соединения живут секунды,
-        // и точечная синхронизация тут дороже полной замены
-        Connections.Clear();
-
-        foreach (var item in fresh.OrderByDescending(c => c.Download + c.Upload))
-            Connections.Add(item);
-    }
-
-    /// <summary>
-    /// Правило прямо из списка соединений - ради этого страница и нужна:
-    /// увидел домен не в том выходе, тут же его и починил.
-    /// </summary>
-    private void AddRuleFor(ConnectionInfo connection, RouteAction action)
-    {
-        var domain = connection.RuleCandidate;
-
-        if (Rules.Any(r => r.Match == MatchKind.DomainSuffix && r.Value == domain))
-        {
-            Status = $"Правило для {domain} уже есть";
-            return;
-        }
-
-        AddRule(MatchKind.DomainSuffix, domain, action);
-
-        Status = action == RouteAction.Block
-            ? $"{domain} добавлен в блок. Применится после переподключения."
-            : $"{domain} пойдёт напрямую. Применится после переподключения.";
-
-        Append($"[cvpn] {Status.ToLowerInvariant()}");
-    }
-
-    private async Task CloseAsync(ConnectionInfo connection)
-    {
-        if (_stats is null) return;
-
-        await _stats.CloseConnectionAsync(connection.Id);
-        await RefreshConnectionsAsync();
     }
 
     /// <summary>
