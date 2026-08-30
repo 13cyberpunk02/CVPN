@@ -128,7 +128,7 @@ public partial class MainWindow : Window
         // создаются напрямую и своё состояние при переходе теряют.
         PageHost.Content = tag switch
         {
-            "profiles" => new ProfilesView(),
+            "profiles" => Vm?.ProfilesPage,
             "routing" => Vm?.RoutingPage,
             "connections" => Vm?.ConnectionsPage,
             "logs" => Vm?.LogsPage,

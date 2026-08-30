@@ -27,6 +27,10 @@
         <DataTemplate DataType="{x:Type vm:RoutingViewModel}">
             <views:RoutingView />
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ProfilesViewModel}">
+            <views:ProfilesView />
+        </DataTemplate>
     </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
@@ -115,6 +119,7 @@
                                                 </Style>
                                             </Ellipse.Style>
                                         </Ellipse>
+
                                         <TextBlock Text="{Binding ModeTitle}" HorizontalAlignment="Left">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock" BasedOn="{StaticResource T.Body}">

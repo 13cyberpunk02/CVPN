@@ -26,7 +26,6 @@ public sealed class MainViewModel : ObservableObject
     private bool _adapterErrorSeen;
     private bool _adapterRetryUsed;
     private DispatcherTimer? _serviceLogTimer;
-    private bool _busy;
     private RoutingProfile _routing;
     private ClashApiClient? _stats;
     private DateTime _connectedAt;
@@ -39,7 +38,6 @@ public sealed class MainViewModel : ObservableObject
     private string _downloadUnit = "КБ/с";
     private string _uploadUnit = "КБ/с";
     private string _singBoxVersion = "ядро не найдено";
-    private string _importLink = "";
     private string _status = "";
     private string _serviceStatus = "проверка…";
     private string _taskStatus = "";
@@ -67,40 +65,20 @@ public sealed class MainViewModel : ObservableObject
         ConnectionsPage = new ConnectionsViewModel(this);
         LogsPage = new LogsViewModel(this);
         RoutingPage = new RoutingViewModel(this);
+        ProfilesPage = new ProfilesViewModel(this);
 
         SubscribeRules();
 
         ToggleConnection = new RelayCommand(async () => await ToggleAsync());
-        ImportLink = new RelayCommand(Import);
-        RemoveProfile = new RelayCommand(p =>
-        {
-            if (p is ServerProfile sp) DeleteProfile(sp);
-        });
-        
-        SelectProfile = new RelayCommand(p =>
-        {
-            if (p is ServerProfile sp) _ = SelectServerAsync(sp);
-        });
-        ImportFile = new RelayCommand(ImportFromFile);
-        CreateProfile = new RelayCommand(() => EditProfile(null));
-        EditProfileCommand = new RelayCommand(p =>
-        {
-            if (p is ServerProfile sp) EditProfile(sp);
-        });
+
+
         BrowseCore = new RelayCommand(PickCore);
         OpenConfig = new RelayCommand(ShowGeneratedConfig);
-        ExportProfile = new RelayCommand(p =>
-        {
-            if (p is ServerProfile sp) ShowExport(sp);
-        });
-        ExportAll = new RelayCommand(ShowExportAll, () => Profiles.Count > 0);
         InstallService = new RelayCommand(InstallTunnelService);
         UninstallService = new RelayCommand(UninstallTunnelService);
         InstallTask = new RelayCommand(InstallElevatedTask);
         UninstallTask = new RelayCommand(UninstallElevatedTask);
         MeasureDelay = new RelayCommand(async () => await MeasureAsync(), () => IsConnected);
-        PingAll = new RelayCommand(async () => await PingAllAsync(), () => !IsBusy);
-        UpdateSubscription = new RelayCommand(async () => await UpdateSubscriptionAsync(), () => !IsBusy);
         RestoreNetwork = new RelayCommand(async () => await RestoreNetworkAsync());
         CheckUpdate = new RelayCommand(async () => await CheckUpdateAsync(manual: true));
         OpenRelease = new RelayCommand(OpenReleasePage, () => Update is not null);
@@ -146,10 +124,11 @@ public sealed class MainViewModel : ObservableObject
     /// но состояние страницы должно переживать переходы.
     /// </summary>
     public ConnectionsViewModel ConnectionsPage { get; }
-    
+
     public RoutingViewModel RoutingPage { get; }
 
     public LogsViewModel LogsPage { get; }
+    public ProfilesViewModel ProfilesPage { get; }
 
     public ObservableCollection<RoutingProfile> RoutingProfiles { get; }
 
@@ -187,23 +166,13 @@ public sealed class MainViewModel : ObservableObject
     public AppSettings Settings { get; }
 
     public ICommand ToggleConnection { get; }
-    public ICommand ImportLink { get; }
-    public ICommand RemoveProfile { get; }
-    public ICommand ImportFile { get; }
-    public ICommand CreateProfile { get; }
-    public ICommand EditProfileCommand { get; }
     public ICommand BrowseCore { get; }
     public ICommand OpenConfig { get; }
-    public ICommand ExportProfile { get; }
-    public ICommand ExportAll { get; }
     public ICommand InstallService { get; }
     public ICommand UninstallService { get; }
     public ICommand InstallTask { get; }
     public ICommand UninstallTask { get; }
     public ICommand MeasureDelay { get; }
-    public ICommand PingAll { get; }
-    public ICommand UpdateSubscription { get; }
-    public ICommand SelectProfile { get; }
     public ICommand RestoreNetwork { get; }
     public ICommand CheckUpdate { get; }
     public ICommand OpenRelease { get; }
@@ -236,13 +205,6 @@ public sealed class MainViewModel : ObservableObject
     {
         Status = message;
         Append($"[cvpn] {message.ToLowerInvariant()}");
-    }
-
-    /// <summary>Идёт долгая операция: пинг всех серверов или загрузка подписки.</summary>
-    public bool IsBusy
-    {
-        get => _busy;
-        private set => Set(ref _busy, value);
     }
 
     // ===================== режим сессии =====================
@@ -337,11 +299,6 @@ public sealed class MainViewModel : ObservableObject
         private set => Set(ref _singBoxVersion, value);
     }
 
-    public string LinkText
-    {
-        get => _importLink;
-        set => Set(ref _importLink, value);
-    }
 
     public string Status
     {
@@ -779,30 +736,6 @@ public sealed class MainViewModel : ObservableObject
         return ((bytesPerSecond / kb).ToString("0.0"), "КБ/с");
     }
 
-    // ===================== профили и правила =====================
-
-    private void Import()
-    {
-        if (!LinkParser.TryParse(LinkText, out var profile, out var error))
-        {
-            Status = error;
-            return;
-        }
-
-        Profiles.Add(profile);
-        Active ??= profile;
-        LinkText = "";
-        Status = $"Профиль «{profile.Name}» добавлен";
-        Persist();
-    }
-
-    private void DeleteProfile(ServerProfile profile)
-    {
-        Profiles.Remove(profile);
-        if (ReferenceEquals(Active, profile)) Active = Profiles.FirstOrDefault();
-        Persist();
-    }
-
     public void AddRule(MatchKind match, string value, RouteAction action)
     {
         if (string.IsNullOrWhiteSpace(value)) return;
@@ -821,32 +754,6 @@ public sealed class MainViewModel : ObservableObject
         ProfileStore.Save(_state);
     }
 
-    /// <summary>Импорт из файла: конфиг sing-box, массив outbound'ов или один outbound.</summary>
-    private void ImportFromFile()
-    {
-        var dialog = new OpenFileDialog
-        {
-            Title = "Выберите конфигурацию sing-box",
-            Filter = "Конфигурации (*.json)|*.json|Все файлы (*.*)|*.*",
-            CheckFileExists = true
-        };
-
-        if (dialog.ShowDialog() != true) return;
-
-        if (!ConfigImporter.TryImportFile(dialog.FileName, out var imported, out var error))
-        {
-            Status = error;
-            return;
-        }
-
-        foreach (var profile in imported) Profiles.Add(profile);
-
-        Active ??= Profiles.FirstOrDefault();
-        Status = imported.Count == 1
-            ? $"Профиль «{imported[0].Name}» добавлен"
-            : $"Добавлено профилей: {imported.Count}";
-        Persist();
-    }
 
     /// <summary>Открывает сгенерированный config.json - удобно сверить с рабочим вручную.</summary>
     private void ShowGeneratedConfig()
@@ -869,36 +776,6 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Ручное создание и правка профиля через отдельное окно.</summary>
-    private void EditProfile(ServerProfile? existing)
-    {
-        var editor = new Views.ProfileEditorWindow(existing)
-        {
-            Owner = Application.Current?.MainWindow
-        };
-
-        if (editor.ShowDialog() != true) return;
-
-        var result = editor.Result;
-
-        if (existing is null)
-        {
-            Profiles.Add(result);
-            Active ??= result;
-            Status = $"Профиль «{result.Name}» создан";
-        }
-        else
-        {
-            // Заменяем на месте, чтобы не терять позицию в списке
-            var index = Profiles.IndexOf(existing);
-            if (index >= 0) Profiles[index] = result;
-
-            if (ReferenceEquals(Active, existing)) Active = result;
-            Status = $"Профиль «{result.Name}» обновлён";
-        }
-
-        Persist();
-    }
 
     private void PickCore()
     {
@@ -1037,96 +914,6 @@ public sealed class MainViewModel : ObservableObject
         _ = RefreshServiceStatusAsync();
     }
 
-    // ===================== проверка серверов и подписка =====================
-
-    /// <summary>
-    /// Замеряет только те профили, которые ещё не проверялись. Вызывается при
-    /// открытии списка: прочерки вместо чисел читаются как поломка, а не как
-    /// «данных пока нет».
-    /// </summary>
-    public async Task EnsureLatencyAsync()
-    {
-        if (IsBusy) return;
-        if (Profiles.All(p => p.LatencyMs >= 0)) return;
-
-        await PingAllAsync(onlyUnknown: true);
-    }
-
-    /// <summary>
-    /// Проверяет серверы разом. Замер идёт напрямую по TCP, а не через ядро:
-    /// так это работает и без подключения, и сразу для всего списка.
-    /// </summary>
-    private async Task PingAllAsync(bool onlyUnknown = false)
-    {
-        var targets = onlyUnknown
-            ? Profiles.Where(p => p.LatencyMs < 0).ToList()
-            : Profiles.ToList();
-
-        if (targets.Count == 0) return;
-
-        IsBusy = true;
-        Status = "Проверка серверов…";
-
-        try
-        {
-            var probes = targets.Select(async profile =>
-            {
-                var ms = await LatencyProbe.MeasureAsync(profile.Host, profile.Port);
-                Dispatch(() => profile.LatencyMs = ms);
-            });
-
-            await Task.WhenAll(probes);
-
-            var alive = targets.Count(p => p.LatencyMs >= 0);
-            Status = $"Ответили {alive} из {targets.Count}";
-            Append($"[cvpn] проверка серверов: {Status.ToLowerInvariant()}");
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    /// <summary>
-    /// Обновляет профили из подписки. Заменяются только пришедшие из неё:
-    /// созданные вручную остаются на месте.
-    /// </summary>
-    private async Task UpdateSubscriptionAsync()
-    {
-        IsBusy = true;
-        Status = "Загрузка подписки…";
-
-        try
-        {
-            var (fetched, error) = await SubscriptionService.FetchAsync(Settings.SubscriptionUrl);
-
-            if (error.Length > 0)
-            {
-                Status = error;
-                Append($"[cvpn] подписка: {error}");
-                return;
-            }
-
-            var activeName = Active?.Name;
-
-            foreach (var stale in Profiles.Where(p => p.Subscription == Settings.SubscriptionUrl).ToList())
-                Profiles.Remove(stale);
-
-            foreach (var profile in fetched) Profiles.Add(profile);
-
-            // Возвращаем выбор на сервер с тем же именем, если он ещё есть
-            Active = Profiles.FirstOrDefault(p => p.Name == activeName) ?? Profiles.FirstOrDefault();
-
-            Status = $"Из подписки загружено серверов: {fetched.Count}";
-            Append($"[cvpn] {Status.ToLowerInvariant()}");
-            Persist();
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
     /// <summary>Автоподключение при старте - вызывается окном после загрузки.</summary>
     public async Task StartupAsync()
     {
@@ -1134,37 +921,6 @@ public sealed class MainViewModel : ObservableObject
 
         Append("[cvpn] автоподключение");
         await ConnectAsync();
-    }
-    
-
-    // ===================== экспорт =====================
-
-    private void ShowExport(ServerProfile profile)
-    {
-        var link = ProfileLink.Build(profile);
-
-        if (link.Length == 0)
-        {
-            Status = "Для этого протокола ссылка не поддерживается";
-            return;
-        }
-
-        new Views.ExportWindow(link, profile.Name, $"{profile.ProtocolLabel} · {profile.Endpoint}")
-        {
-            Owner = Application.Current?.MainWindow
-        }.ShowDialog();
-    }
-
-    /// <summary>Весь список одной строкой подписки - её можно скормить другому клиенту.</summary>
-    private void ShowExportAll()
-    {
-        var payload = ProfileLink.BuildSubscription(Profiles);
-
-        new Views.ExportWindow(payload, "Все профили",
-            $"Список из {Profiles.Count} серверов в формате подписки (base64)")
-        {
-            Owner = Application.Current?.MainWindow
-        }.ShowDialog();
     }
 
     /// <summary>
@@ -1230,7 +986,7 @@ public sealed class MainViewModel : ObservableObject
     /// ядро не перезапускается, существующие соединения не рвутся.
     /// Перегенерировать конфиг нужно только чтобы выбор пережил перезапуск.
     /// </summary>
-    private async Task SelectServerAsync(ServerProfile profile)
+    public async Task SelectServerAsync(ServerProfile profile)
     {
         Active = profile;
         Persist();
@@ -1323,7 +1079,7 @@ public sealed class MainViewModel : ObservableObject
     }
 
     /// <summary>Вывод ядра приходит из фонового потока, коллекции WPF этого не прощают.</summary>
-    private static void Dispatch(Action action)
+    public static void Dispatch(Action action)
     {
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher is null || dispatcher.CheckAccess()) action();

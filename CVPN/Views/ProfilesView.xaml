@@ -6,7 +6,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CVPN.ViewModels"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=False}">
+             d:DataContext="{d:DesignInstance Type=vm:ProfilesViewModel, IsDesignTimeCreatable=False}">
 
     <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
@@ -19,7 +19,8 @@
         <Grid Grid.Row="0">
             <StackPanel>
                 <TextBlock Text="Профили" Style="{StaticResource T.Title}" />
-                <TextBlock Text="Вставьте ссылку или импортируйте конфигурацию sing-box" Style="{StaticResource T.Secondary}"
+                <TextBlock Text="Вставьте ссылку или импортируйте конфигурацию sing-box"
+                           Style="{StaticResource T.Secondary}"
                            Margin="0,4,0,0" />
                 <TextBlock Text="{Binding Status}" Style="{StaticResource T.Caption}" Margin="0,6,0,0"
                            Foreground="{StaticResource Warning}" TextWrapping="Wrap" />
@@ -32,7 +33,7 @@
                 <Button Content="Импорт из файла" Style="{StaticResource Btn.Base}"
                         Margin="8,0,0,0" Command="{Binding ImportFile}" />
                 <Button Content="Создать вручную" Style="{StaticResource Btn.Primary}"
-                        Margin="8,0,0,0" Command="{Binding CreateProfile}" />
+                        Margin="8,0,0,0" Command="{Binding Create}" />
             </StackPanel>
         </Grid>
 

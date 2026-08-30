@@ -8,10 +8,8 @@ public partial class ProfilesView : UserControl
     public ProfilesView()
     {
         InitializeComponent();
-
-        Loaded += async (_, _) =>
-        {
-            if (DataContext is MainViewModel vm) await vm.EnsureLatencyAsync();
-        };
+        
+        Loaded += (_, _) => (DataContext as PageViewModel)?.Activate();
+        Unloaded += (_, _) => (DataContext as PageViewModel)?.Deactivate();
     }
 }

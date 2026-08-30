@@ -19,9 +19,11 @@
 
         <Grid Grid.Row="0">
             <StackPanel>
-                <TextBlock Text="Маршруты" Style="{StaticResource T.Title}" />
+                <TextBlock Text="Маршруты" Style="{StaticResource T.Title}" 
+                           Margin="0,0,0,7"/>
                 <TextBlock Text="Правила проверяются сверху вниз. Первое совпадение решает судьбу соединения."
-                           Style="{StaticResource T.Secondary}" Margin="0,4,0,0" />
+                           Style="{StaticResource T.Secondary}" 
+                           Margin="0,7,0,0" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
