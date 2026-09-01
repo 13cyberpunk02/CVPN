@@ -1,542 +1,544 @@
 # CVPN
 
-Десктопный клиент sing-box для Windows. Собирает `config.json` за вас,
-запускает ядро и показывает, что происходит с трафиком.
+**English** · [Русский](README.ru.md)
 
-Поддерживаются **VLESS (Reality и WebSocket)**, **AnyTLS** и **NaiveProxy**,
-а маршрутизация настраивается правилами: какие сайты идут через прокси,
-какие напрямую, а какие блокируются.
+[![Release](https://img.shields.io/github/v/release/13CyberPunk02/CVPN?label=release)](https://github.com/13CyberPunk02/CVPN/releases)
+[![Downloads](https://img.shields.io/github/downloads/13CyberPunk02/CVPN/total)](https://github.com/13CyberPunk02/CVPN/releases)
+[![Tests](https://github.com/13CyberPunk02/CVPN/actions/workflows/tests.yml/badge.svg)](https://github.com/13CyberPunk02/CVPN/actions/workflows/tests.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-> Проект не связан с командой sing-box. Это отдельная обёртка над официальным ядром.
+A desktop sing-box client for Windows. It builds `config.json` for you, runs the
+core, and shows you what is happening to your traffic.
+
+Supports **VLESS (Reality and WebSocket)**, **AnyTLS** and **NaiveProxy**, with
+routing rules that decide which sites go through the proxy, which go direct,
+and which get blocked.
+
+> Not affiliated with the sing-box team. This is an independent wrapper around
+> the official core.
 
 ---
 
-## Содержание
+## Contents
 
-- [Возможности](#возможности)
-- [Установка](#установка)
-- [Быстрый старт](#быстрый-старт)
-- [Профили](#профили)
-- [Режимы работы](#режимы-работы)
-- [Права администратора](#права-администратора)
-- [Обновления](#обновления)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Profiles](#profiles)
+- [Interception modes](#interception-modes)
+- [Administrator rights](#administrator-rights)
+- [Updates](#updates)
 - [Kill switch](#kill-switch)
-- [Автозапуск](#автозапуск)
-- [Маршрутизация](#маршрутизация)
-- [Соединения](#соединения)
-- [Где лежат файлы](#где-лежат-файлы)
-- [Что генерируется в config.json](#что-генерируется-в-configjson)
-- [Решение проблем](#решение-проблем)
-- [Сборка из исходников](#сборка-из-исходников)
-- [Сборка релиза](#сборка-релиза)
-- [Архитектура](#архитектура)
-- [Лицензии](#лицензии)
+- [Autostart](#autostart)
+- [Routing](#routing)
+- [Connections](#connections)
+- [File locations](#file-locations)
+- [What goes into config.json](#what-goes-into-configjson)
+- [Troubleshooting](#troubleshooting)
+- [Building from source](#building-from-source)
+- [Tests](#tests)
+- [Building a release](#building-a-release)
+- [Architecture](#architecture)
+- [Roadmap](#roadmap)
+- [Licences](#licences)
 
 ---
 
-## Возможности
+## Features
 
-- Подключение по VLESS+Reality, VLESS+WebSocket, AnyTLS и NaiveProxy
-- Импорт по ссылке, из `config.json` и по ссылке подписки
-- Экспорт профиля ссылкой и QR-кодом
-- Правила маршрутизации: geosite, geoip, домен, суффикс, ключевое слово, процесс
-- Свои наборы правил `.srs` - по ссылке или файлом с диска
-- Именованные наборы правил с переключением
-- Переключение сервера без перезапуска ядра, автовыбор быстрейшего
-- Два режима перехвата: TUN и системный прокси Windows
-- Служба Windows: TUN без запроса прав при каждом запуске
-- Список живых соединений: домен, выход, правило - и правило в один клик
-- Живые счётчики трафика, замер задержки по всем серверам
-- Значок в трее, автозапуск, вывод ядра в реальном времени
-- Лог в файл за 7 дней и запись аварий со стеком
-- Kill switch: трафик мимо туннеля блокируется брандмауэром
-- Проверка обновлений через GitHub Releases
-- Учётные данные шифруются ключом учётной записи Windows
+- VLESS+Reality, VLESS+WebSocket, AnyTLS and NaiveProxy
+- Import from a share link, from an existing `config.json`, or from a subscription
+- Export a profile as a link and a QR code
+- Routing rules: geosite, geoip, domain, suffix, keyword, process name
+- Custom `.srs` rule sets, remote or local
+- Named rule sets you can switch between
+- Server switching without restarting the core, plus automatic fastest-server selection
+- Two interception modes: TUN and the Windows system proxy
+- A Windows service so TUN does not ask for elevation on every launch
+- Live traffic counters and latency measurement across all servers
+- A list of live connections showing domain, outbound and matched rule
+- Tray icon, autostart, real-time core output
+- File logs kept for 7 days, crashes recorded with stack traces
+- Kill switch: traffic outside the tunnel is blocked by the firewall
+- Credentials encrypted with your Windows account key
 
 ---
 
-## Установка
+## Installation
 
-Скачайте с [страницы релизов](https://github.com/13CyberPunk02/CVPN/releases):
+Grab a build from the [releases page](https://github.com/13CyberPunk02/CVPN/releases):
 
-| Файл | Что это |
+| File | What it is |
 |---|---|
-| `CVPN-x.y.z-setup.exe` | установщик: `Program Files`, служба, ярлыки |
-| `CVPN-x.y.z-portable.zip` | портативная сборка, просто распакуйте |
+| `CVPN-x.y.z-setup.exe` | installer: Program Files, service, shortcuts |
+| `CVPN-x.y.z-portable.zip` | portable build, just unpack it |
 
-Оба варианта уже включают `sing-box`. Установщик занимает около 50 МБ и при
-необходимости сам докачает среду .NET (~60 МБ, один раз на систему).
-Портативная сборка автономна: ничего скачивать не нужно, но весит ~200 МБ.
+Both bundle `sing-box`. The installer is about 50 MB and downloads the .NET
+runtime if your system does not have it (~60 MB, once per machine). The
+portable build is self-contained: nothing to download, but it weighs ~200 MB.
 
-> При запуске Windows SmartScreen предупредит о неизвестном издателе:
-> установщик не подписан сертификатом. Это ожидаемо для проекта без платного
-> code signing - «Подробнее» → «Выполнить в любом случае».
+> Windows SmartScreen will warn about an unknown publisher - the installer is
+> not code-signed. That is expected for a project without a paid certificate:
+> **More info** → **Run anyway**.
 
-Портативная сборка не может установить службу, поэтому в ней TUN будет
-запрашивать права администратора при каждом запуске. Нужен запуск без
-запросов - берите установщик.
+The portable build cannot install the service, so TUN will request elevation
+every time. If you want elevation-free startup, use the installer.
 
-### Требования
+### Requirements
 
 | | |
 |---|---|
-| ОС | Windows 10 версии 1809 или новее / Windows 11 |
-| Ядро | sing-box **1.12 или новее** (входит в релиз) |
+| OS | Windows 10 1809 or newer / Windows 11 |
+| Core | sing-box **1.12 or newer** (bundled in releases) |
 
-Версия ядра важна: в 1.12 из sing-box убрали `geosite` и `geoip` в правилах
-маршрутизации, заменив их механизмом rule-set, а спецвыходы `block` и `dns` -
-действиями правил. CVPN генерирует конфигурацию в новом формате, и на 1.11
-она не запустится.
-
----
-
-## Быстрый старт
-
-1. **Профили** → вставьте ссылку и нажмите «Разобрать ссылку».
-   Либо «Импорт из файла», если есть готовый `config.json`.
-2. Нажмите **«Выбрать»** на нужном сервере - появится рамка акцентного цвета.
-3. **Соединение** → нажмите круг по центру.
-
-Название профиля, флаг страны, протокол и задержка отображаются внутри круга.
-Обод показывает состояние: серый - отключено, индиго с бегущим сегментом -
-подключение, нефритовый - работает, красный - ошибка.
+The core version matters. sing-box 1.12 removed `geosite` and `geoip` from
+routing rules in favour of rule sets, and replaced the `block` and `dns`
+outbounds with rule actions. CVPN generates the new format, which will not
+start on 1.11.
 
 ---
 
-## Профили
+## Quick start
 
-### Импорт по ссылке
+1. **Profiles** → paste a link and press **Parse link**, or **Import from file**
+   if you already have a `config.json`.
+2. Press **Select** on the server you want - it gets an accent-coloured border.
+3. **Connection** → press the dial in the middle.
+
+The profile name, country flag, protocol and latency are shown inside the dial.
+The ring shows state: grey means disconnected, indigo with a running segment
+means connecting, jade means connected, red means an error.
+
+---
+
+## Profiles
+
+### Import from a link
 
 ```
-vless://uuid@host:443?security=reality&pbk=<public_key>&sid=<short_id>&sni=www.google.com&flow=xtls-rprx-vision#Название
-vless://uuid@host:443?type=ws&security=tls&path=/ws&host=example.com#Название
-anytls://password@host:8443?sni=example.com#Название
-naive+https://user:password@host:443#Название
+vless://uuid@host:443?security=reality&pbk=<public_key>&sid=<short_id>&sni=www.google.com&flow=xtls-rprx-vision#Name
+vless://uuid@host:443?type=ws&security=tls&path=/ws&host=example.com#Name
+anytls://password@host:8443?sni=example.com#Name
+naive+https://user:password@host:443#Name
 ```
 
-### Импорт из JSON
+### Import from JSON
 
-Кнопка «Импорт из файла» принимает три формы: полный конфиг sing-box
-(вытащит все прокси-outbound'ы разом), массив outbound-объектов и одиночный
-объект. Всё, что не относится к поддерживаемым протоколам - `direct`,
-`selector`, `urltest` - пропускается молча, поэтому чужой рабочий конфиг
-можно скормить целиком.
+**Import from file** accepts three shapes: a full sing-box config (it pulls out
+every proxy outbound at once), an array of outbound objects, and a single
+object. Anything that is not a supported protocol - `direct`, `selector`,
+`urltest` - is skipped silently, so you can feed it someone else's working
+config as is.
 
-### Подписка
+### Subscription
 
-Вставьте ссылку подписки в поле на странице «Профили» и нажмите «Обновить
-подписку». Понимается стандартный формат: список ссылок построчно, целиком
-закодированный в base64 (без кодирования тоже работает).
+Paste a subscription URL on the Profiles page and press **Update
+subscription**. The standard format is understood: a list of links, one per
+line, base64-encoded as a whole (plain text works too).
 
-Обновление заменяет только профили из этой же подписки - они помечены
-в списке. Созданные вручную не трогаются, выбранный сервер сохраняется
-по имени.
+An update only replaces profiles that came from that same subscription - they
+are marked in the list. Manually created ones are left alone, and the selected
+server is restored by name.
 
-### Создание вручную
+### Creating one by hand
 
-Кнопка «Создать вручную» открывает форму, где поля меняются под протокол:
-для Reality - UUID, public key, short id и flow; для WebSocket - UUID и путь;
-для AnyTLS - пароль; для NaiveProxy - логин и пароль. Валидация проверяет
-формат UUID и диапазон порта до сохранения.
+**Create manually** opens a form whose fields change with the protocol: UUID,
+public key, short id and flow for Reality; UUID and path for WebSocket; a
+password for AnyTLS; a login and password for NaiveProxy. Validation checks the
+UUID format and the port range before saving.
 
-### Экспорт
+### Export
 
-Кнопка «Поделиться» на карточке открывает окно со ссылкой и QR-кодом.
-«Экспорт всех» отдаёт весь список одной строкой подписки - её принимает
-и сам CVPN, и большинство других клиентов.
+**Share** on a profile card opens a window with the link and a QR code.
+**Export all** produces the whole list as a single subscription string, which
+CVPN itself and most other clients will accept.
 
-### Проверка серверов
+### Checking servers
 
-Задержка измеряется при первом открытии списка; кнопка «Проверить все»
-обновляет её принудительно. Замер идёт напрямую по TCP, поэтому работает
-и без подключения, и сразу для всех серверов.
+Latency is measured when you first open the list; **Check all** refreshes it.
+The probe is a plain TCP handshake, so it works without a tunnel and covers
+every server at once.
 
-Это не то же, что кнопка «Замерить задержку» на странице соединения: та
-гоняет запрос через поднятый туннель и показывает реальную задержку до
-целевого сайта.
+This is not the same as **Measure latency** on the connection page: that one
+sends a request through the live tunnel and reports the real round trip to a
+target site.
 
-### Переключение без перезапуска
+### Switching without a restart
 
-Все серверы попадают в конфигурацию сразу, а выбор делает селектор sing-box.
-Поэтому «Выбрать» на другом профиле переключает туннель через Clash API
-за миллисекунды - ядро не перезапускается, живые соединения не рвутся.
+Every server goes into the configuration at once, and a sing-box selector picks
+between them. Pressing **Select** on another profile therefore switches the
+tunnel through the Clash API in milliseconds - the core is not restarted and
+live connections are not dropped.
 
-Настройка «Автовыбор быстрого сервера» передаёт выбор механизму urltest:
-ядро проверяет серверы раз в три минуты и держит соединение на быстрейшем.
-Переключение происходит, только если новый быстрее минимум на 50 мс - иначе
-туннель прыгал бы между узлами с близкой задержкой.
+**Pick the fastest server automatically** hands the choice to the urltest
+mechanism: the core probes servers every three minutes and keeps the connection
+on the fastest one. It only switches when the new server is at least 50 ms
+faster, otherwise the tunnel would bounce between nodes with similar latency.
 
-### Код страны
+### Country code
 
-Флаг определяется автоматически - по названию профиля («Netherlands»,
-«Франкфурт») или по хосту вида `nl-01.example.net`. Не угадал - задайте
-код вручную в редакторе профиля.
+The flag is detected automatically - from the profile name ("Netherlands",
+"Frankfurt") or from a host like `nl-01.example.net`. If the guess fails, set
+the code by hand in the profile editor.
 
-Флаги нарисованы картинками, а не эмодзи: Windows не отображает флаги
-из regional indicator, показывая вместо них две буквы.
+Flags are bitmaps rather than emoji: Windows does not render regional indicator
+flags, showing two letters instead.
 
 ---
 
-## Режимы работы
+## Interception modes
 
-Текущий режим всегда виден слева внизу.
+The active mode is always shown in the bottom left.
 
 ### TUN
 
-Создаёт виртуальный сетевой интерфейс и перехватывает **весь** трафик системы,
-включая приложения, которые ничего не знают про прокси. Требует прав
-администратора - см. [следующий раздел](#права-администратора).
+Creates a virtual network interface and captures **all** system traffic,
+including applications that know nothing about proxies. Requires administrator
+rights - see [the next section](#administrator-rights).
 
-### Системный прокси
+### System proxy
 
-Прописывает `127.0.0.1:<порт>` в настройки прокси Windows. Прав администратора
-не требует, но работает только для приложений, которые эти настройки учитывают:
-браузеры, большинство мессенджеров.
+Writes `127.0.0.1:<port>` into the Windows proxy settings. No elevation needed,
+but it only affects applications that respect those settings: browsers and most
+messengers.
 
-Настройки возвращаются к прежним при отключении, при закрытии приложения
-и при аварийном завершении ядра. Локальные адреса идут мимо прокси.
+The previous settings are restored on disconnect, on exit, and even when the
+core dies unexpectedly. Local addresses bypass the proxy.
 
-> Если переключить режим при активном соединении, подпись предупредит:
-> изменение применится только после переподключения. Ядро перечитывает
-> конфигурацию исключительно при перезапуске.
+> Switching modes while connected shows a warning: the change only applies
+> after reconnecting. The core reads its configuration at startup only.
 
 ---
 
-## Права администратора
+## Administrator rights
 
-TUN-интерфейс может создать только процесс с правами администратора.
-Без подготовки это означает запрос UAC при каждом запуске. Есть два способа
-это убрать - оба требуют одного разрешения при установке.
+Only an elevated process can create a TUN interface, which otherwise means a
+UAC prompt on every launch. There are two ways around it, and both cost exactly
+one prompt at setup time.
 
-### Служба туннеля
+### Tunnel service
 
-`CVPN.Service` работает под учётной записью `LocalSystem`, ставится один раз
-и стартует вместе с системой. Приложение работает под обычным пользователем
-и просит службу поднять туннель через именованный канал.
+`CVPN.Service` runs as `LocalSystem`, is installed once, and starts with the
+system. The application runs as a normal user and asks the service to bring the
+tunnel up over a named pipe.
 
 ```
-CVPN.exe (пользователь)  ──[канал cvpn-tunnel]──►  CVPN.Service (LocalSystem)
-                                                          └─► sing-box + TUN
+CVPN.exe (user)  ──[pipe cvpn-tunnel]──►  CVPN.Service (LocalSystem)
+                                                 └─► sing-box + TUN
 ```
 
-Установщик разворачивает службу сам. Вручную - в настройках приложения,
-кнопка «Установить службу».
+The installer sets the service up for you. To do it manually, use **Install
+service** in settings.
 
-### Задача планировщика
+### Scheduled task
 
-Проще: отдельный проект не нужен. Задача создаётся с уровнем «наивысшие права»,
-после чего приложение запускается через неё уже с правами администратора.
-Настройки → «Создать задачу».
+Simpler: no second project involved. The task is created with the highest
+privileges, and the application is then launched through it already elevated.
+Settings → **Create task**.
 
-> **Задача запоминает путь к файлу.** При нажатии «Подключить» без прав
-> приложение вызывает `schtasks /run`, и планировщик поднимает именно тот exe,
-> который был записан при создании задачи, - а текущий экземпляр закрывается.
->
-> Поэтому после переустановки, переноса папки или пересборки в другом каталоге
-> задачу нужно пересоздать: иначе будет запускаться старая копия приложения.
-> CVPN замечает расхождение и пишет об этом в лог и в статус на странице
-> настроек.
+### Which to choose
 
-### Что выбрать
-
-| | Служба | Задача планировщика |
+| | Service | Scheduled task |
 |---|---|---|
-| Отдельный проект | нужен | не нужен |
-| Права администратора | только у туннеля | у всего приложения |
-| Туннель при выходе из системы | продолжает работать | обрывается |
-| Старт до входа пользователя | да | нет |
-| Разовый запрос UAC при установке | да | да |
+| Separate project | required | not required |
+| Elevation scope | tunnel only | the whole application |
+| Tunnel after sign-out | keeps running | drops |
+| Starts before user sign-in | yes | no |
+| One-time UAC prompt at setup | yes | yes |
 
-Служба правильнее с точки зрения разграничения прав: интерфейс остаётся
-обычным пользовательским процессом, а под `SYSTEM` работает только туннель.
-Задача проще, но повышает всё приложение целиком - из-за этого, в частности,
-перестаёт работать перетаскивание файлов из проводника.
+The service is the cleaner separation: the UI stays an ordinary user process
+and only the tunnel runs as `SYSTEM`. The task is simpler but elevates
+everything, which among other things breaks drag-and-drop from Explorer.
 
-### О безопасности службы
+### Service security
 
-Служба выполняет конфигурацию от имени `SYSTEM`, а присылает её обычный
-пользователь. Принимать конфиг как есть нельзя: через `cache_file.path`
-или `log.output` любой локальный пользователь заставил бы `SYSTEM` писать
-файлы куда угодно. Поэтому `ConfigSanitizer` перед запуском:
+The service executes a configuration as `SYSTEM`, and that configuration is
+supplied by an unprivileged process. Taking it at face value is not an option:
+through `cache_file.path` or `log.output` any local user could make `SYSTEM`
+write a file anywhere. So `ConfigSanitizer` rewrites it before launch:
 
-- переписывает путь кэша на служебный каталог;
-- удаляет `log.output` - вывод только в stdout;
-- отбрасывает локальные наборы правил вне `%ProgramData%\CVPN\rules`;
-- возвращает Clash API на петлевой адрес.
+- the cache path is forced into the service directory;
+- `log.output` is removed - output goes to stdout only;
+- local rule sets outside `%ProgramData%\CVPN\rules` are dropped;
+- the Clash API is pinned back to loopback.
 
-Сам конфиг служба сохраняет только в свой каталог - путь от клиента
-не принимается. Команд, кроме запуска, остановки и статуса, в протоколе нет.
+The service writes the config itself, into its own directory - a path from the
+client is never accepted. The protocol has no commands beyond start, stop and
+status.
 
-Доступ к каналу открыт всем локальным пользователям осознанно: иначе клиенту
-снова понадобились бы права администратора. Если машина многопользовательская
-и это неприемлемо, ограничьте правило в `PipeServer` конкретным SID вместо
-`BuiltinUsersSid`.
+Pipe access is deliberately open to all local users: restricting it to
+administrators would put us back to needing elevation in the client, defeating
+the point. If that is unacceptable on a shared machine, narrow the rule in
+`PipeServer` to a specific SID instead of `BuiltinUsersSid`.
 
-Общее требование для обоих способов: исполняемый файл должен лежать там, куда
-обычный пользователь не может писать. Иначе подмена файла даёт выполнение кода
-с правами администратора. Установщик по этой причине ставит приложение
-в `Program Files`.
+One requirement applies to both approaches: the executable must live somewhere
+an ordinary user cannot write to. Otherwise replacing the file gives code
+execution with administrator rights. That is why the installer puts the
+application in Program Files.
 
 ---
 
-## Обновления
+## Updates
 
-Приложение спрашивает у GitHub, есть ли релиз новее установленного, и сообщает
-о нём на странице настроек. Ничего не скачивает и не ставит: самообновление
-для программы, которая разворачивает службу и правит брандмауэр, требует
-отдельной осторожности - пока это работа установщика.
+The application asks GitHub whether a newer release exists and reports it on
+the settings page. It downloads and installs nothing: self-updating an
+application that deploys a service and edits firewall rules deserves separate
+care - for now that is the installer's job.
 
-Черновики и предрелизы не предлагаются. Проверка отключается в настройках.
+Drafts and pre-releases are ignored. The check can be disabled in settings.
 
-> Перед первым релизом замените константу `Repository` в
-> `Services/UpdateChecker.cs` на свой репозиторий.
+> Replace the `Repository` constant in `Services/UpdateChecker.cs` with your own
+> repository before the first release.
+
+---
 
 ## Kill switch
 
-Пока туннель работает, весь исходящий трафик мимо него запрещён правилами
-брандмауэра Windows. Разрешены только ядро, само приложение, петля и локальная
-сеть. Смысл в том, что при обрыве соединения трафик не уйдёт в обход молча -
-он просто не пойдёт.
+While the tunnel is up, all outbound traffic that bypasses it is blocked by
+Windows Firewall rules. Only the core, the application itself, loopback and the
+local network are allowed. The point is that a dropped connection cannot
+silently fall back to a direct route - traffic simply stops.
 
-Включается в настройках, требует прав администратора.
+Enabled in settings, requires administrator rights.
 
-> **Функция способна оставить систему без интернета.** Если приложение
-> завершится аварийно, не сняв правила, обычный трафик останется заблокирован.
+> **This feature can leave the machine without internet.** If the application
+> terminates without removing the rules, ordinary traffic stays blocked.
 >
-> Страховка двойная: факт включения записывается в файл-отметку, и при
-> следующем запуске правила снимаются автоматически. Если интернет нужен
-> прямо сейчас - кнопка «Восстановить сеть» в настройках. Вручную то же
-> самое делает команда от администратора:
+> There are two safety nets: the fact that it was enabled is recorded in a
+> marker file, and the rules are removed automatically on the next launch. If
+> you need connectivity right now, use **Restore network** in settings. The
+> same thing by hand, from an elevated prompt:
 >
 > ```
 > netsh advfirewall set allprofiles firewallpolicy blockinbound,allowoutbound
 > ```
 
-## Автозапуск
+---
 
-Переключатель в настройках прописывает приложение в раздел `Run` текущего
-пользователя. Запуск идёт с аргументом `--minimized`: окно не показывается,
-работает только значок в трее.
+## Autostart
 
-Отдельная настройка «Подключаться при запуске» сразу поднимает туннель
-с последним выбранным профилем. Без службы или задачи планировщика TUN
-в этот момент запросит права администратора.
+The toggle in settings registers the application in the current user's `Run`
+key. It launches with `--minimized`: no window, only the tray icon.
+
+A separate setting, **Connect on startup**, brings the tunnel up with the last
+selected profile. Without the service or the scheduled task, TUN will ask for
+elevation at that moment.
 
 ---
 
-## Маршрутизация
+## Routing
 
-Правила проверяются **сверху вниз, первое совпадение решает судьбу
-соединения**. Что делать с остальным трафиком - задаётся отдельно внизу
-страницы.
+Rules are evaluated **top to bottom, and the first match wins**. What happens to
+everything else is set separately at the bottom of the page.
 
-| Тип | Что вводить | Пример |
+| Type | What to enter | Example |
 |---|---|---|
-| `geosite` | имя категории | `youtube`, `twitch`, `category-ads-all` |
-| `geoip` | код страны | `ru`, `de`, `us` |
-| `domain` | точное совпадение | `example.com` |
-| `domain_suffix` | домен и все поддомены | `openai.com` |
-| `domain_keyword` | подстрока в имени домена | `google` |
-| `process_name` | имя исполняемого файла | `Telegram.exe` |
-| `rule_set · ссылка` | URL готового набора | `https://.../geosite-youtube.srs` |
-| `rule_set · файл` | путь к файлу | `C:\rules\twitch.srs` |
+| `geosite` | category name | `youtube`, `twitch`, `category-ads-all` |
+| `geoip` | country code | `ru`, `de`, `us` |
+| `domain` | exact match | `example.com` |
+| `domain_suffix` | domain and all subdomains | `openai.com` |
+| `domain_keyword` | substring in the domain | `google` |
+| `process_name` | executable name | `Telegram.exe` |
+| `rule_set · link` | URL of a rule set | `https://.../geosite-youtube.srs` |
+| `rule_set · file` | path to a file | `C:\rules\twitch.srs` |
 
-Действия: **через прокси**, **напрямую**, **блокировать**.
+Actions: **through proxy**, **direct**, **block**.
 
-Порядок задаётся стрелками ▲ ▼ у каждого правила. Это не оформление:
-ядро берёт первое совпадение, поэтому правило выше перекрывает всё,
-что ниже. Если `geosite:youtube` отправляет трафик через прокси, то
-стоящее ниже `domain_suffix:youtube.com` напрямую не сработает никогда.
+Order is controlled by the ▲ ▼ arrows on each rule. This is not cosmetic: the
+core takes the first match, so a rule above overrides everything below it. If
+`geosite:youtube` sends traffic through the proxy, a `domain_suffix:youtube.com`
+direct rule placed below will never fire.
 
-Изменение порядка применяется после переподключения.
+Reordering applies after reconnecting.
 
-### Наборы правил
+### Rule sets
 
-В правом верхнем углу страницы переключаются именованные наборы. Каждый хранит
-свои правила и своё значение «всё остальное» - удобно держать раздельно,
-например, «всё через прокси» и «только заблокированное».
+Named rule sets are switched in the top right corner. Each keeps its own rules
+and its own fallback action - handy for keeping, say, "everything through the
+proxy" and "only what is blocked" side by side.
 
-Смена набора требует переподключения: маршруты живут в конфигурации ядра,
-в отличие от выбора сервера, который меняется на лету.
+Switching a set requires reconnecting: routes live in the core configuration,
+unlike server selection which changes on the fly.
 
-### Про наборы .srs
+### About .srs sets
 
-`geosite` и `geoip` подтягиваются с официальных репозиториев SagerNet
-автоматически. Скачивание идёт **через туннель**, потому что
-`raw.githubusercontent.com` часто недоступен напрямую, а результат кэшируется -
-загрузка разовая. Обратная сторона: при первом запуске с новым правилом нужен
-живой прокси, иначе ядро не стартует.
+`geosite` and `geoip` are pulled from the official SagerNet repositories
+automatically. They are downloaded **through the tunnel**, because
+`raw.githubusercontent.com` is often unreachable directly, and the result is
+cached, so it happens once. The trade-off: the first run with a new rule needs
+a working proxy, or the core will not start.
 
-Локальные `.srs` копируются в `%APPDATA%\CVPN\rules` при добавлении, так что
-профиль не сломается, если исходный файл переместят.
+Local `.srs` files are copied into `%APPDATA%\CVPN\rules` when added, so a
+profile does not break if the original file moves.
 
-При работе через службу файлы наборов передаются ей вместе с конфигом: служба
-работает под `SYSTEM` и каталог пользователя не видит. От клиента принимается
-только имя файла - путь служба назначает сама.
+When running through the service, rule set files are handed over together with
+the configuration: the service runs as `SYSTEM` and cannot see the user
+directory. Only the file name is accepted from the client - the service picks
+the path itself.
 
-### Стартовый набор
+### Starter set
 
-При первом запуске создаются два правила: реклама (`geosite:category-ads-all`)
-в блок и российские адреса (`geoip:ru`) напрямую.
+On first launch two rules are created: ads (`geosite:category-ads-all`) blocked
+and Russian addresses (`geoip:ru`) direct.
 
 ---
 
-## Соединения
+## Connections
 
-Страница показывает, что идёт прямо сейчас: домен, выход, сработавшее правило,
-процесс, объём трафика и время жизни соединения. Метка выхода подсвечена -
-нефритовая означает прямое соединение, индиго через прокси.
+This page shows what is flowing right now: domain, outbound, matched rule,
+process, traffic volume and connection age. The outbound badge is colour-coded -
+jade for direct, indigo for proxied.
 
-Это самый быстрый способ понять, почему сайт уходит не туда: не нужно включать
-подробный лог и искать домен среди тысяч строк.
+It is the fastest way to understand why a site goes somewhere unexpected: no
+need to enable verbose logging and hunt for the domain among thousands of lines.
 
-Рядом с каждой строкой две кнопки, «Напрямую» и «Блок». Они добавляют правило
-`domain_suffix` для домена второго уровня - `sun9-40.vkuserphoto.ru` превратится
-в `vkuserphoto.ru`. Правило применится после переподключения.
+Each row has **Direct** and **Block** buttons. They add a `domain_suffix` rule
+for the second-level domain - `sun9-40.vkuserphoto.ru` becomes
+`vkuserphoto.ru`. The rule applies after reconnecting.
 
-Крестик закрывает соединение: приложение переоткроет его, и уже по новым
-правилам.
+The cross closes the connection so the application reopens it under the new
+rules.
 
-## Где лежат файлы
+---
 
-Служба ведёт собственный лог в `%ProgramData%\CVPN\logs\` - она стартует
-до входа пользователя, и её вывод иначе терялся бы целиком.
+## File locations
 
 ```
 %APPDATA%\CVPN\
-├── profiles.json     профили, наборы правил и настройки
-├── config.json       генерируется при каждом подключении
-├── cache.db          кэш ядра: наборы правил и DNS
-├── rules\            копии локальных .srs
-└── logs\             cvpn-ГГГГ-ММ-ДД.log, хранятся 7 дней
+├── profiles.json     profiles, rule sets and settings
+├── config.json       regenerated on every connect
+├── cache.db          core cache: rule sets and DNS
+├── rules\            copies of local .srs files
+└── logs\             cvpn-YYYY-MM-DD.log, kept for 7 days
 ```
 
-Лог пишется в файл целиком, а на экране остаются последние 500 строк. Туда же
-попадают необработанные исключения - с версией сборки и полным стеком. Открыть
-папку можно кнопкой на странице «Логи»; именно эти файлы имеет смысл прикладывать
-к сообщению об ошибке.
+The full log goes to file; the screen keeps the last 500 lines. Unhandled
+exceptions land there too, with the build version and a full stack trace. The
+folder can be opened from the Logs page - those are the files worth attaching
+to a bug report.
 
-### Учётные данные
+The service keeps its own log in `%ProgramData%\CVPN\logs\` - it starts before
+user sign-in, so its output would otherwise be lost entirely.
 
-UUID, пароли и ссылка подписки шифруются в `profiles.json` через DPAPI -
-ключом учётной записи Windows. В файле они выглядят так:
+`config.json` is **overwritten on every launch**, so editing it by hand is
+pointless. Use **Open config.json** on the connection page to inspect the
+result.
+
+When running through the service, the same files live in `%ProgramData%\CVPN\`.
+
+### Credentials
+
+UUIDs, passwords and the subscription URL are encrypted in `profiles.json`
+using DPAPI - with your Windows account key. In the file they look like this:
 
 ```json
 "Password": "dpapi:AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA..."
 ```
 
-Мастер-пароль при этом не нужен: ключ выдаёт система. Обратная сторона -
-файл привязан к учётной записи и машине. Если перенести его на другой
-компьютер, приложение сообщит, сколько значений не удалось расшифровать,
-и остальные поля профиля сохранит: заново придётся ввести только секреты.
+No master password is needed: the system provides the key. The flip side is
+that the file is tied to the account and the machine. Move it to another
+computer and the application will report how many values could not be
+decrypted, keeping the rest of the profile - only the secrets have to be
+re-entered.
 
-Файлы, созданные до появления шифрования, читаются как есть и шифруются
-при первом сохранении.
+Files created before encryption was added are read as is and encrypted on the
+first save.
 
-Адрес сервера, порт и SNI секретами не считаются и остаются открытыми -
-их видно в любом случае при установлении соединения.
+The server address, port and SNI are not treated as secrets and stay readable -
+they are visible on the wire anyway.
 
-**От чего это защищает, а от чего нет.** Шифрование закрывает сценарии, когда
-файл покидает машину: резервная копия, синхронизация профиля в облако, отправка
-`profiles.json` в issue при разборе проблемы. Плюс чтение другой учётной записью
-на том же компьютере.
+**What this protects and what it does not.** Encryption covers cases where the
+file leaves the machine: backups, profile sync, attaching `profiles.json` to an
+issue. Plus reads by another account on the same computer.
 
-Оно **не защищает** от вредоносного кода, запущенного от вашего имени: он
-вызовет расшифровку так же, как это делает приложение. Это принципиальное
-свойство DPAPI без мастер-пароля.
+It does **not** protect against malicious code running as you: it can call
+decryption exactly the way the application does. That is inherent to DPAPI
+without a master password.
 
-Отдельно учитывайте, что `config.json` содержит те же учётные данные открытым
-текстом - иначе ядро их не прочитает. В `%APPDATA%` он доступен только
-владельцу, а каталог службы в `%ProgramData%` приложение закрывает от группы
-«Пользователи» при каждом запуске: по умолчанию у неё есть право чтения.
-
-`config.json` **перезаписывается при каждом запуске** - править его руками
-бессмысленно. Посмотреть результат можно кнопкой «Открыть config.json»
-на странице соединения.
-
-При работе через службу те же файлы лежат в `%ProgramData%\CVPN\`.
+Note also that `config.json` holds the same credentials in plain text - the
+core cannot read them otherwise. Inside `%APPDATA%` only the owner can read it,
+and the service directory in `%ProgramData%` is locked down from the Users
+group on every start, since it is world-readable by default.
 
 ---
 
-## Что генерируется в config.json
+## What goes into config.json
 
-Несколько решений, о которых стоит знать, если будете сверять с чужими
-конфигами.
+A few decisions worth knowing if you compare the output with other configs.
 
-**Адрес сервера резолвится мимо туннеля.** На прокси-outbound проставляется
-`domain_resolver` с локальным резолвером - иначе замкнутый круг: чтобы
-подключиться к серверу, нужно узнать его адрес, а для этого нужен туннель.
-DNS-правило с `outbound: "any"`, решавшее ту же задачу, устарело в 1.12
-и удалено в 1.13.
+**The server address resolves outside the tunnel.** The proxy outbound gets a
+`domain_resolver` pointing at the local resolver - otherwise you get a
+chicken-and-egg problem: connecting to the server requires resolving it, which
+requires the tunnel. The DNS rule with `outbound: "any"` that used to do this
+was deprecated in 1.12 and removed in 1.13.
 
-**Домены из правил «напрямую» резолвятся локально.** Иначе запрос уходит через
-туннель, и сайт с геобалансировкой отдаёт адрес узла рядом с выходной нодой.
+**Domains from direct rules resolve locally.** Otherwise the query goes through
+the tunnel and a geo-balanced site returns a node close to the exit.
 
-Переносятся только доменные условия (`domain`, `domain_suffix`,
-`domain_keyword`) и локальные наборы `.srs`. Не переносятся:
+Only domain conditions (`domain`, `domain_suffix`, `domain_keyword`) and local
+`.srs` sets are mirrored. Not mirrored:
 
-- `geoip` и `process_name` - на момент DNS-запроса ни адреса, ни процесса ещё нет;
-- `geosite` и `rule_set` по ссылке - файл скачивается, и на старте ядра его может
-  не быть. Маршруты это переживают, а инициализация DNS-правил падает
-  с `rule-set not found`.
+- `geoip` and `process_name` - at DNS time there is no address or process yet;
+- `geosite` and remote `rule_set` - the file is downloaded, and may not exist
+  when the core starts. Routes survive that, but DNS rule initialisation fails
+  with `rule-set not found`.
 
-**Удалённый DNS по умолчанию - DoH на 443 порту.** DoT (853) через прокси часто
-висит до таймаута: этот порт режут и провайдеры, и сами прокси-серверы.
-Транспорт задаётся схемой в настройках: `https://`, `tls://`, `quic://`, `udp://`.
+**The remote resolver defaults to DoH on port 443.** DoT (853) through a proxy
+often hangs until timeout: the port is blocked by ISPs and proxy servers alike.
+The transport comes from the URL scheme in settings: `https://`, `tls://`,
+`quic://`, `udp://`.
 
-**Блокировка - это действие, а не выход.** Правила с блокировкой получают
-`"action": "reject"`; спецвыход `block` из ядра убран.
+**Blocking is an action, not an outbound.** Blocking rules get
+`"action": "reject"`; the `block` outbound was removed from the core.
 
-**Определение протокола до маршрутизации.** Первым правилом идёт
-`"action": "sniff"`, без него доменные правила не сработают для соединений,
-пришедших из TUN по IP.
+**Protocol detection before routing.** The first rule is `"action": "sniff"`,
+without which domain rules never match connections arriving from TUN by IP.
 
-**Частные адреса всегда напрямую.** Правило `ip_is_private` стоит выше
-пользовательских.
+**Private addresses always go direct.** The `ip_is_private` rule sits above the
+user rules.
 
-**Clash API** поднимается на `127.0.0.1:9191` - оттуда берутся счётчики трафика,
-замер задержки и переключение селектора.
+**The Clash API** listens on `127.0.0.1:9191` - that is where traffic counters,
+latency probes and selector switching come from.
 
 ---
 
-## Решение проблем
+## Troubleshooting
 
-### «ядро не найдено» в заголовке
+### "core not found" in the title bar
 
-Путь к `sing-box.exe` указан неверно. Настройки → «Обзор».
+The path to `sing-box.exe` is wrong. Settings → **Browse**.
 
-### Конфигурация отклонена ядром
+### Configuration rejected by the core
 
-Текст ошибки от sing-box показывается целиком - читайте его, там указано поле.
-Частая причина: ядро версии 1.11 или старее, не понимающее `rule_set`
-и `action`. Проверьте `sing-box version`.
+The core's error text is shown in full - read it, it names the field. A common
+cause is a core older than 1.12 that does not understand `rule_set` and
+`action`. Check `sing-box version`.
 
-### Сайт идёт не через тот выход
+### A site goes through the wrong outbound
 
-Включите «Подробный лог» в настройках и найдите строки с нужным доменом:
+Enable **Verbose log** in settings and look for the domain:
 
 ```
-router: match[0] => sniff                                       определение протокола
-router: match[1] protocol=dns => hijack-dns                     перехват DNS
-router: match[3] rule_set=geosite-category-ru => route(direct)   ваше правило
+router: match[0] => sniff                                       protocol detection
+router: match[1] protocol=dns => hijack-dns                     DNS capture
+router: match[3] rule_set=geosite-category-ru => route(direct)   your rule
 outbound/direct[direct]: outbound connection to 87.240.185.168:443
 ```
 
-Индексы 0–2 занимают служебные правила, пользовательские начинаются
-с третьего. Если совпадения нет, а соединение ушло в `proxy` - домена просто
-нет в наборе.
+Indices 0–2 are the built-in rules; yours start at three. If there is no match
+and the connection went to `proxy`, the domain simply is not in the set.
 
-Частая причина: сайт живёт не в той зоне, что вы предполагаете. Например,
-`2ip.ru` переехал на `2ip.io`, и в списке российских сайтов зоны `.io` нет.
-Проверяется за минуту - добавьте правило `domain_suffix` с этим доменом.
+A frequent cause: the site does not live in the zone you assume. `2ip.ru`, for
+example, moved to `2ip.io`, and a list of Russian sites contains no `.io`. It
+takes a minute to check - add a `domain_suffix` rule for that domain and see
+whether the outbound changes.
 
-### Подключились, но интернета нет
+### Connected, but no internet
 
-Посмотрите режим слева внизу. Если это системный прокси - работать будут
-только браузеры и приложения, читающие настройки Windows. Для остального
-нужен TUN.
+Check the mode in the bottom left. With the system proxy only browsers and
+applications that read Windows settings are affected. Everything else needs TUN.
 
-### При первом запуске: `create adapter: file already exists`
+### On first launch: `create adapter: file already exists`
 
 ```
 FATAL start service: start inbound/tun[tun-in]: configure tun interface:
@@ -544,110 +546,95 @@ FATAL start service: start inbound/tun[tun-in]: configure tun interface:
  | open existing adapter: Element not found.)
 ```
 
-Остался TUN-адаптер от прошлого сеанса: процесс `sing-box` был снят
-принудительно и не успел удалить интерфейс.
+A TUN adapter is left over from a previous session: the `sing-box` process was
+killed and never removed the interface.
 
-CVPN обрабатывает это на трёх уровнях: при остановке шлёт ядру Ctrl+Break,
-чтобы оно сняло интерфейс само; перед запуском удаляет зависшие адаптеры
-Wintun; и повторяет запуск через три секунды, если ошибка всё же возникла.
-В логе это видно строками «удалено зависших адаптеров» и «повтор через 3 с».
+CVPN handles this at three levels: it sends Ctrl+C on shutdown so the core
+cleans up after itself; it removes stale Wintun adapters before starting; and it
+retries three seconds later if the error still happens. You will see "removed
+stale adapters" and "retrying in 3 s" in the log.
 
-Если ни одной из этих строк в логе нет, а ошибка повторяется - вероятно,
-работает старая сборка, см. [«Правки в коде не применяются»](#правки-в-коде-не-применяются).
+If none of those lines appear and the error repeats, you are probably running
+an old build - see [the section below](#code-changes-have-no-effect).
 
-Если ошибка повторяется постоянно, удалите адаптер вручную: Диспетчер
-устройств → Сетевые адаптеры → удалить запись с именем `sing-box` или
-`WireGuard Tunnel`. Либо в PowerShell от администратора:
+To remove the adapter by hand, from an elevated PowerShell:
 
 ```powershell
-Get-NetAdapter | Where-Object InterfaceDescription -like "*Wintun*" | Remove-NetAdapter -Confirm:$false
+Get-NetAdapter -IncludeHidden | Where-Object InterfaceDescription -like "*Wintun*" | Remove-NetAdapter -Confirm:$false
 ```
 
-### Приложение упало или ведёт себя странно
+### The application crashed or behaves oddly
 
-Загляните в `%APPDATA%\CVPN\logs\` - кнопка «Папка логов» на странице «Логи».
-Файлы за неделю, по одному на день. Аварии записываются блоком с заголовком,
-версией сборки и полным стеком:
+Look in `%APPDATA%\CVPN\logs\` - the **Log folder** button on the Logs page.
+One file per day, a week of history. Crashes are written as a block with a
+heading, the build version and a full stack trace.
 
-```
-────────────────────────────────────────────────────────────
-Ошибка в интерфейсе
-  System.InvalidOperationException: ...
-────────────────────────────────────────────────────────────
-```
+On a UI error the application asks whether to continue. That is deliberate:
+closing with the tunnel up is worse than continuing in an uncertain state,
+because the user is left without internet and without an explanation.
 
-При ошибке в интерфейсе приложение спрашивает, продолжать ли работу.
-Это сделано намеренно: закрыться с поднятым туннелем хуже, чем продолжить
-в неопределённом состоянии - иначе пользователь остаётся без интернета
-и без понятной причины.
+### Code changes have no effect
 
-### Правки в коде не применяются
-
-Первой строкой лога CVPN пишет версию и путь к запущенному файлу:
+The first line of the log holds the version and the path of the running file:
 
 ```
-[cvpn] сборка 1.0.0.0 · D:\Projects\CVPN\bin\Debug\net10.0-windows\CVPN.exe
+[cvpn] build 1.0.0.0 · D:\Projects\CVPN\bin\Debug\net10.0-windows\CVPN.exe
 ```
 
-Если путь ведёт не туда, куда вы собираете, - работает другая копия. Обычная
-причина: задача планировщика указывает на прежний exe и запускает его вместо
-свежего. В логе тогда появится:
+If the path is not where you build, a different copy is running. The usual
+culprit is the scheduled task pointing at the previous executable:
 
 ```
-[cvpn] внимание: задача планировщика запускает другой файл - C:\Program Files\CVPN\CVPN.exe
-[cvpn] пересоздайте задачу в настройках, иначе изменения не применятся
+[cvpn] warning: the scheduled task launches a different file - C:\Program Files\CVPN\CVPN.exe
+[cvpn] recreate the task in settings, otherwise your changes will not apply
 ```
 
-Лечится в настройках: «Удалить задачу» → «Создать задачу» из нужной сборки.
-На время отладки задачу удобнее не держать вовсе и соглашаться на запрос UAC -
-так гарантированно запускается текущий файл.
+Fix it in settings: **Delete task** → **Create task** from the right build.
+While debugging it is easier not to keep the task at all and accept the UAC
+prompt - that way the current file always runs.
 
-Та же ловушка со службой: она указывает на `CVPN.Service.exe` из каталога
-установки. После пересборки службу нужно переустановить.
+The same trap applies to the service: it points at `CVPN.Service.exe` in the
+install directory, so reinstall it after rebuilding.
 
-### В логе ошибки о `192.168.x.x` по таймауту
+### `192.168.x.x` timeouts in the log
 
-Это обращения к устройствам локальной сети - сетевым папкам, принтерам,
-роутеру. Правило `ip_is_private` отправляет их напрямую, и если устройство
-недоступно, соединение отваливается по таймауту. К туннелю отношения не имеет.
+Those are requests to local network devices - file shares, printers, the
+router. The `ip_is_private` rule sends them direct, and if the device is
+unreachable the connection times out. Nothing to do with the tunnel.
 
-### `rule-set not found` при запуске
+### `rule-set not found` at startup
 
 ```
 FATAL start service: initialize DNS rule[0]: rule-set not found: geosite-youtube
 ```
 
-Возникало, когда правило «напрямую» с удалённым набором дублировалось в DNS.
-Набор скачивается при старте, а DNS-правила инициализируются раньше - ядро
-не находило его и падало. Коварство было в том, что уже закэшированные наборы
-работали, и ошибка появлялась только при добавлении нового.
+There were two causes, both fixed.
 
-Причин было две, и обе исправлены.
+First: remote sets were mirrored into DNS rules, but they are downloaded after
+initialisation. Only domain conditions and local sets are mirrored now.
 
-Первая: удалённые наборы дублировались в DNS-правила, а скачиваются они после
-инициализации. Теперь туда переносятся только доменные условия и локальные
-наборы.
+Second, the main one: the application stores `.srs` in the user directory,
+while the service runs as `SYSTEM` and never looks there. The set was dropped
+but the reference in the rules remained. Rule set files are now handed to the
+service together with the configuration, and if a set is dropped anyway, the
+references to it are removed - the rule simply does not apply instead of
+crashing the core.
 
-Вторая, основная: приложение хранит `.srs` в каталоге пользователя, а служба
-работает под `SYSTEM` и туда не заглядывает. Набор отбрасывался, а ссылка
-на него в правилах оставалась. Теперь файлы наборов передаются службе вместе
-с конфигом через тот же канал, а если набор всё же отброшен, ссылки на него
-убираются из правил - вместо падения ядра правило просто не применяется.
+### Rule sets do not download
 
-### Наборы правил не скачиваются
+They are fetched through the tunnel, so the proxy has to work on the first
+connect. Remove the geosite/geoip rules, connect, and add them back.
 
-Они качаются через туннель, так что при первом подключении прокси должен быть
-рабочим. Уберите правила с geosite/geoip, подключитесь и верните обратно.
+### The application will not start via `dotnet run`
 
-### Приложение не запускается через `dotnet run`
-
-Так и должно быть, если вернуть в манифест `requireAdministrator`: `dotnet run`
-стартует процесс через `CreateProcess`, который не умеет показывать запрос UAC,
-и падает с ошибкой 740. В репозитории манифест намеренно оставлен `asInvoker`.
+That is expected if you put `requireAdministrator` back into the manifest:
+`dotnet run` starts the process with `CreateProcess`, which cannot raise a UAC
+prompt, and fails with error 740. The manifest in this repository is
+deliberately `asInvoker`.
 
 ---
 
-## Сборка из исходников
+## Building from source
 
 ```bash
 git clone https://github.com/13CyberPunk02/CVPN.git
@@ -657,148 +644,166 @@ dotnet build -c Release
 dotnet run --project CVPN
 ```
 
-Нужен [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
-Положите `sing-box.exe` в `CVPN\bin\Debug\net10.0-windows\core\` либо укажите
-путь в настройках.
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
+Put `sing-box.exe` into `CVPN\bin\Debug\net10.0-windows\core\` or point at it in
+settings.
 
-Служба копируется в подпапку `service` рядом с приложением автоматически при
-сборке проекта CVPN - за это отвечает цель `CopyServiceOutput` в его `csproj`.
-Если кнопка «Установить службу» пишет «файлы службы не найдены», соберите
-решение целиком (`dotnet build` в корне), а не один проект приложения.
+The service is copied into a `service` subfolder next to the application
+automatically - that is the `CopyServiceOutput` target in its `csproj`. If
+**Install service** reports that the files are missing, build the whole
+solution rather than just the application project.
 
-> При отладке не держите созданной задачу планировщика и установленную службу:
-> обе указывают на конкретный exe и будут запускать его вместо вашей сборки.
-> Проверить, что работает нужный файл, можно по первой строке лога - там
-> версия и полный путь.
+> While debugging, avoid keeping both a scheduled task and an installed
+> service: each points at a specific executable and will launch that instead of
+> your build. The first log line tells you which file is actually running.
 
-Для NaiveProxy рядом с `sing-box.exe` дополнительно нужен `libcronet.dll`:
-этот протокол работает через сетевой стек Chromium. Для VLESS и AnyTLS
-библиотека не требуется.
+NaiveProxy additionally needs `libcronet.dll` next to `sing-box.exe`: the
+protocol runs on Chromium's network stack. VLESS and AnyTLS do not need it.
 
-### Зависимости
+### Dependencies
 
-| Пакет | Зачем |
+| Package | Why |
 |---|---|
-| [QRCoder](https://www.nuget.org/packages/QRCoder) | QR-коды при экспорте |
-| [System.Security.Cryptography.ProtectedData](https://www.nuget.org/packages/System.Security.Cryptography.ProtectedData) | DPAPI для учётных данных |
+| [QRCoder](https://www.nuget.org/packages/QRCoder) | QR codes for export |
+| [System.Security.Cryptography.ProtectedData](https://www.nuget.org/packages/System.Security.Cryptography.ProtectedData) | DPAPI for credentials |
 
-Всё остальное - стандартная библиотека. Ядром управляет
-`System.Diagnostics.Process` напрямую: это понадобилось ради корректной
-остановки, а обёртки над процессами такого контроля не дают.
+Everything else is the standard library. The core is driven by
+`System.Diagnostics.Process` directly - needed for a graceful shutdown, which
+process wrappers do not offer.
 
 ---
 
-## Тесты
+## Tests
 
 ```bash
 dotnet test
 ```
 
-Покрыты чистые функции, где ошибка тише всего и дороже всего: генерация
-`config.json`, разбор и сборка ссылок, импорт чужих конфигов и санитайзер
-службы. Именно здесь мы ловили баги руками - пропавший тег селектора,
-`geoip` в DNS-правилах, транспорт резолвера.
+The suite covers the pure functions where mistakes are quietest and most
+expensive: `config.json` generation, link parsing and building, importing
+foreign configs, and the service sanitiser. Those are exactly the places where
+bugs were found by hand - a missing selector tag, `geoip` in DNS rules, the
+resolver transport.
 
-Тесты гоняются в CI на каждый push и pull request
+Tests run in CI on every push and pull request
 (`.github/workflows/tests.yml`).
 
-## Сборка релиза
+---
+
+## Building a release
 
 ```powershell
 .\installer\build.ps1 -Version 1.0.0
 ```
 
-Скрипт публикует оба проекта, скачивает `sing-box`, раскладывает файлы
-и вызывает Inno Setup. На выходе - `dist\CVPN-1.0.0-setup.exe`.
+The script publishes both projects, downloads `sing-box`, lays out the files
+and invokes Inno Setup. The result is `dist\CVPN-1.0.0-setup.exe`.
 
-По умолчанию сборка framework-dependent: ~50 МБ на диске, среда докачивается
-установщиком. Ключ `-SelfContained` делает автономную сборку на ~200 МБ -
-так собирается портативная версия.
+Requires [Inno Setup 6](https://jrsoftware.org/isdl.php) and the .NET 10 SDK.
 
-Размер держится в рамках тремя приёмами: одна копия `sing-box` на приложение
-и службу, обрезка службы (`PublishTrimmed` - для WPF она не поддерживается,
-для консольной службы работает) и отключение сателлитных ресурсов .NET.
+By default the build is framework-dependent: ~50 MB on disk, with the runtime
+downloaded by the installer. `-SelfContained` produces a standalone ~200 MB
+build, which is how the portable version is made.
 
-Нужен [Inno Setup 6](https://jrsoftware.org/isdl.php) и .NET 10 SDK.
+Size is kept in check three ways: one copy of `sing-box` shared by the
+application and the service, trimming the service (`PublishTrimmed` is not
+supported for WPF but works for the console project), and disabling satellite
+resource assemblies.
 
-В CI то же самое делает `.github/workflows/release.yml`: пуш тега `v1.0.0`
-собирает установщик и портативный архив и прикрепляет их к релизу.
+CI does the same via `.github/workflows/release.yml`: pushing a `v1.0.0` tag
+builds the installer and the portable archive and attaches both to the release.
 
-> Workflow требует прав на запись: блок `permissions: contents: write` в файле
-> и «Read and write permissions» в Settings → Actions → General. Без этого
-> создание релиза возвращает 403.
+> The workflow needs write access: the `permissions: contents: write` block in
+> the file and "Read and write permissions" under Settings → Actions → General.
+> Without it, creating a release returns 403.
 >
-> Inno Setup на образе `windows-latest` не предустановлен - workflow ставит
-> его через Chocolatey отдельным шагом.
+> Inno Setup is not preinstalled on the `windows-latest` image - the workflow
+> installs it through Chocolatey in a separate step.
 
 ---
 
-## Архитектура
+## Architecture
 
 ```
 CVPN.sln
-├── CVPN/                    приложение WPF
-│   ├── Theme/               токены дизайна и стили контролов
-│   ├── Controls/            ConnectDial - круг подключения
-│   ├── Views/               6 страниц + редактор профиля + экспорт
-│   ├── ViewModels/          MainViewModel
+├── CVPN/                    WPF application
+│   ├── Theme/               design tokens and control styles
+│   ├── Controls/            ConnectDial - the connection dial
+│   ├── Views/               6 pages + profile editor + export
+│   ├── ViewModels/          MainViewModel + one per page
 │   ├── Models/              ServerProfile, RouteRule, RoutingProfile
-│   ├── Core/                Mvvm, Elevation
+│   ├── Core/                Mvvm, Elevation, Secret
 │   ├── Services/            ConfigBuilder, ClashApiClient, TrayIcon, …
-│   ├── Ipc/                 контракт и клиент службы
-│   └── Assets/              иконки и флаги
+│   ├── Ipc/                 service client
+│   └── Assets/              icons and flags
 │
-├── CVPN.Service/            служба Windows (Worker Service)
-│   ├── PipeServer.cs        именованный канал и его ACL
-│   ├── CoreRunner.cs        запуск и остановка sing-box
-│   ├── ConfigSanitizer.cs   обеззараживание присланного конфига
-│   └── DataDirectory.cs     закрытие каталога от обычных пользователей
+├── CVPN.Service/            Windows service (Worker Service)
+│   ├── PipeServer.cs        named pipe and its ACL
+│   ├── CoreRunner.cs        starting and stopping sing-box
+│   ├── ConfigSanitizer.cs   sanitising the incoming configuration
+│   └── DataDirectory.cs     locking the directory down from ordinary users
 │
-├── CVPN.Shared/             общий код приложения и службы
-│   ├── IpcContract.cs       протокол канала
-│   ├── ConsoleSignal.cs     штатная остановка ядра
-│   └── FileLog.cs           файловый лог
+├── CVPN.Shared/             code shared by the application and the service
+│   ├── IpcContract.cs       pipe protocol
+│   ├── ConsoleSignal.cs     graceful core shutdown
+│   └── FileLog.cs           file logging
 │
-├── CVPN.Tests/              xUnit: конфиг, ссылки, санитайзер
-├── installer/               Inno Setup и сборочный скрипт
-└── .github/workflows/       сборка релиза
+├── CVPN.Tests/              xUnit: config, links, sanitiser
+├── installer/               Inno Setup and the build script
+└── .github/workflows/       tests and release
 ```
 
-Все цвета живут в `Theme/Palette.xaml` - ниже по коду литеральных цветов нет.
-MVVM реализован вручную в `Core/Mvvm.cs`: при таком объёме логики тянуть
-CommunityToolkit незачем.
+Pages sit on their own view models: navigation supplies an object and WPF picks
+the markup by `DataTemplate`, so page state survives navigation. The extraction
+guide is in [REFACTORING.md](REFACTORING.md).
 
-Приложение и служба не ссылаются друг на друга - общий код вынесен
-в библиотеку `CVPN.Shared`. Так протокол канала нельзя поменять с одной
-стороны и забыть про другую.
+The application and the service do not reference each other - shared code lives
+in `CVPN.Shared`. That way the pipe protocol cannot be changed on one side and
+forgotten on the other.
 
-Раньше эти файлы подключались в службу через `<Compile Include>` со ссылкой.
-Способ рабочий, но типы при этом компилируются в обе сборки, и тестовый
-проект, ссылающийся на оба, получает один и тот же тип дважды.
+Every colour lives in `Theme/Palette.xaml`; there are no literal colours
+anywhere else. MVVM is hand-rolled in `Core/Mvvm.cs`: with this amount of logic
+a toolkit would not earn its keep.
 
-### Полезно знать при доработке
+### Worth knowing when working on it
 
-Внутри `Style` и `ControlTemplate` **не работают** `ElementName`
-и `Storyboard.TargetName` - у них нет доступа к области имён. Используйте
-`RelativeSource AncestorType` и пути свойств вида
+`ElementName` and `Storyboard.TargetName` **do not work** inside `Style` and
+`ControlTemplate` - they have no access to the name scope. Use
+`RelativeSource AncestorType` and property paths like
 `(UIElement.RenderTransform).(RotateTransform.Angle)`.
 
-Модели сохраняются в JSON, поэтому каждое вычисляемое свойство должно быть
-помечено `[JsonIgnore]` - иначе сериализатор попытается записать и его.
+Inside a `DataTemplate` the data context is the list item, not the page. Page
+commands are reached with
+`{Binding DataContext.Command, RelativeSource={RelativeSource AncestorType=UserControl}}`.
+
+Models are serialised to JSON, so every computed property needs `[JsonIgnore]` -
+otherwise the serialiser will try to write it too.
 
 ---
 
-## Лицензии
+## Roadmap
 
-CVPN распространяется под лицензией MIT - см. [LICENSE](LICENSE).
+- [ ] Test a domain before saving a rule: show which rule will match
+- [ ] Quick server switching from the tray menu
+- [ ] Automatic daily subscription refresh
+- [ ] Per-session statistics
+- [ ] Code-signed installer
 
-`sing-box` распространяется под GPL-3.0-or-later. Приложение запускает ядро
-как отдельный процесс через командную строку, не линкуется с ним и не содержит
-его кода, поэтому это агрегация, а не производная работа. При распространении
-установщика текст лицензии ядра кладётся рядом (`LICENSE.sing-box.txt`) -
-это требование GPL, и сборочный скрипт делает это автоматически.
+Suggestions welcome in [issues](https://github.com/13CyberPunk02/CVPN/issues).
 
-Лицензия sing-box отдельно запрещает производным работам использовать его имя
-или подразумевать связь с проектом без согласия авторов. Поэтому CVPN
-не называет себя клиентом sing-box в названии и явно указывает, что с командой
-sing-box не связан.
+---
+
+## Licences
+
+CVPN is released under the MIT licence - see [LICENSE](LICENSE).
+
+`sing-box` is released under GPL-3.0-or-later. The application runs the core as
+a separate process over the command line, does not link against it and contains
+none of its code, so this is aggregation rather than a derivative work. The
+core's licence text ships next to the binary (`LICENSE.sing-box.txt`) as GPL
+requires, and the build script does that automatically.
+
+The sing-box licence separately forbids derivative works from using its name or
+implying an association without consent. CVPN therefore does not call itself a
+sing-box client in its name and states plainly that it is not affiliated with
+the sing-box team.
