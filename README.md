@@ -315,6 +315,15 @@ Enabled in settings, requires administrator rights.
 
 ---
 
+## Session summary
+
+Below the dial on the main screen: how long the connection has been up, how
+much was received and sent, the peak speed, and which server was used. It comes
+from the same counter stream as the live speed - no extra requests to the core.
+
+The summary stays on screen after disconnecting, which is the point of
+collecting it.
+
 ## Tray icon
 
 Double-click opens the window. The menu offers connect, exit, and a **Server**
@@ -813,8 +822,8 @@ otherwise the serialiser will try to write it too.
 
 - [x] Test a domain before saving a rule: show which rule will match
 - [x] Quick server switching from the tray menu
-- [ ] Automatic daily subscription refresh
-- [ ] Per-session statistics
+- [x] Automatic daily subscription refresh
+- [x] Per-session statistics
 - [ ] Code-signed installer
 
 Suggestions welcome in [issues](https://github.com/13CyberPunk02/CVPN/issues).
