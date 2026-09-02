@@ -315,6 +315,12 @@ Enabled in settings, requires administrator rights.
 
 ---
 
+## Tray icon
+
+Double-click opens the window. The menu offers connect, exit, and a **Server**
+submenu listing your profiles with the active one ticked. Switching goes
+through the selector, so the core is not restarted.
+
 ## Autostart
 
 The toggle in settings registers the application in the current user's `Run`
@@ -350,6 +356,17 @@ core takes the first match, so a rule above overrides everything below it. If
 direct rule placed below will never fire.
 
 Reordering applies after reconnecting.
+
+### Testing a domain
+
+The field above the list answers the question that usually sends people into
+the logs: which rule will match. Enter a domain or a full URL and the
+application names the outcome and the matching rule, without bringing the
+tunnel up.
+
+The contents of `geosite` and `.srs` sets cannot be checked - they are binary
+files the application does not have. If such a set sits above the match found,
+the check says so plainly instead of guessing.
 
 ### Rule sets
 
@@ -620,6 +637,17 @@ service together with the configuration, and if a set is dropped anyway, the
 references to it are removed - the rule simply does not apply instead of
 crashing the core.
 
+### Testing a domain
+
+The field above the list answers the question that usually sends people into
+the logs: which rule will match. Enter a domain or a full URL and the
+application names the outcome and the matching rule, without bringing the
+tunnel up.
+
+The contents of `geosite` and `.srs` sets cannot be checked - they are binary
+files the application does not have. If such a set sits above the match found,
+the check says so plainly instead of guessing.
+
 ### Rule sets do not download
 
 They are fetched through the tunnel, so the proxy has to work on the first
@@ -783,8 +811,8 @@ otherwise the serialiser will try to write it too.
 
 ## Roadmap
 
-- [ ] Test a domain before saving a rule: show which rule will match
-- [ ] Quick server switching from the tray menu
+- [x] Test a domain before saving a rule: show which rule will match
+- [x] Quick server switching from the tray menu
 - [ ] Automatic daily subscription refresh
 - [ ] Per-session statistics
 - [ ] Code-signed installer
