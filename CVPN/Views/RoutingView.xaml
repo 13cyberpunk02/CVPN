@@ -13,6 +13,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -22,8 +23,7 @@
                 <TextBlock Text="Маршруты" Style="{StaticResource T.Title}" 
                            Margin="0,0,0,7"/>
                 <TextBlock Text="Правила проверяются сверху вниз. Первое совпадение решает судьбу соединения."
-                           Style="{StaticResource T.Secondary}" 
-                           Margin="0,7,0,0" />
+                           Style="{StaticResource T.Secondary}" Margin="0,7,0,0" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
@@ -77,7 +77,51 @@
             </Grid>
         </Border>
 
-        <ListBox Grid.Row="2" Style="{StaticResource PlainList}" Margin="0,14,0,0" ItemsSource="{Binding Rules}">
+        <!-- Проверка домена: отвечает на вопрос «какое правило сработает»
+             без подключения и без чтения логов -->
+        <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,10,0,0" Padding="14,12">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" Style="{StaticResource Input}"
+                             Text="{Binding TestInput, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="проверить домен: youtube.com" />
+                    <Button Grid.Column="1" Content="Проверить" Style="{StaticResource Btn.Base}"
+                            Margin="8,0,0,0" Command="{Binding TestDomain}" />
+                </Grid>
+
+                <TextBlock Text="{Binding TestResult}" Margin="0,10,0,0" TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource T.Caption}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasTestResult}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding TestOutcome}"
+                                             Value="{x:Static enums:RouteAction.Direct}">
+                                    <Setter Property="Foreground" Value="{StaticResource Connected}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding TestOutcome}"
+                                             Value="{x:Static enums:RouteAction.Block}">
+                                    <Setter Property="Foreground" Value="{StaticResource Danger}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding TestOutcome}"
+                                             Value="{x:Static enums:RouteAction.Proxy}">
+                                    <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <ListBox Grid.Row="3" Style="{StaticResource PlainList}" Margin="0,14,0,0" ItemsSource="{Binding Rules}">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type models:RouteRule}">
                     <Border Background="{StaticResource Surface}" CornerRadius="{StaticResource Radius}"
@@ -141,7 +185,7 @@
                             <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="8,0,0,0">
                                 <!-- Порядок решает: первое совпадение выигрывает -->
                                 <Button Content="▲" Style="{StaticResource Btn.Ghost}" Padding="8,4"
-                                        ToolTip="Выше по списку - правило сработает раньше"
+                                        ToolTip="Выше по списку — правило сработает раньше"
                                         Command="{Binding DataContext.MoveUp,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" />
@@ -162,7 +206,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <Border Grid.Row="3" Style="{StaticResource Card}" Padding="14,12" Margin="0,4,0,0" BorderThickness="0">
+        <Border Grid.Row="4" Style="{StaticResource Card}" Padding="14,12" Margin="0,4,0,0" BorderThickness="0">
             <Grid>
                 <StackPanel>
                     <TextBlock Text="Всё остальное" Style="{StaticResource T.Body}" />

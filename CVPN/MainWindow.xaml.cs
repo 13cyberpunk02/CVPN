@@ -18,6 +18,7 @@ public partial class MainWindow : Window
 
         _tray.ShowRequested += RestoreFromTray;
         _tray.ToggleRequested += () => Vm?.ToggleConnection.Execute(null);
+        _tray.ProfileRequested += SwitchProfile;
         _tray.ExitRequested += ExitApplication;
 
         DataContextChanged += (_, _) => Subscribe();
@@ -41,6 +42,11 @@ public partial class MainWindow : Window
 
         Vm.PropertyChanged -= OnVmChanged;
         Vm.PropertyChanged += OnVmChanged;
+
+        // Профиль могли добавить, удалить или переименовать - меню должно поспевать
+        Vm.Profiles.CollectionChanged -= OnProfilesChanged;
+        Vm.Profiles.CollectionChanged += OnProfilesChanged;
+
         RefreshTray();
     }
 
@@ -49,9 +55,26 @@ public partial class MainWindow : Window
         if (e.PropertyName is nameof(MainViewModel.State) or nameof(MainViewModel.Active)) RefreshTray();
     }
 
+    private void OnProfilesChanged(object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => RefreshTray();
+
     private void RefreshTray()
     {
-        if (Vm is not null) _tray.Update(Vm.State, Vm.Active?.Name);
+        if (Vm is null) return;
+
+        _tray.Update(Vm.State, Vm.Active?.Name);
+        _tray.SetProfiles(Vm.Profiles.Select(p => (p.Name, ReferenceEquals(p, Vm.Active))));
+    }
+
+    /// <summary>
+    /// Выбор сервера из меню трея. Ищем по названию: пункт меню хранит строку,
+    /// а не ссылку на профиль - список пересоздаётся при каждом изменении.
+    /// </summary>
+    private void SwitchProfile(string name)
+    {
+        var profile = Vm?.Profiles.FirstOrDefault(p => p.Name == name);
+
+        if (profile is not null) _ = Vm!.SelectServerAsync(profile);
     }
 
     // ===================== заголовок окна =====================

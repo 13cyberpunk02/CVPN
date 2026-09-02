@@ -1,7 +1,6 @@
 using System.Drawing;
 using System.Windows.Forms;
 using CVPN.Models.Enums;
-
 using Application = System.Windows.Application;
 
 namespace CVPN.Services;
@@ -14,6 +13,7 @@ public sealed class TrayIcon : IDisposable
 {
     private readonly NotifyIcon _icon;
     private readonly ToolStripMenuItem _toggleItem;
+    private readonly ToolStripMenuItem _serversItem;
     private readonly Icon _idle;
     private readonly Icon _connected;
     private readonly Icon _failing;
@@ -26,10 +26,14 @@ public sealed class TrayIcon : IDisposable
 
         _toggleItem = new ToolStripMenuItem("Подключить", null, (_, _) => ToggleRequested?.Invoke());
 
+        // Сервер меняют чаще, чем открывают окно, - список прямо в меню
+        _serversItem = new ToolStripMenuItem("Сервер") { Enabled = false };
+
         var menu = new ContextMenuStrip();
         menu.Items.Add(new ToolStripMenuItem("Открыть CVPN", null, (_, _) => ShowRequested?.Invoke()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_toggleItem);
+        menu.Items.Add(_serversItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Выход", null, (_, _) => ExitRequested?.Invoke()));
 
@@ -47,6 +51,35 @@ public sealed class TrayIcon : IDisposable
     public event Action? ShowRequested;
     public event Action? ToggleRequested;
     public event Action? ExitRequested;
+
+    /// <summary>Из меню выбрали сервер - передаётся его название.</summary>
+    public event Action<string>? ProfileRequested;
+
+    /// <summary>
+    /// Перестраивает список серверов. Вызывается при изменении профилей
+    /// и при смене активного: пункты меню WinForms не умеют привязок.
+    /// </summary>
+    public void SetProfiles(IEnumerable<(string Name, bool IsActive)> profiles)
+    {
+        _serversItem.DropDownItems.Clear();
+
+        var any = false;
+
+        foreach (var (name, isActive) in profiles)
+        {
+            var item = new ToolStripMenuItem(name) { Checked = isActive, CheckOnClick = false };
+
+            // Замыкание по name, а не по item: список пересоздаётся целиком
+            var chosen = name;
+            item.Click += (_, _) => ProfileRequested?.Invoke(chosen);
+
+            _serversItem.DropDownItems.Add(item);
+            any = true;
+        }
+
+        // Пустое подменю выглядит как поломка - лучше показать его недоступным
+        _serversItem.Enabled = any;
+    }
 
     /// <summary>Иконка и подсказка отражают состояние - свёрнутое окно тоже должно быть информативным.</summary>
     public void Update(TunnelState state, string? profileName)
