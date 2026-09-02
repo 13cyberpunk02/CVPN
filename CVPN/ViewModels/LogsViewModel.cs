@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.Windows.Input;
 using CVPN.Core;
+using CVPN.Localization;
 using CVPN.Shared;
 
 namespace CVPN.ViewModels;
@@ -42,7 +43,7 @@ public sealed class LogsViewModel : PageViewModel
             try
             {
                 Clipboard.SetDataObject(text, true);
-                Shell.Notify($"Скопировано строк: {Log.Count}");
+                Shell.Notify(Loc.T("Logs_CopiedLines", Log.Count));
                 return;
             }
             catch (Exception) when (attempt < attempts)
@@ -51,7 +52,7 @@ public sealed class LogsViewModel : PageViewModel
             }
             catch (Exception ex)
             {
-                Shell.Notify($"Не удалось скопировать: {ex.Message}");
+                Shell.Notify(Loc.T("Logs_CopyFailed", ex.Message));
             }
         }
     }
@@ -67,7 +68,7 @@ public sealed class LogsViewModel : PageViewModel
         }
         catch (Exception ex)
         {
-            Shell.Notify($"Не удалось открыть папку логов: {ex.Message}");
+            Shell.Notify(Loc.T("Logs_FolderFailed", ex.Message));
         }
     }
 }

@@ -15,6 +15,9 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Язык применяется до создания окна: разметка читает переводы при разборе
+        Localization.Loc.Apply(ProfileStore.Load().Settings.Language);
+
         FileLog.Initialize(System.IO.Path.Combine(AppPaths.DataDir, "logs"));
 
         var version = Assembly.GetExecutingAssembly().GetName().Version;

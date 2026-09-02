@@ -4,6 +4,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:vm="clr-namespace:CVPN.ViewModels"
         xmlns:views="clr-namespace:CVPN.Views"
+        xmlns:loc="clr-namespace:CVPN.Localization"
         Title="CVPN" Icon="Assets/cvpn.ico" Width="980" Height="660" MinWidth="860" MinHeight="580"
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
         TextOptions.TextFormattingMode="Ideal">
@@ -90,24 +91,24 @@
 
                             <StackPanel Grid.Row="0" Margin="0,12,0,0">
                                 <RadioButton x:Name="NavConnection" Style="{StaticResource NavItem}"
-                                             Content="Соединение" IsChecked="True" Checked="OnNavChanged"
+                                             Content="{loc:T Nav_Connection}" IsChecked="True" Checked="OnNavChanged"
                                              Tag="connection" />
-                                <RadioButton Style="{StaticResource NavItem}" Content="Профили"
+                                <RadioButton Style="{StaticResource NavItem}" Content="{loc:T Nav_Profiles}"
                                              Checked="OnNavChanged" Tag="profiles" />
-                                <RadioButton Style="{StaticResource NavItem}" Content="Маршруты"
+                                <RadioButton Style="{StaticResource NavItem}" Content="{loc:T Nav_Routing}"
                                              Checked="OnNavChanged" Tag="routing" />
-                                <RadioButton Style="{StaticResource NavItem}" Content="Соединения"
+                                <RadioButton Style="{StaticResource NavItem}" Content="{loc:T Nav_Connections}"
                                              Checked="OnNavChanged" Tag="connections" />
-                                <RadioButton Style="{StaticResource NavItem}" Content="Логи"
+                                <RadioButton Style="{StaticResource NavItem}" Content="{loc:T Nav_Logs}"
                                              Checked="OnNavChanged" Tag="logs" />
-                                <RadioButton Style="{StaticResource NavItem}" Content="Настройки"
+                                <RadioButton Style="{StaticResource NavItem}" Content="{loc:T Nav_Settings}"
                                              Checked="OnNavChanged" Tag="settings" />
                             </StackPanel>
 
                             <Border Grid.Row="2" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0"
                                     Padding="18,12">
                                 <StackPanel>
-                                    <TextBlock Text="режим" Style="{StaticResource T.Label}" />
+                                    <TextBlock Text="{loc:T Common_Mode}" Style="{StaticResource T.Label}" />
 
                                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                                         <!-- Точка горит, только когда режим реально работает -->

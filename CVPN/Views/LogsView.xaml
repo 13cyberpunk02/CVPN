@@ -4,10 +4,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CVPN.ViewModels"
+             xmlns:loc="clr-namespace:CVPN.Localization"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:LogsViewModel, IsDesignTimeCreatable=False}">
 
-    <Grid Margin="28,22,28,24">
+  <Grid Margin="28,22,28,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -15,22 +16,19 @@
 
         <Grid Grid.Row="0">
             <StackPanel>
-                <TextBlock Text="Логи" Style="{StaticResource T.Title}" 
-                           Margin="0, 0, 0, 7"/>
-                <TextBlock Text="Живой вывод ядра. Полная история пишется в файл - кнопка «Папка логов»."
-                           Style="{StaticResource T.Secondary}"
-                           Margin="0,7,0,0" 
-                           TextWrapping="Wrap" />
+                <TextBlock Text="{loc:T Logs_Title}" Style="{StaticResource T.Title}" />
+                <TextBlock Text="{loc:T Logs_Subtitle}"
+                           Style="{StaticResource T.Secondary}" Margin="0,4,0,0" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding Status}" Style="{StaticResource T.Caption}" Margin="0,6,0,0"
                            Foreground="{StaticResource Warning}" TextWrapping="Wrap" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                <Button Content="Папка логов" Style="{StaticResource Btn.Ghost}"
-                        ToolTip="Файлы за последние 7 дней - их удобно приложить к сообщению об ошибке"
+                <Button Content="{loc:T Logs_OpenFolder}" Style="{StaticResource Btn.Ghost}"
+                        ToolTip="{loc:T Logs_OpenFolderHint}"
                         Command="{Binding OpenFolder}" />
-                <Button Content="Копировать" Style="{StaticResource Btn.Base}" Margin="8,0,0,0"
+                <Button Content="{loc:T Common_Copy}" Style="{StaticResource Btn.Base}" Margin="8,0,0,0"
                         Command="{Binding Copy}" />
-                <Button Content="Очистить" Style="{StaticResource Btn.Ghost}" Margin="8,0,0,0"
+                <Button Content="{loc:T Common_Clear}" Style="{StaticResource Btn.Ghost}" Margin="8,0,0,0"
                         Command="{Binding Clear}" />
             </StackPanel>
         </Grid>

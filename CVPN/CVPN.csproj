@@ -11,7 +11,7 @@
         <AssemblyName>CVPN</AssemblyName>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Assets\cvpn.ico</ApplicationIcon>
-        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        <SatelliteResourceLanguages>en;ru</SatelliteResourceLanguages>
     </PropertyGroup>
 
     <ItemGroup>
@@ -52,6 +52,26 @@
         <Resource Include="Assets\cvpn-connected.ico" />
         <Resource Include="Assets\cvpn-idle.ico" />
         <Resource Include="Assets\Flags\*.png" />
+    </ItemGroup>
+
+
+    <ItemGroup>
+        <EmbeddedResource Update="Localization\Strings.resx" />
+        <EmbeddedResource Update="Localization\Strings.ru.resx" />
+    </ItemGroup>
+
+
+    <ItemGroup>
+      <Compile Update="Localization\Strings.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Strings.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Localization\Strings.ru.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Strings.ru.resx</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

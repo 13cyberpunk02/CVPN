@@ -4,6 +4,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using CVPN.Core;
 using CVPN.Ipc;
+using CVPN.Localization;
 using CVPN.Services;
 
 namespace CVPN.ViewModels;
@@ -33,9 +34,25 @@ public sealed class SettingsViewModel : PageViewModel
         UninstallService = new RelayCommand(UninstallTunnelService);
         InstallTask = new RelayCommand(InstallElevatedTask);
         UninstallTask = new RelayCommand(UninstallElevatedTask);
+
+        // Настройки сохранялись только при штатном выходе: если приложение
+        // снять из диспетчера, изменения пропадали
+        Settings.PropertyChanged += OnSettingChanged;
+    }
+
+    private void OnSettingChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        Shell.Persist();
+
+        // Язык читается при запуске, поэтому предупреждаем сразу
+        if (e.PropertyName == nameof(AppSettings.Language))
+            Shell.Notify(Loc.T("Settings_LanguageHint"));
     }
 
     public AppSettings Settings => Shell.Settings;
+
+    /// <summary>Языки интерфейса для выпадающего списка.</summary>
+    public IReadOnlyList<LanguageOption> Languages => Loc.Available;
 
     public ICommand BrowseCore { get; }
     public ICommand RestoreNetwork { get; }

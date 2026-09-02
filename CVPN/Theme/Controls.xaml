@@ -355,7 +355,7 @@
                 <ControlTemplate TargetType="ComboBoxItem">
                     <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}"
                             CornerRadius="6" Margin="4,1">
-                        <ContentPresenter />
+                        <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
@@ -401,8 +401,11 @@
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
+                        <!-- Цвет задаём явно: наследование через TextElement работает,
+                             пока в шаблоне элемента не окажется свой TextBlock -->
                         <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
                                           ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"
                                           Margin="12,0,32,0" VerticalAlignment="Center" IsHitTestVisible="False" />
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                AllowsTransparency="True" PopupAnimation="Fade" Focusable="False">

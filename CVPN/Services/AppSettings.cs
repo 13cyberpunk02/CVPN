@@ -12,6 +12,7 @@ public sealed class AppSettings : ObservableObject
     private bool _proxyByDefault = true;
     private int _clashApiPort = 9191;
     private string _logLevel = "info";
+    private string _language = "";
     private bool _closeToTray = true;
     private bool _autoStart;
     private bool _autoConnect;
@@ -138,6 +139,16 @@ public sealed class AppSettings : ObservableObject
     {
         get => _useService;
         set => Set(ref _useService, value);
+    }
+
+    /// <summary>
+    /// Код языка интерфейса: «en», «ru» или пустая строка - язык системы.
+    /// Применяется при запуске.
+    /// </summary>
+    public string Language
+    {
+        get => _language;
+        set => Set(ref _language, value);
     }
 
     /// <summary>Проверять новую версию на GitHub при запуске.</summary>
