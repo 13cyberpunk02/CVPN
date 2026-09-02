@@ -119,11 +119,41 @@
                             <!-- Внутри DataTemplate контекст - ConnectionInfo, поэтому
                                  до команд страницы добираемся через RelativeSource -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Content="Напрямую" Style="{StaticResource Btn.Ghost}" Padding="9,5"
+                                <!-- Предлагаем противоположное тому, что происходит сейчас:
+                                     для прокси - «напрямую», для прямого - «через прокси» -->
+                                <Button Content="Напрямую" Padding="9,5"
                                         ToolTip="Добавить правило: домен пойдёт мимо туннеля"
                                         Command="{Binding DataContext.RuleDirect,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}" />
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource Btn.Ghost}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDirect}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <Button Content="Через прокси" Padding="9,5"
+                                        ToolTip="Добавить правило: домен пойдёт через туннель"
+                                        Command="{Binding DataContext.RuleProxy,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource Btn.Ghost}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDirect}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                                 <Button Content="Блок" Style="{StaticResource Btn.Ghost}" Padding="9,5"
                                         ToolTip="Добавить правило: домен блокируется"
                                         Command="{Binding DataContext.RuleBlock,

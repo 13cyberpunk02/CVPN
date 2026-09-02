@@ -25,6 +25,10 @@ public sealed class ConnectionsViewModel : PageViewModel
         {
             if (p is ConnectionInfo c) AddRule(c, RouteAction.Direct);
         });
+        RuleProxy = new RelayCommand(p =>
+        {
+            if (p is ConnectionInfo c) AddRule(c, RouteAction.Proxy);
+        });
         RuleBlock = new RelayCommand(p =>
         {
             if (p is ConnectionInfo c) AddRule(c, RouteAction.Block);
@@ -38,6 +42,7 @@ public sealed class ConnectionsViewModel : PageViewModel
     public ObservableCollection<ConnectionInfo> Connections { get; } = [];
 
     public ICommand RuleDirect { get; }
+    public ICommand RuleProxy { get; }
     public ICommand RuleBlock { get; }
     public ICommand CloseConnection { get; }
 
@@ -88,18 +93,36 @@ public sealed class ConnectionsViewModel : PageViewModel
     {
         var domain = connection.RuleCandidate;
 
-        if (Shell.Rules.Any(r => r.Match == MatchKind.DomainSuffix && r.Value == domain))
+        var existing = Shell.Rules.FirstOrDefault(r => r.Match == MatchKind.DomainSuffix && r.Value == domain);
+
+        if (existing is not null)
         {
-            Shell.Notify($"Правило для {domain} уже есть");
+            // Правило уже есть, но ведёт не туда - меняем действие вместо отказа
+            if (existing.Action == action)
+            {
+                Shell.Notify($"Правило для {domain} уже есть");
+                return;
+            }
+
+            existing.Action = action;
+            Shell.Persist();
+
+            Shell.Notify($"Правило для {domain} изменено на «{Describe(action)}». " +
+                         "Применится после переподключения.");
             return;
         }
 
         Shell.AddRule(MatchKind.DomainSuffix, domain, action);
 
-        Shell.Notify(action == RouteAction.Block
-            ? $"{domain} добавлен в блок. Применится после переподключения."
-            : $"{domain} пойдёт напрямую. Применится после переподключения.");
+        Shell.Notify($"{domain} - «{Describe(action)}». Применится после переподключения.");
     }
+
+    private static string Describe(RouteAction action) => action switch
+    {
+        RouteAction.Direct => "напрямую",
+        RouteAction.Block => "блокировать",
+        _ => "через прокси"
+    };
 
     private async Task CloseAsync(ConnectionInfo connection)
     {

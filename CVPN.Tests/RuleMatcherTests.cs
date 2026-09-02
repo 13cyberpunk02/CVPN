@@ -9,6 +9,8 @@ public class RuleMatcherTests
     private static RouteRule Rule(MatchKind match, string value, RouteAction action) =>
         new() { Match = match, Value = value, Action = action };
 
+    // ===================== разбор ввода =====================
+
     [Theory]
     [InlineData("youtube.com", "youtube.com")]
     [InlineData("https://www.youtube.com/watch?v=1", "www.youtube.com")]
@@ -20,6 +22,8 @@ public class RuleMatcherTests
     {
         Assert.Equal(expected, RuleMatcher.Normalize(input));
     }
+
+    // ===================== сопоставление =====================
 
     [Fact]
     public void Точное_совпадение_срабатывает()
@@ -142,18 +146,49 @@ public class RuleMatcherTests
         Assert.Empty(match.Unknown);
     }
 
-    /// <summary>geoip и имя процесса к домену неприменимы: это не «не знаю», а «мимо».</summary>
-    [Theory]
-    [InlineData(MatchKind.Geoip, "ru")]
-    [InlineData(MatchKind.Process, "firefox.exe")]
-    public void Неприменимые_условия_не_считаются_неизвестными(MatchKind kind, string value)
+    /// <summary>
+    /// geoip решается по адресу, в который резолвится домен. Базы у нас нет,
+    /// но правило вполне может перехватить - значит «не знаю», а не «мимо».
+    /// Именно это поведение сначала было сделано неверно: проверка уверенно
+    /// сообщала «через прокси» при активном правиле geoip ru.
+    /// </summary>
+    [Fact]
+    public void Geoip_считается_неизвестным()
     {
-        var rules = new[] { Rule(kind, value, RouteAction.Direct) };
+        var rules = new[] { Rule(MatchKind.Geoip, "ru", RouteAction.Direct) };
+
+        var match = RuleMatcher.Evaluate(rules, proxyByDefault: true, "yandex.ru");
+
+        Assert.False(match.IsCertain);
+        Assert.Single(match.Unknown);
+    }
+
+    /// <summary>Имя процесса к проверке домена не относится вовсе.</summary>
+    [Fact]
+    public void Имя_процесса_не_считается_неизвестным()
+    {
+        var rules = new[] { Rule(MatchKind.Process, "firefox.exe", RouteAction.Direct) };
 
         var match = RuleMatcher.Evaluate(rules, proxyByDefault: true, "example.com");
 
         Assert.True(match.IsCertain);
         Assert.Equal(RouteAction.Proxy, match.Outcome);
+    }
+
+    /// <summary>Точное совпадение выше geoip снимает неопределённость.</summary>
+    [Fact]
+    public void Совпадение_до_geoip_даёт_точный_ответ()
+    {
+        var rules = new[]
+        {
+            Rule(MatchKind.Domain, "yandex.ru", RouteAction.Direct),
+            Rule(MatchKind.Geoip, "ru", RouteAction.Block)
+        };
+
+        var match = RuleMatcher.Evaluate(rules, proxyByDefault: true, "yandex.ru");
+
+        Assert.True(match.IsCertain);
+        Assert.Equal(RouteAction.Direct, match.Outcome);
     }
 
     [Fact]
