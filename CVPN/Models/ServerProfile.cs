@@ -12,54 +12,87 @@ public sealed class ServerProfile : ObservableObject
     private ProtocolKind _protocol = ProtocolKind.VlessReality;
     private int _latencyMs = -1;
     private bool _isActive;
- 
+
     public string Name
     {
         get => _name;
-        set { Set(ref _name, value); Raise(nameof(CountryCode)); Raise(nameof(FlagImage)); }
+        set
+        {
+            Set(ref _name, value);
+            Raise(nameof(CountryCode));
+            Raise(nameof(FlagImage));
+        }
     }
-    public string Host { get => _host; set => Set(ref _host, value); }
-    public int Port { get => _port; set => Set(ref _port, value); }
-    public ProtocolKind Protocol { get => _protocol; set { Set(ref _protocol, value); Raise(nameof(ProtocolLabel)); } }
- 
+
+    public string Host
+    {
+        get => _host;
+        set => Set(ref _host, value);
+    }
+
+    public int Port
+    {
+        get => _port;
+        set => Set(ref _port, value);
+    }
+
+    public ProtocolKind Protocol
+    {
+        get => _protocol;
+        set
+        {
+            Set(ref _protocol, value);
+            Raise(nameof(ProtocolLabel));
+        }
+    }
+
     /// <summary>-1 означает «ещё не измеряли».</summary>
     [JsonIgnore]
     public int LatencyMs
     {
         get => _latencyMs;
-        set { Set(ref _latencyMs, value); Raise(nameof(LatencyLabel)); Raise(nameof(LatencyGrade)); }
+        set
+        {
+            Set(ref _latencyMs, value);
+            Raise(nameof(LatencyLabel));
+            Raise(nameof(LatencyGrade));
+        }
     }
- 
+
     /// <summary>Состояние интерфейса, в файл не пишется.</summary>
     [JsonIgnore]
-    public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
- 
+    public bool IsActive
+    {
+        get => _isActive;
+        set => Set(ref _isActive, value);
+    }
+
     // Учётные данные протокола. UUID и пароль - секреты, они шифруются
     // при записи в файл; остальное восстанавливается из ссылки и тайной не является.
     [JsonConverter(typeof(ProtectedStringConverter))]
     public string Uuid { get; set; } = "";
- 
+
     [JsonConverter(typeof(ProtectedStringConverter))]
     public string Password { get; set; } = "";
+
     public string Sni { get; set; } = "";
     public string PublicKey { get; set; } = "";
     public string ShortId { get; set; } = "";
     public string Flow { get; set; } = "xtls-rprx-vision";
     public string Path { get; set; } = "/";
     public string Username { get; set; } = "";
- 
+
     /// <summary>
     /// Ссылка подписки, из которой пришёл профиль. Пусто - создан вручную.
     /// По этому признаку обновление подписки заменяет только свои профили
     /// и не трогает добавленные руками.
     /// </summary>
     public string Subscription { get; set; } = "";
- 
-    [JsonIgnore]
-    public string Endpoint => $"{Host}:{Port}";
- 
+
+    [JsonIgnore] public string Endpoint => $"{Host}:{Port}";
+
     private string _countryCode = "";
- 
+
     /// <summary>
     /// Двухбуквенный код страны: заданный вручную либо определённый по названию.
     /// Windows не рисует флаги-эмодзи из regional indicator, поэтому флаги
@@ -75,7 +108,7 @@ public sealed class ServerProfile : ObservableObject
             Raise(nameof(FlagImage));
         }
     }
- 
+
     /// <summary>
     /// В файл пишется только явно заданный код. Пустая строка означает
     /// «определять автоматически» - иначе догадка застыла бы навсегда
@@ -92,11 +125,11 @@ public sealed class ServerProfile : ObservableObject
             Raise(nameof(FlagImage));
         }
     }
- 
+
     /// <summary>Картинка флага или null, если для страны её нет.</summary>
     [JsonIgnore]
     public System.Windows.Media.ImageSource? FlagImage => Services.FlagCatalog.Get(CountryCode);
- 
+
     /// <summary>
     /// Догадка по имени профиля и по хосту вида nl-01.example.net.
     /// Именно догадка: всегда можно задать код вручную.
@@ -106,13 +139,13 @@ public sealed class ServerProfile : ObservableObject
         foreach (var (needle, code) in Countries)
             if (Name.Contains(needle, StringComparison.OrdinalIgnoreCase))
                 return code;
- 
+
         var head = Host.Split('.', '-').FirstOrDefault() ?? "";
         if (head.Length == 2 && head.All(char.IsLetter)) return head.ToUpperInvariant();
- 
+
         return "";
     }
- 
+
     private static readonly (string Name, string Code)[] Countries =
     [
         ("netherlands", "NL"), ("нидерланд", "NL"), ("amsterdam", "NL"),
@@ -131,7 +164,7 @@ public sealed class ServerProfile : ObservableObject
         ("canada", "CA"), ("канад", "CA"),
         ("russia", "RU"), ("росси", "RU"), ("moscow", "RU")
     ];
- 
+
     [JsonIgnore]
     public string ProtocolLabel => Protocol switch
     {
@@ -141,10 +174,9 @@ public sealed class ServerProfile : ObservableObject
         ProtocolKind.Naive => "naive",
         _ => "-"
     };
- 
-    [JsonIgnore]
-    public string LatencyLabel => LatencyMs < 0 ? "-" : $"{LatencyMs} ms";
- 
+
+    [JsonIgnore] public string LatencyLabel => LatencyMs < 0 ? "-" : $"{LatencyMs} ms";
+
     /// <summary>Качество канала для подсветки: unknown · good · fair · poor · dead.</summary>
     [JsonIgnore]
     public string LatencyGrade => LatencyMs switch

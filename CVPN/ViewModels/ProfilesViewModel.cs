@@ -77,6 +77,24 @@ public sealed class ProfilesViewModel : PageViewModel
     public ICommand UpdateSubscription { get; }
 
     /// <summary>
+    /// Обновление подписки при запуске - не чаще раза в сутки. Вызывается
+    /// оболочкой: страница может не открыться ни разу за сеанс, а список
+    /// серверов должен быть свежим.
+    /// </summary>
+    public async Task StartupRefreshAsync()
+    {
+        if (!Settings.AutoUpdateSubscription) return;
+        if (string.IsNullOrWhiteSpace(Settings.SubscriptionUrl)) return;
+
+        var last = Settings.SubscriptionUpdated;
+        if (last is not null && DateTimeOffset.Now - last.Value < TimeSpan.FromDays(1)) return;
+
+        // Пауза, чтобы не соперничать со стартом за сеть
+        await Task.Delay(TimeSpan.FromSeconds(8));
+        await UpdateSubscriptionAsync();
+    }
+
+    /// <summary>
     /// При открытии списка меряем непроверенные профили: прочерки вместо чисел
     /// читаются как поломка, а не как «данных пока нет».
     /// </summary>
@@ -272,6 +290,8 @@ public sealed class ProfilesViewModel : PageViewModel
 
             // Возвращаем выбор на сервер с тем же именем, если он ещё есть
             Shell.Active = Profiles.FirstOrDefault(p => p.Name == activeName) ?? Profiles.FirstOrDefault();
+
+            Settings.SubscriptionUpdated = DateTimeOffset.Now;
 
             Shell.Notify($"Из подписки загружено серверов: {fetched.Count}");
             Shell.Persist();

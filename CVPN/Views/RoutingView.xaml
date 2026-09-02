@@ -185,7 +185,7 @@
                             <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="8,0,0,0">
                                 <!-- Порядок решает: первое совпадение выигрывает -->
                                 <Button Content="▲" Style="{StaticResource Btn.Ghost}" Padding="8,4"
-                                        ToolTip="Выше по списку — правило сработает раньше"
+                                        ToolTip="Выше по списку - правило сработает раньше"
                                         Command="{Binding DataContext.MoveUp,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" />

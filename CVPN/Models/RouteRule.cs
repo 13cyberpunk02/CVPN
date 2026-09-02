@@ -10,12 +10,44 @@ public sealed class RouteRule : ObservableObject
     private string _value = "";
     private RouteAction _action = RouteAction.Proxy;
     private bool _enabled = true;
- 
-    public MatchKind Match { get => _match; set { Set(ref _match, value); Raise(nameof(MatchLabel)); Raise(nameof(DisplayValue)); } }
-    public string Value { get => _value; set { Set(ref _value, value); Raise(nameof(DisplayValue)); } }
-    public RouteAction Action { get => _action; set { Set(ref _action, value); Raise(nameof(ActionLabel)); } }
-    public bool Enabled { get => _enabled; set => Set(ref _enabled, value); }
- 
+
+    public MatchKind Match
+    {
+        get => _match;
+        set
+        {
+            Set(ref _match, value);
+            Raise(nameof(MatchLabel));
+            Raise(nameof(DisplayValue));
+        }
+    }
+
+    public string Value
+    {
+        get => _value;
+        set
+        {
+            Set(ref _value, value);
+            Raise(nameof(DisplayValue));
+        }
+    }
+
+    public RouteAction Action
+    {
+        get => _action;
+        set
+        {
+            Set(ref _action, value);
+            Raise(nameof(ActionLabel));
+        }
+    }
+
+    public bool Enabled
+    {
+        get => _enabled;
+        set => Set(ref _enabled, value);
+    }
+
     [JsonIgnore]
     public string MatchLabel => Match switch
     {
@@ -29,7 +61,7 @@ public sealed class RouteRule : ObservableObject
         MatchKind.RuleSetLocal => "rule_set · файл",
         _ => "-"
     };
- 
+
     /// <summary>Для .srs в списке показываем имя набора: путь и ссылка не влезают в строку.</summary>
     [JsonIgnore]
     public string DisplayValue => Match switch
@@ -37,15 +69,15 @@ public sealed class RouteRule : ObservableObject
         MatchKind.RuleSetRemote or MatchKind.RuleSetLocal => ShortName(Value),
         _ => Value
     };
- 
+
     private static string ShortName(string value)
     {
         if (string.IsNullOrWhiteSpace(value)) return "";
- 
+
         var name = value.Split('/', '\\').LastOrDefault() ?? value;
         return name.EndsWith(".srs", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
     }
- 
+
     [JsonIgnore]
     public string ActionLabel => Action switch
     {

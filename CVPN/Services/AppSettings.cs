@@ -20,6 +20,8 @@ public sealed class AppSettings : ObservableObject
     private bool _useService = true;
     private bool _killSwitch;
     private bool _checkUpdates = true;
+    private bool _autoUpdateSubscription;
+    private DateTimeOffset? _subscriptionUpdated;
 
     /// <summary>Полный путь к sing-box.exe.</summary>
     public string CorePath
@@ -143,6 +145,23 @@ public sealed class AppSettings : ObservableObject
     {
         get => _checkUpdates;
         set => Set(ref _checkUpdates, value);
+    }
+
+    /// <summary>Обновлять подписку не чаще раза в сутки при запуске.</summary>
+    public bool AutoUpdateSubscription
+    {
+        get => _autoUpdateSubscription;
+        set => Set(ref _autoUpdateSubscription, value);
+    }
+
+    /// <summary>
+    /// Когда подписка обновлялась в последний раз. Хранится, чтобы не дёргать
+    /// сервер при каждом запуске приложения.
+    /// </summary>
+    public DateTimeOffset? SubscriptionUpdated
+    {
+        get => _subscriptionUpdated;
+        set => Set(ref _subscriptionUpdated, value);
     }
 
     /// <summary>

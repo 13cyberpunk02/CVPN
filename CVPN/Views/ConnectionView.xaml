@@ -16,6 +16,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Строка состояния -->
@@ -103,12 +104,60 @@
             </Border>
         </UniformGrid>
 
-        <TextBlock Grid.Row="3" Text="{Binding Status}" Style="{StaticResource T.Caption}"
+        <!-- Итоги сессии остаются после отключения: их для того и собирали -->
+        <Border Grid.Row="3" Padding="14,12" Margin="0,10,0,0" BorderThickness="0">
+            <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Session.HasData}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <StackPanel>
+                <Grid>
+                    <TextBlock Text="сессия" Style="{StaticResource T.Label}" />
+                    <TextBlock Text="{Binding Session.Server}" Style="{StaticResource T.Caption}"
+                               HorizontalAlignment="Right" />
+                </Grid>
+
+                <UniformGrid Columns="4" Margin="0,10,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Session.DurationLabel}" Style="{StaticResource T.Mono}"
+                                   Foreground="{StaticResource Text}" />
+                        <TextBlock Text="время" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                    </StackPanel>
+
+                    <StackPanel>
+                        <TextBlock Text="{Binding Session.DownloadLabel}" Style="{StaticResource T.Mono}"
+                                   Foreground="{StaticResource Text}" />
+                        <TextBlock Text="принято" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                    </StackPanel>
+
+                    <StackPanel>
+                        <TextBlock Text="{Binding Session.UploadLabel}" Style="{StaticResource T.Mono}"
+                                   Foreground="{StaticResource Text}" />
+                        <TextBlock Text="отдано" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                    </StackPanel>
+
+                    <StackPanel>
+                        <TextBlock Text="{Binding Session.PeakLabel}" Style="{StaticResource T.Mono}"
+                                   Foreground="{StaticResource Text}" />
+                        <TextBlock Text="пик" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                    </StackPanel>
+                </UniformGrid>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="4" Text="{Binding Status}" Style="{StaticResource T.Caption}"
                    Foreground="{StaticResource Warning}" TextWrapping="Wrap" Margin="0,10,0,0"
                    VerticalAlignment="Top" />
 
         <!-- Действие -->
-        <Grid Grid.Row="4" Margin="0,10,0,0">
+        <Grid Grid.Row="5" Margin="0,10,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

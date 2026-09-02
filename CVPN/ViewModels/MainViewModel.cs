@@ -75,7 +75,11 @@ public sealed class MainViewModel : ObservableObject
         CheckConfig = new RelayCommand(async () => await CheckAsync());
 
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _uptimeTimer.Tick += (_, _) => Uptime = (DateTime.Now - _connectedAt).ToString(@"hh\:mm\:ss");
+        _uptimeTimer.Tick += (_, _) =>
+        {
+            Uptime = (DateTime.Now - _connectedAt).ToString(@"hh\:mm\:ss");
+            Session.RaiseElapsed();
+        };
 
         // Реестр мог разойтись с настройкой, если приложение перенесли
         AutoStart.Sync(Settings.AutoStart);
@@ -96,6 +100,7 @@ public sealed class MainViewModel : ObservableObject
         ReportMissingFlags();
 
         _ = SettingsPage.StartupCheckAsync();
+        _ = ProfilesPage.StartupRefreshAsync();
     }
 
     public ObservableCollection<ServerProfile> Profiles { get; }
@@ -143,6 +148,9 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public ObservableCollection<string> Log { get; } = [];
+    
+    /// <summary>Итоги текущей сессии: сколько прошло трафика и за какое время.</summary>
+    public SessionStats Session { get; } = new();
 
     /// <summary>Живые соединения. Обновляются, пока открыта страница «Соединения».</summary>
     public AppSettings Settings { get; }
@@ -180,8 +188,6 @@ public sealed class MainViewModel : ObservableObject
         Status = message;
         Append($"[cvpn] {message.ToLowerInvariant()}");
     }
-
-    // ===================== режим сессии =====================
 
     /// <summary>Режим запущенной сессии; если ядро не работает - то, что выбрано в настройках.</summary>
     private bool EffectiveTun => _sessionTun ?? Settings.TunEnabled;
@@ -281,8 +287,6 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public int ActiveRuleCount => Rules.Count(r => r.Enabled);
-
-    // ===================== подключение =====================
 
     private async Task ToggleAsync()
     {
@@ -421,6 +425,7 @@ public sealed class MainViewModel : ObservableObject
         }
 
         _adapterErrorSeen = false;
+        Session.Begin(Active.Name);
         _connectedAt = DateTime.Now;
         _uptimeTimer.Start();
         State = TunnelState.Connected;
@@ -665,21 +670,11 @@ public sealed class MainViewModel : ObservableObject
 
     private void OnTraffic(long up, long down) => Dispatch(() =>
     {
-        (Upload, UploadUnit) = FormatRate(up);
-        (Download, DownloadUnit) = FormatRate(down);
+        (Upload, UploadUnit) = ByteFormat.Rate(up);
+        (Download, DownloadUnit) = ByteFormat.Rate(down);
+
+        Session.Add(up, down);
     });
-
-    /// <summary>Килобайты до мегабайта, дальше мегабайты - иначе на медленном канале одни нули.</summary>
-    private static (string Value, string Unit) FormatRate(long bytesPerSecond)
-    {
-        const double kb = 1024;
-        const double mb = kb * 1024;
-
-        if (bytesPerSecond >= mb)
-            return ((bytesPerSecond / mb).ToString("0.0"), "МБ/с");
-
-        return ((bytesPerSecond / kb).ToString("0.0"), "КБ/с");
-    }
 
     public void AddRule(MatchKind match, string value, RouteAction action)
     {
