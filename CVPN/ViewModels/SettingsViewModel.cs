@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Windows;
 using System.IO;
 using System.Windows.Input;
 using Microsoft.Win32;
@@ -6,6 +7,7 @@ using CVPN.Core;
 using CVPN.Ipc;
 using CVPN.Localization;
 using CVPN.Services;
+
 
 namespace CVPN.ViewModels;
 
@@ -44,9 +46,8 @@ public sealed class SettingsViewModel : PageViewModel
     {
         Shell.Persist();
 
-        // Язык читается при запуске, поэтому предупреждаем сразу
-        if (e.PropertyName == nameof(AppSettings.Language))
-            Shell.Notify(Loc.T("Settings_LanguageHint"));
+        // Язык читается при запуске, поэтому спрашиваем прямо
+        if (e.PropertyName == nameof(AppSettings.Language)) OfferRestart();
     }
 
     public AppSettings Settings => Shell.Settings;
@@ -112,6 +113,39 @@ public sealed class SettingsViewModel : PageViewModel
 
         await Task.Delay(TimeSpan.FromSeconds(5));
         await CheckUpdateAsync(manual: false);
+    }
+
+    /// <summary>
+    /// Язык применяется при разборе разметки, то есть только при запуске.
+    /// Молчаливое «ничего не изменилось» выглядит как поломка, поэтому
+    /// предлагаем перезапуск сразу.
+    /// </summary>
+    private void OfferRestart()
+    {
+        Shell.Persist();
+
+        var answer = MessageBox.Show(
+            Loc.T("Settings_RestartQuestion"),
+            "CVPN", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (answer != MessageBoxResult.Yes)
+        {
+            Shell.Notify(Loc.T("Settings_LanguageHint"));
+            return;
+        }
+
+        var exe = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(exe)) return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
+            Application.Current?.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            Shell.Notify(Loc.T("Settings_RestartFailed", ex.Message));
+        }
     }
 
     // ===================== ядро =====================

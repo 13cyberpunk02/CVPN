@@ -1,6 +1,7 @@
 <UserControl x:Class="CVPN.Views.ConnectionsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:CVPN.Localization"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:models="clr-namespace:CVPN.Models"
@@ -16,8 +17,8 @@
 
         <Grid Grid.Row="0">
             <StackPanel>
-                <TextBlock Text="Соединения" Style="{StaticResource T.Title}" />
-                <TextBlock Text="Что куда идёт прямо сейчас и по какому правилу"
+                <TextBlock Text="{loc:T Nav_Connections}" Style="{StaticResource T.Title}" />
+                <TextBlock Text="{loc:T Connections_Subtitle}"
                            Style="{StaticResource T.Secondary}" Margin="0,4,0,0" />
                 <TextBlock Text="{Binding Status}" Style="{StaticResource T.Caption}" Margin="0,6,0,0"
                            Foreground="{StaticResource Warning}" TextWrapping="Wrap" />
@@ -26,12 +27,12 @@
             <TextBlock HorizontalAlignment="Right" VerticalAlignment="Top" Style="{StaticResource T.Mono}"
                        FontSize="{StaticResource Size.Caption}">
                 <Run Text="{Binding Connections.Count, Mode=OneWay}" />
-                <Run Text="активных" />
+                <Run Text="{loc:T Common_Active}" />
             </TextBlock>
         </Grid>
 
         <!-- Пустой список при отключённом туннеле - не ошибка, а нормальное состояние -->
-        <TextBlock Grid.Row="1" Text="Соединений нет. Список заполняется, пока туннель поднят."
+        <TextBlock Grid.Row="1" Text="{loc:T Connections_Empty}"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="320"
                    TextAlignment="Center">
@@ -121,8 +122,8 @@
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                 <!-- Предлагаем противоположное тому, что происходит сейчас:
                                      для прокси - «напрямую», для прямого - «через прокси» -->
-                                <Button Content="Напрямую" Padding="9,5"
-                                        ToolTip="Добавить правило: домен пойдёт мимо туннеля"
+                                <Button Content="{loc:T Connections_MakeDirect}" Padding="9,5"
+                                        ToolTip="{loc:T Connections_MakeDirectHint}"
                                         Command="{Binding DataContext.RuleDirect,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}">
@@ -138,8 +139,8 @@
                                     </Button.Style>
                                 </Button>
 
-                                <Button Content="Через прокси" Padding="9,5"
-                                        ToolTip="Добавить правило: домен пойдёт через туннель"
+                                <Button Content="{loc:T Connections_MakeProxy}" Padding="9,5"
+                                        ToolTip="{loc:T Connections_MakeProxyHint}"
                                         Command="{Binding DataContext.RuleProxy,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}">
@@ -154,13 +155,14 @@
                                         </Style>
                                     </Button.Style>
                                 </Button>
-                                <Button Content="Блок" Style="{StaticResource Btn.Ghost}" Padding="9,5"
-                                        ToolTip="Добавить правило: домен блокируется"
+                                <Button Content="{loc:T Connections_MakeBlock}" Style="{StaticResource Btn.Ghost}"
+                                        Padding="9,5"
+                                        ToolTip="{loc:T Connections_MakeBlockHint}"
                                         Command="{Binding DataContext.RuleBlock,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" />
                                 <Button Content="✕" Style="{StaticResource Btn.Ghost}" Padding="9,5"
-                                        ToolTip="Закрыть соединение"
+                                        ToolTip="{loc:T Connections_CloseHint}"
                                         Command="{Binding DataContext.CloseConnection,
                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" />

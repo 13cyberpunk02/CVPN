@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using CVPN.Core;
 using CVPN.Ipc;
+using CVPN.Localization;
 using CVPN.Models;
 using CVPN.Models.Enums;
 using CVPN.Services;
@@ -117,6 +118,9 @@ public sealed class MainViewModel : ObservableObject
     public ProfilesViewModel ProfilesPage { get; }
     public SettingsViewModel SettingsPage { get; }
 
+    /// <summary>Имя активного профиля для круга подключения.</summary>
+    public string ActiveName => Active?.Name ?? Loc.T("Connection_NoProfile");
+
     public ObservableCollection<RoutingProfile> RoutingProfiles { get; }
 
     /// <summary>Правила активного набора. При смене набора коллекция подменяется целиком.</summary>
@@ -148,7 +152,7 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public ObservableCollection<string> Log { get; } = [];
-    
+
     /// <summary>Итоги текущей сессии: сколько прошло трафика и за какое время.</summary>
     public SessionStats Session { get; } = new();
 
@@ -240,6 +244,7 @@ public sealed class MainViewModel : ObservableObject
             Set(ref _active, value);
             if (_active is not null) _active.IsActive = true;
             _state.ActiveProfileName = _active?.Name;
+            Raise(nameof(ActiveName));
         }
     }
 

@@ -1,93 +1,417 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-        <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-        <xsd:element name="root" msdata:IsDataSet="true">
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
             <xsd:complexType>
-                <xsd:choice maxOccurs="unbounded">
-                    <xsd:element name="data">
-                        <xsd:complexType>
-                            <xsd:sequence>
-                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-                            </xsd:sequence>
-                            <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
-                            <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-                            <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-                            <xsd:attribute ref="xml:space" />
-                        </xsd:complexType>
-                    </xsd:element>
-                    <xsd:element name="resheader">
-                        <xsd:complexType>
-                            <xsd:sequence>
-                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                            </xsd:sequence>
-                            <xsd:attribute name="name" type="xsd:string" use="required" />
-                        </xsd:complexType>
-                    </xsd:element>
-                </xsd:choice>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
-        </xsd:element>
-    </xsd:schema>
-    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-    <resheader name="version"><value>2.0</value></resheader>
-    <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-    <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-    <data name="Nav_Connection" xml:space="preserve">
-    <value>Connection</value>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Common_Active" xml:space="preserve">
+    <value>active</value>
   </data>
-    <data name="Nav_Profiles" xml:space="preserve">
-    <value>Profiles</value>
+  <data name="Common_Add" xml:space="preserve">
+    <value>Add</value>
   </data>
-    <data name="Nav_Routing" xml:space="preserve">
-    <value>Routing</value>
+  <data name="Common_Block" xml:space="preserve">
+    <value>block</value>
   </data>
-    <data name="Nav_Connections" xml:space="preserve">
-    <value>Connections</value>
+  <data name="Common_Browse" xml:space="preserve">
+    <value>Browse</value>
   </data>
-    <data name="Nav_Logs" xml:space="preserve">
-    <value>Logs</value>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
   </data>
-    <data name="Nav_Settings" xml:space="preserve">
-    <value>Settings</value>
+  <data name="Common_Check" xml:space="preserve">
+    <value>Check</value>
   </data>
-    <data name="Common_Copy" xml:space="preserve">
-    <value>Copy</value>
-  </data>
-    <data name="Common_Clear" xml:space="preserve">
+  <data name="Common_Clear" xml:space="preserve">
     <value>Clear</value>
   </data>
-    <data name="Common_Copied" xml:space="preserve">
-    <value>Copied</value>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
   </data>
-    <data name="Common_Mode" xml:space="preserve">
+  <data name="Common_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Common_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Common_Direct" xml:space="preserve">
+    <value>direct</value>
+  </data>
+  <data name="Common_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Common_Mode" xml:space="preserve">
     <value>mode</value>
   </data>
-    <data name="Logs_Title" xml:space="preserve">
-    <value>Logs</value>
+  <data name="Common_New" xml:space="preserve">
+    <value>New</value>
   </data>
-    <data name="Logs_Subtitle" xml:space="preserve">
-    <value>Live core output. The full history is written to file - see “Log folder”.</value>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
   </data>
-    <data name="Logs_OpenFolder" xml:space="preserve">
-    <value>Log folder</value>
+  <data name="Common_Select" xml:space="preserve">
+    <value>Select</value>
   </data>
-    <data name="Logs_OpenFolderHint" xml:space="preserve">
-    <value>Files for the last 7 days - the ones worth attaching to a bug report</value>
+  <data name="Common_ViaProxy" xml:space="preserve">
+    <value>through proxy</value>
   </data>
-    <data name="Logs_CopiedLines" xml:space="preserve">
+  <data name="Connection_CheckConfig" xml:space="preserve">
+    <value>Check config</value>
+  </data>
+  <data name="Connection_Download" xml:space="preserve">
+    <value>download</value>
+  </data>
+  <data name="Connection_Duration" xml:space="preserve">
+    <value>duration</value>
+  </data>
+  <data name="Connection_Measure" xml:space="preserve">
+    <value>Measure latency</value>
+  </data>
+  <data name="Connection_NoProfile" xml:space="preserve">
+    <value>No profile selected</value>
+  </data>
+  <data name="Connection_OpenConfig" xml:space="preserve">
+    <value>Open config.json</value>
+  </data>
+  <data name="Connection_Peak" xml:space="preserve">
+    <value>peak</value>
+  </data>
+  <data name="Connection_Received" xml:space="preserve">
+    <value>received</value>
+  </data>
+  <data name="Connection_Rules" xml:space="preserve">
+    <value>rules</value>
+  </data>
+  <data name="Connection_Sent" xml:space="preserve">
+    <value>sent</value>
+  </data>
+  <data name="Connection_Session" xml:space="preserve">
+    <value>session</value>
+  </data>
+  <data name="Connection_Upload" xml:space="preserve">
+    <value>upload</value>
+  </data>
+  <data name="Connections_CloseHint" xml:space="preserve">
+    <value>Close this connection</value>
+  </data>
+  <data name="Connections_Empty" xml:space="preserve">
+    <value>No connections. The list fills up while the tunnel is running.</value>
+  </data>
+  <data name="Connections_MakeBlock" xml:space="preserve">
+    <value>Block</value>
+  </data>
+  <data name="Connections_MakeBlockHint" xml:space="preserve">
+    <value>Add a rule: this domain will be blocked</value>
+  </data>
+  <data name="Connections_MakeDirect" xml:space="preserve">
+    <value>Direct</value>
+  </data>
+  <data name="Connections_MakeDirectHint" xml:space="preserve">
+    <value>Add a rule: this domain will bypass the tunnel</value>
+  </data>
+  <data name="Connections_MakeProxy" xml:space="preserve">
+    <value>Through proxy</value>
+  </data>
+  <data name="Connections_MakeProxyHint" xml:space="preserve">
+    <value>Add a rule: this domain will go through the tunnel</value>
+  </data>
+  <data name="Connections_Subtitle" xml:space="preserve">
+    <value>What is going where right now, and by which rule</value>
+  </data>
+  <data name="Editor_Country" xml:space="preserve">
+    <value>country</value>
+  </data>
+  <data name="Editor_Host" xml:space="preserve">
+    <value>server address</value>
+  </data>
+  <data name="Editor_Name" xml:space="preserve">
+    <value>name</value>
+  </data>
+  <data name="Editor_New" xml:space="preserve">
+    <value>New profile</value>
+  </data>
+  <data name="Editor_Password" xml:space="preserve">
+    <value>password</value>
+  </data>
+  <data name="Editor_Port" xml:space="preserve">
+    <value>port</value>
+  </data>
+  <data name="Editor_Protocol" xml:space="preserve">
+    <value>protocol</value>
+  </data>
+  <data name="Editor_Sni" xml:space="preserve">
+    <value>sni · tls server name</value>
+  </data>
+  <data name="Editor_Subtitle" xml:space="preserve">
+    <value>The fields change with the protocol</value>
+  </data>
+  <data name="Editor_Username" xml:space="preserve">
+    <value>username</value>
+  </data>
+  <data name="Editor_Window" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="Editor_WsPath" xml:space="preserve">
+    <value>websocket path</value>
+  </data>
+  <data name="Export_CopyLink" xml:space="preserve">
+    <value>Copy link</value>
+  </data>
+  <data name="Export_Link" xml:space="preserve">
+    <value>link</value>
+  </data>
+  <data name="Export_Title" xml:space="preserve">
+    <value>Export profile</value>
+  </data>
+  <data name="Logs_CopiedLines" xml:space="preserve">
     <value>Copied {0} lines</value>
   </data>
-    <data name="Logs_CopyFailed" xml:space="preserve">
+  <data name="Logs_CopyFailed" xml:space="preserve">
     <value>Could not copy: {0}</value>
   </data>
-    <data name="Logs_FolderFailed" xml:space="preserve">
+  <data name="Logs_FolderFailed" xml:space="preserve">
     <value>Could not open the log folder: {0}</value>
   </data>
-    <data name="Settings_Language" xml:space="preserve">
+  <data name="Logs_OpenFolder" xml:space="preserve">
+    <value>Log folder</value>
+  </data>
+  <data name="Logs_OpenFolderHint" xml:space="preserve">
+    <value>Files for the last 7 days - the ones worth attaching to a bug report</value>
+  </data>
+  <data name="Logs_Subtitle" xml:space="preserve">
+    <value>Live core output. The full history is written to file - see “Log folder”.</value>
+  </data>
+  <data name="Logs_Title" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Nav_Connection" xml:space="preserve">
+    <value>Connection</value>
+  </data>
+  <data name="Nav_Connections" xml:space="preserve">
+    <value>Connections</value>
+  </data>
+  <data name="Nav_Logs" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Nav_Profiles" xml:space="preserve">
+    <value>Profiles</value>
+  </data>
+  <data name="Nav_Routing" xml:space="preserve">
+    <value>Routing</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Profiles_CheckAll" xml:space="preserve">
+    <value>Check all</value>
+  </data>
+  <data name="Profiles_Create" xml:space="preserve">
+    <value>Create manually</value>
+  </data>
+  <data name="Profiles_ExportAll" xml:space="preserve">
+    <value>Export all</value>
+  </data>
+  <data name="Profiles_FromSubscription" xml:space="preserve">
+    <value>from subscription</value>
+  </data>
+  <data name="Profiles_ImportFile" xml:space="preserve">
+    <value>Import from file</value>
+  </data>
+  <data name="Profiles_ParseLink" xml:space="preserve">
+    <value>Parse link</value>
+  </data>
+  <data name="Profiles_Share" xml:space="preserve">
+    <value>Share</value>
+  </data>
+  <data name="Profiles_SubscriptionHint" xml:space="preserve">
+    <value>https://…  -  subscription URL</value>
+  </data>
+  <data name="Profiles_Subtitle" xml:space="preserve">
+    <value>Paste a link or import a sing-box configuration</value>
+  </data>
+  <data name="Profiles_UpdateSubscription" xml:space="preserve">
+    <value>Update subscription</value>
+  </data>
+  <data name="Routing_Fallback" xml:space="preserve">
+    <value>Everything else</value>
+  </data>
+  <data name="Routing_FallbackHint" xml:space="preserve">
+    <value>What to do with traffic that matched no rule</value>
+  </data>
+  <data name="Routing_MoveDownHint" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="Routing_MoveUpHint" xml:space="preserve">
+    <value>Move up - the rule will match earlier</value>
+  </data>
+  <data name="Routing_PickSrs" xml:space="preserve">
+    <value>Pick .srs</value>
+  </data>
+  <data name="Routing_SetLocal" xml:space="preserve">
+    <value>rule_set · file</value>
+  </data>
+  <data name="Routing_SetRemote" xml:space="preserve">
+    <value>rule_set · link</value>
+  </data>
+  <data name="Routing_Subtitle" xml:space="preserve">
+    <value>Rules are checked top to bottom. The first match decides.</value>
+  </data>
+  <data name="Routing_TestHint" xml:space="preserve">
+    <value>test a domain: youtube.com</value>
+  </data>
+  <data name="Settings_AutoConnect" xml:space="preserve">
+    <value>Connect on startup</value>
+  </data>
+  <data name="Settings_AutoConnectHint" xml:space="preserve">
+    <value>Bring the tunnel up with the last selected profile</value>
+  </data>
+  <data name="Settings_AutoSelect" xml:space="preserve">
+    <value>Pick the fastest server</value>
+  </data>
+  <data name="Settings_AutoSelectHint" xml:space="preserve">
+    <value>The core keeps the connection on the fastest server and re-checks every three minutes.</value>
+  </data>
+  <data name="Settings_AutoStart" xml:space="preserve">
+    <value>Start with Windows</value>
+  </data>
+  <data name="Settings_AutoStartHint" xml:space="preserve">
+    <value>The application starts minimised to tray</value>
+  </data>
+  <data name="Settings_AutoSubscription" xml:space="preserve">
+    <value>Refresh subscription</value>
+  </data>
+  <data name="Settings_AutoSubscriptionHint" xml:space="preserve">
+    <value>Once a day at startup, if a subscription URL is set</value>
+  </data>
+  <data name="Settings_CheckNow" xml:space="preserve">
+    <value>Check now</value>
+  </data>
+  <data name="Settings_CheckUpdates" xml:space="preserve">
+    <value>Check on startup</value>
+  </data>
+  <data name="Settings_CloseToTray" xml:space="preserve">
+    <value>Minimise to tray</value>
+  </data>
+  <data name="Settings_CloseToTrayHint" xml:space="preserve">
+    <value>The close button hides the window instead of exiting. Use the tray menu to quit.</value>
+  </data>
+  <data name="Settings_CorePath" xml:space="preserve">
+    <value>core path</value>
+  </data>
+  <data name="Settings_CreateTask" xml:space="preserve">
+    <value>Create task</value>
+  </data>
+  <data name="Settings_DeleteTask" xml:space="preserve">
+    <value>Delete task</value>
+  </data>
+  <data name="Settings_DnsHint" xml:space="preserve">
+    <value>Queries outside the rules go to this resolver through the tunnel. The scheme selects the transport: https:// (DoH on 443, the most reliable), tls:// (DoT, port 853 is often blocked), quic://, udp://.</value>
+  </data>
+  <data name="Settings_InstallService" xml:space="preserve">
+    <value>Install service</value>
+  </data>
+  <data name="Settings_KillSwitch" xml:space="preserve">
+    <value>Block traffic outside the tunnel</value>
+  </data>
+  <data name="Settings_KillSwitchHint" xml:space="preserve">
+    <value>Kill switch: a dropped connection cannot fall back to a direct route. Requires administrator rights.</value>
+  </data>
+  <data name="Settings_KillSwitchWarning" xml:space="preserve">
+    <value>If the application terminates unexpectedly, the rules are removed on the next launch. The button below is for when you need connectivity right now.</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
     <value>Interface language</value>
   </data>
-    <data name="Settings_LanguageHint" xml:space="preserve">
-    <value>Applies after restarting the application</value>
+  <data name="Settings_LanguageHint" xml:space="preserve">
+    <value>Applies after a restart - CVPN will offer to do it right away</value>
+  </data>
+  <data name="Settings_MixedPort" xml:space="preserve">
+    <value>Mixed port</value>
+  </data>
+  <data name="Settings_MixedPortHint" xml:space="preserve">
+    <value>When TUN is off, this port is set as the Windows system proxy</value>
+  </data>
+  <data name="Settings_OpenRelease" xml:space="preserve">
+    <value>Open release page</value>
+  </data>
+  <data name="Settings_RestartFailed" xml:space="preserve">
+    <value>Could not restart: {0}</value>
+  </data>
+  <data name="Settings_RestartQuestion" xml:space="preserve">
+    <value>The interface language applies after a restart.
+
+Restart CVPN now?</value>
+  </data>
+  <data name="Settings_RestoreNetwork" xml:space="preserve">
+    <value>Restore network</value>
+  </data>
+  <data name="Settings_RestoreNetworkHint" xml:space="preserve">
+    <value>Removes the firewall rules if internet went away with the tunnel</value>
+  </data>
+  <data name="Settings_Service" xml:space="preserve">
+    <value>tunnel service</value>
+  </data>
+  <data name="Settings_ServiceHint" xml:space="preserve">
+    <value>The service runs under the system account and brings TUN up without asking for administrator rights. Installed once.</value>
+  </data>
+  <data name="Settings_Subtitle" xml:space="preserve">
+    <value>Core, interception mode and startup</value>
+  </data>
+  <data name="Settings_Task" xml:space="preserve">
+    <value>or a scheduled task</value>
+  </data>
+  <data name="Settings_TaskHint" xml:space="preserve">
+    <value>Simpler than the service: no second project needed. The whole application runs elevated, and the tunnel only lives inside your session.</value>
+  </data>
+  <data name="Settings_Tun" xml:space="preserve">
+    <value>TUN mode</value>
+  </data>
+  <data name="Settings_TunHint" xml:space="preserve">
+    <value>Captures all system traffic. Requires administrator rights - CVPN will offer to restart.</value>
+  </data>
+  <data name="Settings_UninstallService" xml:space="preserve">
+    <value>Remove service</value>
+  </data>
+  <data name="Settings_UseService" xml:space="preserve">
+    <value>Use the service</value>
+  </data>
+  <data name="Settings_VerboseLog" xml:space="preserve">
+    <value>Verbose log</value>
+  </data>
+  <data name="Settings_VerboseLogHint" xml:space="preserve">
+    <value>The core records which rule matched each connection. Helps explain why a site goes the wrong way.</value>
+  </data>
+  <data name="Settings_Version" xml:space="preserve">
+    <value>version</value>
   </data>
 </root>
+

@@ -1,93 +1,416 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-        <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-        <xsd:element name="root" msdata:IsDataSet="true">
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
             <xsd:complexType>
-                <xsd:choice maxOccurs="unbounded">
-                    <xsd:element name="data">
-                        <xsd:complexType>
-                            <xsd:sequence>
-                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-                            </xsd:sequence>
-                            <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
-                            <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-                            <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-                            <xsd:attribute ref="xml:space" />
-                        </xsd:complexType>
-                    </xsd:element>
-                    <xsd:element name="resheader">
-                        <xsd:complexType>
-                            <xsd:sequence>
-                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                            </xsd:sequence>
-                            <xsd:attribute name="name" type="xsd:string" use="required" />
-                        </xsd:complexType>
-                    </xsd:element>
-                </xsd:choice>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
-        </xsd:element>
-    </xsd:schema>
-    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-    <resheader name="version"><value>2.0</value></resheader>
-    <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-    <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-    <data name="Nav_Connection" xml:space="preserve">
-    <value>Соединение</value>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Common_Active" xml:space="preserve">
+    <value>активных</value>
   </data>
-    <data name="Nav_Profiles" xml:space="preserve">
-    <value>Профили</value>
+  <data name="Common_Add" xml:space="preserve">
+    <value>Добавить</value>
   </data>
-    <data name="Nav_Routing" xml:space="preserve">
-    <value>Маршруты</value>
+  <data name="Common_Block" xml:space="preserve">
+    <value>блокировать</value>
   </data>
-    <data name="Nav_Connections" xml:space="preserve">
-    <value>Соединения</value>
+  <data name="Common_Browse" xml:space="preserve">
+    <value>Обзор</value>
   </data>
-    <data name="Nav_Logs" xml:space="preserve">
-    <value>Логи</value>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Отмена</value>
   </data>
-    <data name="Nav_Settings" xml:space="preserve">
-    <value>Настройки</value>
+  <data name="Common_Check" xml:space="preserve">
+    <value>Проверить</value>
   </data>
-    <data name="Common_Copy" xml:space="preserve">
-    <value>Копировать</value>
-  </data>
-    <data name="Common_Clear" xml:space="preserve">
+  <data name="Common_Clear" xml:space="preserve">
     <value>Очистить</value>
   </data>
-    <data name="Common_Copied" xml:space="preserve">
-    <value>Скопировано</value>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Закрыть</value>
   </data>
-    <data name="Common_Mode" xml:space="preserve">
+  <data name="Common_Copy" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="Common_Delete" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="Common_Direct" xml:space="preserve">
+    <value>напрямую</value>
+  </data>
+  <data name="Common_Edit" xml:space="preserve">
+    <value>Изменить</value>
+  </data>
+  <data name="Common_Mode" xml:space="preserve">
     <value>режим</value>
   </data>
-    <data name="Logs_Title" xml:space="preserve">
-    <value>Логи</value>
+  <data name="Common_New" xml:space="preserve">
+    <value>Новый</value>
   </data>
-    <data name="Logs_Subtitle" xml:space="preserve">
-    <value>Живой вывод ядра. Полная история пишется в файл - кнопка «Папка логов».</value>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Сохранить</value>
   </data>
-    <data name="Logs_OpenFolder" xml:space="preserve">
-    <value>Папка логов</value>
+  <data name="Common_Select" xml:space="preserve">
+    <value>Выбрать</value>
   </data>
-    <data name="Logs_OpenFolderHint" xml:space="preserve">
-    <value>Файлы за последние 7 дней - их удобно приложить к сообщению об ошибке</value>
+  <data name="Common_ViaProxy" xml:space="preserve">
+    <value>через прокси</value>
   </data>
-    <data name="Logs_CopiedLines" xml:space="preserve">
+  <data name="Connection_CheckConfig" xml:space="preserve">
+    <value>Проверить конфиг</value>
+  </data>
+  <data name="Connection_Download" xml:space="preserve">
+    <value>приём</value>
+  </data>
+  <data name="Connection_Duration" xml:space="preserve">
+    <value>время</value>
+  </data>
+  <data name="Connection_Measure" xml:space="preserve">
+    <value>Замерить задержку</value>
+  </data>
+  <data name="Connection_NoProfile" xml:space="preserve">
+    <value>Профиль не выбран</value>
+  </data>
+  <data name="Connection_OpenConfig" xml:space="preserve">
+    <value>Открыть config.json</value>
+  </data>
+  <data name="Connection_Peak" xml:space="preserve">
+    <value>пик</value>
+  </data>
+  <data name="Connection_Received" xml:space="preserve">
+    <value>принято</value>
+  </data>
+  <data name="Connection_Rules" xml:space="preserve">
+    <value>правила</value>
+  </data>
+  <data name="Connection_Sent" xml:space="preserve">
+    <value>отдано</value>
+  </data>
+  <data name="Connection_Session" xml:space="preserve">
+    <value>сессия</value>
+  </data>
+  <data name="Connection_Upload" xml:space="preserve">
+    <value>отдача</value>
+  </data>
+  <data name="Connections_CloseHint" xml:space="preserve">
+    <value>Закрыть соединение</value>
+  </data>
+  <data name="Connections_Empty" xml:space="preserve">
+    <value>Соединений нет. Список заполняется, пока туннель поднят.</value>
+  </data>
+  <data name="Connections_MakeBlock" xml:space="preserve">
+    <value>Блок</value>
+  </data>
+  <data name="Connections_MakeBlockHint" xml:space="preserve">
+    <value>Добавить правило: домен блокируется</value>
+  </data>
+  <data name="Connections_MakeDirect" xml:space="preserve">
+    <value>Напрямую</value>
+  </data>
+  <data name="Connections_MakeDirectHint" xml:space="preserve">
+    <value>Добавить правило: домен пойдёт мимо туннеля</value>
+  </data>
+  <data name="Connections_MakeProxy" xml:space="preserve">
+    <value>Через прокси</value>
+  </data>
+  <data name="Connections_MakeProxyHint" xml:space="preserve">
+    <value>Добавить правило: домен пойдёт через туннель</value>
+  </data>
+  <data name="Connections_Subtitle" xml:space="preserve">
+    <value>Что куда идёт прямо сейчас и по какому правилу</value>
+  </data>
+  <data name="Editor_Country" xml:space="preserve">
+    <value>страна</value>
+  </data>
+  <data name="Editor_Host" xml:space="preserve">
+    <value>адрес сервера</value>
+  </data>
+  <data name="Editor_Name" xml:space="preserve">
+    <value>название</value>
+  </data>
+  <data name="Editor_New" xml:space="preserve">
+    <value>Новый профиль</value>
+  </data>
+  <data name="Editor_Password" xml:space="preserve">
+    <value>пароль</value>
+  </data>
+  <data name="Editor_Port" xml:space="preserve">
+    <value>порт</value>
+  </data>
+  <data name="Editor_Protocol" xml:space="preserve">
+    <value>протокол</value>
+  </data>
+  <data name="Editor_Sni" xml:space="preserve">
+    <value>sni · имя сервера в tls</value>
+  </data>
+  <data name="Editor_Subtitle" xml:space="preserve">
+    <value>Поля меняются в зависимости от протокола</value>
+  </data>
+  <data name="Editor_Username" xml:space="preserve">
+    <value>имя пользователя</value>
+  </data>
+  <data name="Editor_Window" xml:space="preserve">
+    <value>Профиль</value>
+  </data>
+  <data name="Editor_WsPath" xml:space="preserve">
+    <value>путь websocket</value>
+  </data>
+  <data name="Export_CopyLink" xml:space="preserve">
+    <value>Копировать ссылку</value>
+  </data>
+  <data name="Export_Link" xml:space="preserve">
+    <value>ссылка</value>
+  </data>
+  <data name="Export_Title" xml:space="preserve">
+    <value>Экспорт профиля</value>
+  </data>
+  <data name="Logs_CopiedLines" xml:space="preserve">
     <value>Скопировано строк: {0}</value>
   </data>
-    <data name="Logs_CopyFailed" xml:space="preserve">
+  <data name="Logs_CopyFailed" xml:space="preserve">
     <value>Не удалось скопировать: {0}</value>
   </data>
-    <data name="Logs_FolderFailed" xml:space="preserve">
+  <data name="Logs_FolderFailed" xml:space="preserve">
     <value>Не удалось открыть папку логов: {0}</value>
   </data>
-    <data name="Settings_Language" xml:space="preserve">
+  <data name="Logs_OpenFolder" xml:space="preserve">
+    <value>Папка логов</value>
+  </data>
+  <data name="Logs_OpenFolderHint" xml:space="preserve">
+    <value>Файлы за последние 7 дней - их удобно приложить к сообщению об ошибке</value>
+  </data>
+  <data name="Logs_Subtitle" xml:space="preserve">
+    <value>Живой вывод ядра. Полная история пишется в файл - кнопка «Папка логов».</value>
+  </data>
+  <data name="Logs_Title" xml:space="preserve">
+    <value>Логи</value>
+  </data>
+  <data name="Nav_Connection" xml:space="preserve">
+    <value>Соединение</value>
+  </data>
+  <data name="Nav_Connections" xml:space="preserve">
+    <value>Соединения</value>
+  </data>
+  <data name="Nav_Logs" xml:space="preserve">
+    <value>Логи</value>
+  </data>
+  <data name="Nav_Profiles" xml:space="preserve">
+    <value>Профили</value>
+  </data>
+  <data name="Nav_Routing" xml:space="preserve">
+    <value>Маршруты</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="Profiles_CheckAll" xml:space="preserve">
+    <value>Проверить все</value>
+  </data>
+  <data name="Profiles_Create" xml:space="preserve">
+    <value>Создать вручную</value>
+  </data>
+  <data name="Profiles_ExportAll" xml:space="preserve">
+    <value>Экспорт всех</value>
+  </data>
+  <data name="Profiles_FromSubscription" xml:space="preserve">
+    <value>из подписки</value>
+  </data>
+  <data name="Profiles_ImportFile" xml:space="preserve">
+    <value>Импорт из файла</value>
+  </data>
+  <data name="Profiles_ParseLink" xml:space="preserve">
+    <value>Разобрать ссылку</value>
+  </data>
+  <data name="Profiles_Share" xml:space="preserve">
+    <value>Поделиться</value>
+  </data>
+  <data name="Profiles_SubscriptionHint" xml:space="preserve">
+    <value>https://…  -  ссылка подписки</value>
+  </data>
+  <data name="Profiles_Subtitle" xml:space="preserve">
+    <value>Вставьте ссылку или импортируйте конфигурацию sing-box</value>
+  </data>
+  <data name="Profiles_UpdateSubscription" xml:space="preserve">
+    <value>Обновить подписку</value>
+  </data>
+  <data name="Routing_Fallback" xml:space="preserve">
+    <value>Всё остальное</value>
+  </data>
+  <data name="Routing_FallbackHint" xml:space="preserve">
+    <value>Что делать с трафиком, не попавшим ни в одно правило</value>
+  </data>
+  <data name="Routing_MoveDownHint" xml:space="preserve">
+    <value>Ниже по списку</value>
+  </data>
+  <data name="Routing_MoveUpHint" xml:space="preserve">
+    <value>Выше по списку - правило сработает раньше</value>
+  </data>
+  <data name="Routing_PickSrs" xml:space="preserve">
+    <value>Выбрать .srs</value>
+  </data>
+  <data name="Routing_SetLocal" xml:space="preserve">
+    <value>rule_set · файл</value>
+  </data>
+  <data name="Routing_SetRemote" xml:space="preserve">
+    <value>rule_set · ссылка</value>
+  </data>
+  <data name="Routing_Subtitle" xml:space="preserve">
+    <value>Правила проверяются сверху вниз. Первое совпадение решает судьбу соединения.</value>
+  </data>
+  <data name="Routing_TestHint" xml:space="preserve">
+    <value>проверить домен: youtube.com</value>
+  </data>
+  <data name="Settings_AutoConnect" xml:space="preserve">
+    <value>Подключаться при запуске</value>
+  </data>
+  <data name="Settings_AutoConnectHint" xml:space="preserve">
+    <value>Сразу поднимать туннель с последним выбранным профилем</value>
+  </data>
+  <data name="Settings_AutoSelect" xml:space="preserve">
+    <value>Автовыбор быстрого сервера</value>
+  </data>
+  <data name="Settings_AutoSelectHint" xml:space="preserve">
+    <value>Ядро само держит соединение на быстрейшем сервере и перепроверяет раз в три минуты.</value>
+  </data>
+  <data name="Settings_AutoStart" xml:space="preserve">
+    <value>Запуск вместе с Windows</value>
+  </data>
+  <data name="Settings_AutoStartHint" xml:space="preserve">
+    <value>Приложение стартует свёрнутым в трей</value>
+  </data>
+  <data name="Settings_AutoSubscription" xml:space="preserve">
+    <value>Обновлять подписку</value>
+  </data>
+  <data name="Settings_AutoSubscriptionHint" xml:space="preserve">
+    <value>Раз в сутки при запуске, если указана ссылка подписки</value>
+  </data>
+  <data name="Settings_CheckNow" xml:space="preserve">
+    <value>Проверить сейчас</value>
+  </data>
+  <data name="Settings_CheckUpdates" xml:space="preserve">
+    <value>Проверять при запуске</value>
+  </data>
+  <data name="Settings_CloseToTray" xml:space="preserve">
+    <value>Сворачивать в трей</value>
+  </data>
+  <data name="Settings_CloseToTrayHint" xml:space="preserve">
+    <value>Крестик прячет окно вместо выхода. Выйти можно из меню значка.</value>
+  </data>
+  <data name="Settings_CorePath" xml:space="preserve">
+    <value>путь к ядру</value>
+  </data>
+  <data name="Settings_CreateTask" xml:space="preserve">
+    <value>Создать задачу</value>
+  </data>
+  <data name="Settings_DeleteTask" xml:space="preserve">
+    <value>Удалить задачу</value>
+  </data>
+  <data name="Settings_DnsHint" xml:space="preserve">
+    <value>Запросы вне правил уходят на этот резолвер через туннель. Схема задаёт транспорт: https:// (DoH, по 443 - надёжнее всего), tls:// (DoT, порт 853 часто блокируется), quic://, udp://.</value>
+  </data>
+  <data name="Settings_InstallService" xml:space="preserve">
+    <value>Установить службу</value>
+  </data>
+  <data name="Settings_KillSwitch" xml:space="preserve">
+    <value>Запрещать трафик мимо туннеля</value>
+  </data>
+  <data name="Settings_KillSwitchHint" xml:space="preserve">
+    <value>Kill switch: при обрыве соединения интернет не уйдёт в обход. Требует прав администратора.</value>
+  </data>
+  <data name="Settings_KillSwitchWarning" xml:space="preserve">
+    <value>Если приложение завершится аварийно, правила снимутся при следующем запуске. Кнопка ниже - на случай, когда интернет нужен прямо сейчас.</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
     <value>Язык интерфейса</value>
   </data>
-    <data name="Settings_LanguageHint" xml:space="preserve">
-    <value>Применится после перезапуска приложения</value>
+  <data name="Settings_LanguageHint" xml:space="preserve">
+    <value>Применяется после перезапуска - CVPN предложит его сразу</value>
+  </data>
+  <data name="Settings_MixedPort" xml:space="preserve">
+    <value>Смешанный порт</value>
+  </data>
+  <data name="Settings_MixedPortHint" xml:space="preserve">
+    <value>Когда TUN выключен, этот порт прописывается системным прокси Windows</value>
+  </data>
+  <data name="Settings_OpenRelease" xml:space="preserve">
+    <value>Открыть страницу релиза</value>
+  </data>
+  <data name="Settings_RestartFailed" xml:space="preserve">
+    <value>Не удалось перезапустить: {0}</value>
+  </data>
+  <data name="Settings_RestartQuestion" xml:space="preserve">
+    <value>Язык интерфейса применяется после перезапуска.
+
+Перезапустить CVPN сейчас?</value>
+  </data>
+  <data name="Settings_RestoreNetwork" xml:space="preserve">
+    <value>Восстановить сеть</value>
+  </data>
+  <data name="Settings_RestoreNetworkHint" xml:space="preserve">
+    <value>Снимает правила брандмауэра, если интернет пропал вместе с туннелем</value>
+  </data>
+  <data name="Settings_Service" xml:space="preserve">
+    <value>служба туннеля</value>
+  </data>
+  <data name="Settings_ServiceHint" xml:space="preserve">
+    <value>Служба работает под системной учётной записью и поднимает TUN без запроса прав администратора. Устанавливается один раз.</value>
+  </data>
+  <data name="Settings_Subtitle" xml:space="preserve">
+    <value>Ядро, режим перехвата трафика и запуск</value>
+  </data>
+  <data name="Settings_Task" xml:space="preserve">
+    <value>или задача планировщика</value>
+  </data>
+  <data name="Settings_TaskHint" xml:space="preserve">
+    <value>Проще службы: отдельный проект не нужен. Приложение целиком запускается с правами администратора, а туннель живёт только внутри вашего сеанса.</value>
+  </data>
+  <data name="Settings_Tun" xml:space="preserve">
+    <value>Режим TUN</value>
+  </data>
+  <data name="Settings_TunHint" xml:space="preserve">
+    <value>Перехватывает весь системный трафик. Требует прав администратора - CVPN предложит перезапуск.</value>
+  </data>
+  <data name="Settings_UninstallService" xml:space="preserve">
+    <value>Удалить службу</value>
+  </data>
+  <data name="Settings_UseService" xml:space="preserve">
+    <value>Использовать службу</value>
+  </data>
+  <data name="Settings_VerboseLog" xml:space="preserve">
+    <value>Подробный лог</value>
+  </data>
+  <data name="Settings_VerboseLogHint" xml:space="preserve">
+    <value>Ядро пишет, какое правило сработало для каждого соединения. Помогает понять, почему сайт идёт не туда.</value>
+  </data>
+  <data name="Settings_Version" xml:space="preserve">
+    <value>версия</value>
   </data>
 </root>

@@ -1,6 +1,7 @@
 <UserControl x:Class="CVPN.Views.ConnectionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:CVPN.Localization"
              xmlns:c="clr-namespace:CVPN.Controls"
              xmlns:enums="clr-namespace:CVPN.Models.Enums"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -44,7 +45,7 @@
                            FontSize="{StaticResource Size.Caption}" Foreground="{StaticResource TextMuted}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Button Content="Замерить задержку" Style="{StaticResource Btn.Ghost}" Padding="8,3"
+                <Button Content="{loc:T Connection_Measure}" Style="{StaticResource Btn.Ghost}" Padding="8,3"
                         FontSize="{StaticResource Size.Caption}" Command="{Binding MeasureDelay}" />
                 <TextBlock Text="{Binding Uptime}" Style="{StaticResource T.Mono}" Margin="10,0,0,0"
                            VerticalAlignment="Center" FontSize="{StaticResource Size.Caption}" />
@@ -54,8 +55,7 @@
         <!-- Подпись интерфейса -->
         <c:ConnectDial Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
                        State="{Binding State}"
-                       Title="{Binding Active.Name, TargetNullValue=Профиль не выбран,
-                                                    FallbackValue=Профиль не выбран}"
+                       Title="{Binding ActiveName}"
                        Subtitle="{Binding Active.ProtocolLabel, TargetNullValue=-, FallbackValue=-}"
                        Metric="{Binding Active.LatencyLabel, TargetNullValue=-, FallbackValue=-}"
                        Country="{Binding Active.CountryCode, TargetNullValue='', FallbackValue=''}"
@@ -69,7 +69,7 @@
         <UniformGrid Grid.Row="2" Columns="3" Margin="0,20,0,0">
             <Border Style="{StaticResource Card}" Padding="14,12" Margin="0,0,5,0" BorderThickness="0">
                 <StackPanel>
-                    <TextBlock Text="приём" Style="{StaticResource T.Caption}" />
+                    <TextBlock Text="{loc:T Connection_Download}" Style="{StaticResource T.Caption}" />
                     <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                         <TextBlock Text="{Binding Download}" Style="{StaticResource T.Mono}" FontSize="18"
                                    Foreground="{StaticResource Text}" />
@@ -81,7 +81,7 @@
 
             <Border Style="{StaticResource Card}" Padding="14,12" Margin="5,0" BorderThickness="0">
                 <StackPanel>
-                    <TextBlock Text="отдача" Style="{StaticResource T.Caption}" />
+                    <TextBlock Text="{loc:T Connection_Upload}" Style="{StaticResource T.Caption}" />
                     <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                         <TextBlock Text="{Binding Upload}" Style="{StaticResource T.Mono}" FontSize="18"
                                    Foreground="{StaticResource Text}" />
@@ -93,11 +93,11 @@
 
             <Border Style="{StaticResource Card}" Padding="14,12" Margin="5,0,0,0" BorderThickness="0">
                 <StackPanel>
-                    <TextBlock Text="правила" Style="{StaticResource T.Caption}" />
+                    <TextBlock Text="{loc:T Connection_Rules}" Style="{StaticResource T.Caption}" />
                     <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                         <TextBlock Text="{Binding ActiveRuleCount}" Style="{StaticResource T.Mono}" FontSize="18"
                                    Foreground="{StaticResource Text}" />
-                        <TextBlock Text="активных" Style="{StaticResource T.Caption}" Margin="6,0,0,2"
+                        <TextBlock Text="{loc:T Common_Active}" Style="{StaticResource T.Caption}" Margin="6,0,0,2"
                                    VerticalAlignment="Bottom" />
                     </StackPanel>
                 </StackPanel>
@@ -119,7 +119,7 @@
 
             <StackPanel>
                 <Grid>
-                    <TextBlock Text="сессия" Style="{StaticResource T.Label}" />
+                    <TextBlock Text="{loc:T Connection_Session}" Style="{StaticResource T.Label}" />
                     <TextBlock Text="{Binding Session.Server}" Style="{StaticResource T.Caption}"
                                HorizontalAlignment="Right" />
                 </Grid>
@@ -128,25 +128,27 @@
                     <StackPanel>
                         <TextBlock Text="{Binding Session.DurationLabel}" Style="{StaticResource T.Mono}"
                                    Foreground="{StaticResource Text}" />
-                        <TextBlock Text="время" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                        <TextBlock Text="{loc:T Connection_Duration}" Style="{StaticResource T.Caption}"
+                                   Margin="0,3,0,0" />
                     </StackPanel>
 
                     <StackPanel>
                         <TextBlock Text="{Binding Session.DownloadLabel}" Style="{StaticResource T.Mono}"
                                    Foreground="{StaticResource Text}" />
-                        <TextBlock Text="принято" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                        <TextBlock Text="{loc:T Connection_Received}" Style="{StaticResource T.Caption}"
+                                   Margin="0,3,0,0" />
                     </StackPanel>
 
                     <StackPanel>
                         <TextBlock Text="{Binding Session.UploadLabel}" Style="{StaticResource T.Mono}"
                                    Foreground="{StaticResource Text}" />
-                        <TextBlock Text="отдано" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                        <TextBlock Text="{loc:T Connection_Sent}" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
                     </StackPanel>
 
                     <StackPanel>
                         <TextBlock Text="{Binding Session.PeakLabel}" Style="{StaticResource T.Mono}"
                                    Foreground="{StaticResource Text}" />
-                        <TextBlock Text="пик" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
+                        <TextBlock Text="{loc:T Connection_Peak}" Style="{StaticResource T.Caption}" Margin="0,3,0,0" />
                     </StackPanel>
                 </UniformGrid>
             </StackPanel>
@@ -163,11 +165,10 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Content="Проверить конфиг" Style="{StaticResource Btn.Base}"
+            <Button Grid.Column="0" Content="{loc:T Connection_CheckConfig}" Style="{StaticResource Btn.Base}"
                     HorizontalAlignment="Left" Command="{Binding CheckConfig}" />
-            <Button Grid.Column="2" Content="Открыть config.json" Style="{StaticResource Btn.Ghost}"
+            <Button Grid.Column="2" Content="{loc:T Connection_OpenConfig}" Style="{StaticResource Btn.Ghost}"
                     Margin="6,0,0,0" Command="{Binding OpenConfig}" />
         </Grid>
     </Grid>
-
 </UserControl>

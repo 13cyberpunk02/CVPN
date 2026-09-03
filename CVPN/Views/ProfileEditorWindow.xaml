@@ -1,6 +1,7 @@
 <Window x:Class="CVPN.Views.ProfileEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:CVPN.Localization"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:CVPN.Models"
@@ -12,16 +13,16 @@
 
     <Border BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="24,20">
         <StackPanel>
-            <TextBlock x:Name="HeaderText" Text="Новый профиль" Style="{StaticResource T.Title}" />
-            <TextBlock Text="Поля меняются в зависимости от протокола" Style="{StaticResource T.Secondary}"
+            <TextBlock x:Name="HeaderText" Text="{loc:T Editor_New}" Style="{StaticResource T.Title}" />
+            <TextBlock Text="{loc:T Editor_Subtitle}" Style="{StaticResource T.Secondary}"
                        Margin="0,4,0,0" />
 
             <!-- ===== общее ===== -->
-            <TextBlock Text="название" Style="{StaticResource T.Label}" Margin="0,20,0,7" />
+            <TextBlock Text="{loc:T Editor_Name}" Style="{StaticResource T.Label}" Margin="0,20,0,7" />
             <TextBox Style="{StaticResource Input}" Tag="Amsterdam"
                      Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
-            <TextBlock Text="протокол" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+            <TextBlock Text="{loc:T Editor_Protocol}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
             <ComboBox x:Name="ProtocolBox" Style="{StaticResource Select}"
                       SelectionChanged="OnProtocolChanged">
                 <ComboBoxItem Content="VLESS · Reality" />
@@ -38,25 +39,25 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="адрес сервера" Style="{StaticResource T.Label}" Margin="0,0,0,7" />
+                    <TextBlock Text="{loc:T Editor_Host}" Style="{StaticResource T.Label}" Margin="0,0,0,7" />
                     <TextBox Style="{StaticResource Input}" Tag="nl-01.example.net"
                              Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Margin="0,0,10,0">
-                    <TextBlock Text="порт" Style="{StaticResource T.Label}" Margin="0,0,0,7" />
+                    <TextBlock Text="{loc:T Editor_Port}" Style="{StaticResource T.Label}" Margin="0,0,0,7" />
                     <TextBox Style="{StaticResource Input}" Tag="443"
                              Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2">
-                    <TextBlock Text="страна" Style="{StaticResource T.Label}" Margin="0,0,0,7" />
+                    <TextBlock Text="{loc:T Editor_Country}" Style="{StaticResource T.Label}" Margin="0,0,0,7" />
                     <TextBox Style="{StaticResource Input}" Tag="NL" MaxLength="2"
                              Text="{Binding CountryCode, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
             </Grid>
 
-            <TextBlock Text="sni · имя сервера в tls" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+            <TextBlock Text="{loc:T Editor_Sni}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
             <TextBox Style="{StaticResource Input}" Tag="www.google.com"
                      Text="{Binding Sni, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -93,20 +94,20 @@
 
             <!-- ===== WebSocket ===== -->
             <StackPanel x:Name="WsGroup">
-                <TextBlock Text="путь websocket" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+                <TextBlock Text="{loc:T Editor_WsPath}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
                 <TextBox Style="{StaticResource Input}" Tag="/ws"
                          Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
 
             <!-- ===== логин ===== -->
             <StackPanel x:Name="UserGroup">
-                <TextBlock Text="имя пользователя" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+                <TextBlock Text="{loc:T Editor_Username}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
                 <TextBox Style="{StaticResource Input}" Tag="user"
                          Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
 
             <StackPanel x:Name="PasswordGroup">
-                <TextBlock Text="пароль" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+                <TextBlock Text="{loc:T Editor_Password}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
                 <TextBox Style="{StaticResource Input}" Tag="••••••••"
                          Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
@@ -116,9 +117,9 @@
                        TextWrapping="Wrap" Visibility="Collapsed" />
 
             <Grid Margin="0,22,0,0">
-                <Button Content="Отмена" Style="{StaticResource Btn.Ghost}"
+                <Button Content="{loc:T Common_Cancel}" Style="{StaticResource Btn.Ghost}"
                         HorizontalAlignment="Left" Click="OnCancel" />
-                <Button Content="Сохранить" Style="{StaticResource Btn.Primary}"
+                <Button Content="{loc:T Common_Save}" Style="{StaticResource Btn.Primary}"
                         HorizontalAlignment="Right" Click="OnSave" />
             </Grid>
         </StackPanel>
