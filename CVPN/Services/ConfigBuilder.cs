@@ -10,10 +10,10 @@ namespace CVPN.Services;
 /// Собирает config.json под sing-box 1.12+.
 ///
 /// Что важно знать про эту версию:
-///  1) geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
-///  2) спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
-///  3) legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
-///  4) DNS-серверы описываются новым форматом с полями type/server.
+///  • geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
+///  • спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
+///  • legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
+///  • DNS-серверы описываются новым форматом с полями type/server.
 /// </summary>
 public static class ConfigBuilder
 {
@@ -199,7 +199,7 @@ public static class ConfigBuilder
         ProtocolKind.VlessWs => Vless(p, reality: false),
         ProtocolKind.AnyTls => AnyTls(p),
         ProtocolKind.Naive => Naive(p),
-        _ => throw new NotSupportedException($"Протокол {p.Protocol} пока не поддержан")
+        _ => throw new NotSupportedException(Localization.Loc.T("Config_UnsupportedProtocol", p.Protocol))
     };
 
     private static JsonObject Vless(ServerProfile p, bool reality)

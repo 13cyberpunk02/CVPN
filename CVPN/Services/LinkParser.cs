@@ -30,7 +30,7 @@ public static class LinkParser
                 profile = ParseNaive(link);
             else
             {
-                error = "Поддерживаются только vless://, anytls:// и naive+https://";
+                error = Loc.T("Link_UnsupportedScheme");
                 return false;
             }
 

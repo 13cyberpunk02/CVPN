@@ -102,6 +102,9 @@
   <data name="Config_Rejected" xml:space="preserve">
     <value>configuration rejected by the core: {0}</value>
   </data>
+  <data name="Config_UnsupportedProtocol" xml:space="preserve">
+    <value>Protocol {0} is not supported yet</value>
+  </data>
   <data name="Connect_NoActiveProfile" xml:space="preserve">
     <value>No profile selected. Open Profiles and press “Select”.</value>
   </data>
@@ -212,6 +215,15 @@
 Details written to {1}
 
 Continue running? Choosing no will close the application.</value>
+  </data>
+  <data name="Duration_HoursMinutes" xml:space="preserve">
+    <value>{0} h {1} min</value>
+  </data>
+  <data name="Duration_Minutes" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Duration_Seconds" xml:space="preserve">
+    <value>{0} s</value>
   </data>
   <data name="Editor_BadPort" xml:space="preserve">
     <value>The port must be a number between 1 and 65535</value>
@@ -334,6 +346,9 @@ If you decline, you can turn TUN off in settings - traffic will then go through 
   <data name="Hint_Process" xml:space="preserve">
     <value>Telegram.exe - process name</value>
   </data>
+  <data name="Hint_SetLocal" xml:space="preserve">
+    <value>C:\rules\twitch.srs - a file on disk</value>
+  </data>
   <data name="Hint_Suffix" xml:space="preserve">
     <value>openai.com - the domain and all subdomains</value>
   </data>
@@ -363,6 +378,9 @@ If you decline, you can turn TUN off in settings - traffic will then go through 
   </data>
   <data name="Link_RealityNeedsPbk" xml:space="preserve">
     <value>reality requires the pbk parameter</value>
+  </data>
+  <data name="Link_UnsupportedScheme" xml:space="preserve">
+    <value>Only vless://, anytls:// and naive+https:// are supported</value>
   </data>
   <data name="Logs_CopiedLines" xml:space="preserve">
     <value>Copied {0} lines</value>
@@ -520,6 +538,9 @@ If you decline, you can turn TUN off in settings - traffic will then go through 
   <data name="Routing_PickSrs" xml:space="preserve">
     <value>Pick .srs</value>
   </data>
+  <data name="Routing_PickSrsTitle" xml:space="preserve">
+    <value>Choose a rule set file</value>
+  </data>
   <data name="Routing_SetAfterReconnect" xml:space="preserve">
     <value>The rule set applies after reconnecting</value>
   </data>
@@ -534,6 +555,9 @@ If you decline, you can turn TUN off in settings - traffic will then go through 
   </data>
   <data name="Routing_SetRemote" xml:space="preserve">
     <value>rule_set · link</value>
+  </data>
+  <data name="Routing_SrsFilter" xml:space="preserve">
+    <value>sing-box rule sets (*.srs)|*.srs|All files (*.*)|*.*</value>
   </data>
   <data name="Routing_Subtitle" xml:space="preserve">
     <value>Rules are checked top to bottom. The first match decides.</value>

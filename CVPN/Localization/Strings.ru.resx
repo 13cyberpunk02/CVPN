@@ -102,6 +102,9 @@
   <data name="Config_Rejected" xml:space="preserve">
     <value>конфигурация отклонена ядром: {0}</value>
   </data>
+  <data name="Config_UnsupportedProtocol" xml:space="preserve">
+    <value>Протокол {0} пока не поддержан</value>
+  </data>
   <data name="Connect_NoActiveProfile" xml:space="preserve">
     <value>Профиль не выбран. Откройте «Профили» и нажмите «Выбрать».</value>
   </data>
@@ -212,6 +215,15 @@
 Подробности записаны в {1}
 
 Продолжить работу? При отказе приложение закроется.</value>
+  </data>
+  <data name="Duration_HoursMinutes" xml:space="preserve">
+    <value>{0} ч {1} мин</value>
+  </data>
+  <data name="Duration_Minutes" xml:space="preserve">
+    <value>{0} мин</value>
+  </data>
+  <data name="Duration_Seconds" xml:space="preserve">
+    <value>{0} с</value>
   </data>
   <data name="Editor_BadPort" xml:space="preserve">
     <value>Порт должен быть числом от 1 до 65535</value>
@@ -334,6 +346,9 @@
   <data name="Hint_Process" xml:space="preserve">
     <value>Telegram.exe - имя процесса</value>
   </data>
+  <data name="Hint_SetLocal" xml:space="preserve">
+    <value>C:\rules\twitch.srs - файл на диске</value>
+  </data>
   <data name="Hint_Suffix" xml:space="preserve">
     <value>openai.com - домен и все поддомены</value>
   </data>
@@ -363,6 +378,9 @@
   </data>
   <data name="Link_RealityNeedsPbk" xml:space="preserve">
     <value>для reality нужен параметр pbk</value>
+  </data>
+  <data name="Link_UnsupportedScheme" xml:space="preserve">
+    <value>Поддерживаются только vless://, anytls:// и naive+https://</value>
   </data>
   <data name="Logs_CopiedLines" xml:space="preserve">
     <value>Скопировано строк: {0}</value>
@@ -520,6 +538,9 @@
   <data name="Routing_PickSrs" xml:space="preserve">
     <value>Выбрать .srs</value>
   </data>
+  <data name="Routing_PickSrsTitle" xml:space="preserve">
+    <value>Выберите файл набора правил</value>
+  </data>
   <data name="Routing_SetAfterReconnect" xml:space="preserve">
     <value>Набор правил применится после переподключения</value>
   </data>
@@ -534,6 +555,9 @@
   </data>
   <data name="Routing_SetRemote" xml:space="preserve">
     <value>rule_set · ссылка</value>
+  </data>
+  <data name="Routing_SrsFilter" xml:space="preserve">
+    <value>Наборы правил sing-box (*.srs)|*.srs|Все файлы (*.*)|*.*</value>
   </data>
   <data name="Routing_Subtitle" xml:space="preserve">
     <value>Правила проверяются сверху вниз. Первое совпадение решает судьбу соединения.</value>
@@ -838,4 +862,3 @@
     <value>МБ/с</value>
   </data>
 </root>
-

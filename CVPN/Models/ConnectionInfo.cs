@@ -56,8 +56,8 @@ public sealed class ConnectionInfo
         {
             var parts = Host.Split('.');
 
-            if (parts.Length < 2 || parts.Any(p => p.Length == 0) || parts.All(p => 
-                    p.All(char.IsDigit))) return Host;
+            if (parts.Length < 2 || parts.Any(p => p.Length == 0)) return Host;
+            if (parts.All(p => p.All(char.IsDigit))) return Host;
 
             return string.Join('.', parts[^2..]);
         }

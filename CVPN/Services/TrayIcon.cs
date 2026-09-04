@@ -10,6 +10,10 @@ namespace CVPN.Services;
 /// Значок в области уведомлений. В WPF своего нет, поэтому берём NotifyIcon
 /// из WinForms - это дешевле, чем реализовывать Shell_NotifyIcon вручную.
 /// </summary>
+/// <summary>
+/// Значок в области уведомлений. В WPF своего нет, поэтому берём NotifyIcon
+/// из WinForms - это дешевле, чем реализовывать Shell_NotifyIcon вручную.
+/// </summary>
 public sealed class TrayIcon : IDisposable
 {
     private readonly NotifyIcon _icon;
@@ -123,7 +127,7 @@ public sealed class TrayIcon : IDisposable
     {
         var uri = new Uri($"pack://application:,,,/Assets/{fileName}", UriKind.Absolute);
         using var stream = Application.GetResourceStream(uri)?.Stream
-                           ?? throw new InvalidOperationException($"Иконка {fileName} не найдена в ресурсах");
+                           ?? throw new InvalidOperationException($"icon {fileName} not found in resources");
 
         return new Icon(stream);
     }

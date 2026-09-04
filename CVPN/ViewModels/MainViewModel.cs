@@ -36,9 +36,9 @@ public sealed class MainViewModel : ObservableObject
     private string _uptime = "00:00:00";
     private string _download = "0.0";
     private string _upload = "0.0";
-    private string _downloadUnit = "КБ/с";
-    private string _uploadUnit = "КБ/с";
-    private string _singBoxVersion = "ядро не найдено";
+    private string _downloadUnit = Loc.T("Unit_KBps");
+    private string _uploadUnit = Loc.T("Unit_KBps");
+    private string _singBoxVersion = Loc.T("Core_NotFound");
     private string _status = "";
 
     public MainViewModel()
@@ -147,7 +147,7 @@ public sealed class MainViewModel : ObservableObject
             Raise(nameof(ActiveRuleCount));
             Persist();
 
-            if (IsConnected) Status = "Набор правил применится после переподключения";
+            if (IsConnected) Status = Loc.T("Routing_SetAfterReconnect");
         }
     }
 
@@ -197,11 +197,11 @@ public sealed class MainViewModel : ObservableObject
     private bool EffectiveTun => _sessionTun ?? Settings.TunEnabled;
 
     public string ModeTitle => EffectiveTun
-        ? _viaService ? "TUN · служба" : "TUN"
-        : "Системный прокси";
+        ? _viaService ? Loc.T("Mode_TunService") : "TUN"
+        : Loc.T("Mode_SystemProxy");
 
     public string ModeDetail => EffectiveTun
-        ? "весь трафик системы"
+        ? Loc.T("Mode_AllTraffic")
         : $"127.0.0.1:{Settings.MixedPort}";
 
     /// <summary>Режим активен только при живом туннеле - иначе это просто настройка.</summary>
@@ -211,8 +211,8 @@ public sealed class MainViewModel : ObservableObject
     public bool ModePending => _sessionTun is not null && _sessionTun != Settings.TunEnabled;
 
     public string ModePendingHint => Settings.TunEnabled
-        ? "после переподключения: TUN"
-        : "после переподключения: прокси";
+        ? Loc.T("Mode_PendingTun")
+        : Loc.T("Mode_PendingProxy");
 
     private void RaiseMode()
     {
@@ -225,15 +225,15 @@ public sealed class MainViewModel : ObservableObject
 
     public string StateLabel => State switch
     {
-        TunnelState.Connected => "ПОДКЛЮЧЕНО",
-        TunnelState.Connecting => "ПОДКЛЮЧЕНИЕ",
-        TunnelState.Failing => "ОШИБКА",
-        _ => "ОТКЛЮЧЕНО"
+        TunnelState.Connected => Loc.T("State_ConnectedCaps"),
+        TunnelState.Connecting => Loc.T("State_ConnectingCaps"),
+        TunnelState.Failing => Loc.T("State_FailedCaps"),
+        _ => Loc.T("State_DisconnectedCaps")
     };
 
     public string PrimaryActionLabel => State is TunnelState.Connected or TunnelState.Connecting
-        ? "Отключить"
-        : "Подключить";
+        ? Loc.T("Action_Disconnect")
+        : Loc.T("Action_Connect");
 
     public ServerProfile? Active
     {
@@ -314,15 +314,15 @@ public sealed class MainViewModel : ObservableObject
         {
             // Раньше кнопка в этом случае просто не нажималась, и причина была не видна
             Status = Profiles.Count == 0
-                ? "Нет ни одного профиля. Добавьте его на странице «Профили»."
-                : "Профиль не выбран. Откройте «Профили» и нажмите «Выбрать».";
+                ? Loc.T("Connect_NoProfiles")
+                : Loc.T("Connect_NoActiveProfile");
             Append($"[cvpn] {Status}");
             return;
         }
 
         if (!File.Exists(Settings.CorePath))
         {
-            Fail($"sing-box.exe не найден: {Settings.CorePath}");
+            Fail(Loc.T("Core_FileNotFound", Settings.CorePath));
             return;
         }
 
@@ -334,7 +334,7 @@ public sealed class MainViewModel : ObservableObject
         if (Settings.TunEnabled && !_viaService && !Elevation.IsElevated && !RequestElevation()) return;
 
         State = TunnelState.Connecting;
-        Append("[cvpn] сборка конфигурации");
+        Append("[cvpn] building configuration");
 
         string configPath;
         try
@@ -343,7 +343,7 @@ public sealed class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Fail($"не удалось собрать конфигурацию: {ex.Message}");
+            Fail(Loc.T("Config_BuildFailed", ex.Message));
             return;
         }
 
@@ -358,19 +358,19 @@ public sealed class MainViewModel : ObservableObject
 
         if (_viaService)
         {
-            Append("[cvpn] запуск через службу CVPN Tunnel");
+            Append("[cvpn] starting through the CVPN Tunnel service");
 
             var configText = File.ReadAllText(configPath);
             var ruleSets = RuleSetPayload.Collect(configText);
 
             if (ruleSets.Count > 0)
-                Append($"[cvpn] службе передано наборов правил: {ruleSets.Count}");
+                Append($"[cvpn] rule sets sent to the service: {ruleSets.Count}");
 
             var response = await ServiceClient.StartAsync(configText, ruleSets);
 
             if (response?.Ok != true)
             {
-                Fail(response?.Message ?? "служба не ответила");
+                Fail(response?.Message ?? Loc.T("Service_NoAnswer"));
                 return;
             }
 
@@ -385,7 +385,7 @@ public sealed class MainViewModel : ObservableObject
             var (ok, message) = await _core.CheckConfigAsync(configPath);
             if (!ok)
             {
-                Fail($"конфигурация отклонена ядром: {message}");
+                Fail(Loc.T("Config_Rejected", message));
                 await TeardownAsync();
                 return;
             }
@@ -399,11 +399,11 @@ public sealed class MainViewModel : ObservableObject
             try
             {
                 SystemProxy.Enable(Settings.MixedPort);
-                Append($"[cvpn] системный прокси: 127.0.0.1:{Settings.MixedPort}");
+                Append($"[cvpn] system proxy: 127.0.0.1:{Settings.MixedPort}");
             }
             catch (Exception ex)
             {
-                Append($"[cvpn] не удалось прописать системный прокси: {ex.Message}");
+                Append($"[cvpn] could not set the system proxy: {ex.Message}");
             }
         }
 
@@ -425,7 +425,7 @@ public sealed class MainViewModel : ObservableObject
             }
             else
             {
-                Append("[cvpn] kill switch включён: трафик мимо туннеля запрещён");
+                Append("[cvpn] kill switch on: traffic outside the tunnel is blocked");
             }
         }
 
@@ -436,8 +436,8 @@ public sealed class MainViewModel : ObservableObject
         State = TunnelState.Connected;
         Status = "";
         Append(Settings.AutoSelectFastest && Profiles.Count > 1
-            ? $"[cvpn] автовыбор быстрейшего из {Profiles.Count} серверов"
-            : $"[cvpn] подключение к {Active.Name} ({Active.ProtocolLabel})");
+            ? $"[cvpn] auto-selecting the fastest of {Profiles.Count} servers"
+            : $"[cvpn] connecting to {Active.Name} ({Active.ProtocolLabel})");
 
         // Первый замер с задержкой: ядру нужно поднять Clash API и сам туннель
         _ = Task.Run(async () =>
@@ -458,13 +458,13 @@ public sealed class MainViewModel : ObservableObject
         Uptime = "00:00:00";
         Download = "0.0";
         Upload = "0.0";
-        DownloadUnit = "КБ/с";
-        UploadUnit = "КБ/с";
+        DownloadUnit = Loc.T("Unit_KBps");
+        UploadUnit = Loc.T("Unit_KBps");
 
         await TeardownAsync();
 
         State = TunnelState.Disconnected;
-        Append("[cvpn] отключено");
+        Append("[cvpn] disconnected");
     }
 
     private async Task TeardownAsync()
@@ -473,8 +473,8 @@ public sealed class MainViewModel : ObservableObject
         {
             var problem = await KillSwitch.DisableAsync();
             Append(problem.Length > 0
-                ? $"[cvpn] не удалось снять kill switch: {problem}"
-                : "[cvpn] kill switch снят");
+                ? $"[cvpn] could not disable the kill switch: {problem}"
+                : "[cvpn] kill switch off");
         }
 
         _sessionTun = null;
@@ -512,8 +512,8 @@ public sealed class MainViewModel : ObservableObject
             var path = ConfigBuilder.Write([.. Profiles], Active, ActiveRouting, Settings);
             var service = new SingBoxService(Settings.CorePath);
             var (ok, message) = await service.CheckConfigAsync(path);
-            Status = ok ? "Конфигурация корректна" : message;
-            Append($"[cvpn] проверка: {Status}");
+            Status = ok ? Loc.T("Core_ConfigValid") : message;
+            Append($"[cvpn] check: {Status}");
         }
         catch (Exception ex)
         {
@@ -528,7 +528,7 @@ public sealed class MainViewModel : ObservableObject
     {
         if (!File.Exists(Settings.CorePath))
         {
-            SingBoxVersion = "ядро не найдено";
+            SingBoxVersion = Loc.T("Core_NotFound");
             return;
         }
 
@@ -539,7 +539,7 @@ public sealed class MainViewModel : ObservableObject
         }
         catch
         {
-            SingBoxVersion = "ядро не отвечает";
+            SingBoxVersion = Loc.T("Core_NotResponding");
         }
     }
 
@@ -559,26 +559,23 @@ public sealed class MainViewModel : ObservableObject
                 return false;
             }
 
-            Append($"[cvpn] задача планировщика не запустилась: {launchError}");
+            Append($"[cvpn] the scheduled task did not start: {launchError}");
         }
 
         var answer = MessageBox.Show(
-            "Режим TUN перехватывает весь системный трафик и требует прав администратора.\n\n" +
-            "Перезапустить CVPN с повышением прав?\n\n" +
-            "Если отказаться, можно выключить TUN в настройках - тогда трафик пойдёт " +
-            "через системный прокси, но только для приложений, которые его учитывают.",
+            Loc.T("Elevation_Question"),
             "CVPN", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
         if (answer != MessageBoxResult.Yes)
         {
-            Status = "Подключение отменено: для TUN нужны права администратора";
+            Status = Loc.T("Elevation_Cancelled");
             State = TunnelState.Disconnected;
             return false;
         }
 
         if (!Elevation.RelaunchElevated())
         {
-            Fail("Windows отклонила запрос на повышение прав");
+            Fail(Loc.T("Elevation_Denied"));
             return false;
         }
 
@@ -613,8 +610,8 @@ public sealed class MainViewModel : ObservableObject
             _adapterRetryUsed = true;
             _adapterErrorSeen = false;
 
-            Append("[cvpn] остался TUN-адаптер от прошлого запуска, повтор через 3 с");
-            Status = "Освобождение сетевого интерфейса…";
+            Append("[cvpn] stale TUN adapter from a previous run, retrying in 3 s");
+            Status = Loc.T("Tun_Releasing");
             State = TunnelState.Connecting;
 
             await TeardownAsync();
@@ -625,8 +622,8 @@ public sealed class MainViewModel : ObservableObject
         }
 
         State = TunnelState.Failing;
-        Status = $"Ядро завершилось с кодом {exitCode}. Подробности в логах.";
-        Append($"[cvpn] ядро остановлено, код {exitCode}");
+        Status = Loc.T("Core_Exited", exitCode);
+        Append($"[cvpn] core stopped, code {exitCode}");
     });
 
     /// <summary>Задержку меряет само ядро через Clash API - свой пинг мимо туннеля бессмыслен.</summary>
@@ -641,7 +638,7 @@ public sealed class MainViewModel : ObservableObject
             if (Active is null) return;
 
             Active.LatencyMs = ms;
-            if (ms < 0) Append("[cvpn] проверка задержки не прошла");
+            if (ms < 0) Append("[cvpn] latency probe failed");
         });
     }
 
@@ -709,7 +706,7 @@ public sealed class MainViewModel : ObservableObject
 
             if (!File.Exists(AppPaths.GeneratedConfig))
             {
-                Status = "Конфигурация ещё не собрана";
+                Status = Loc.T("Config_NotBuilt");
                 return;
             }
 
@@ -717,7 +714,7 @@ public sealed class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Status = $"Не удалось открыть конфигурацию: {ex.Message}";
+            Status = Loc.T("Config_OpenFailed", ex.Message);
         }
     }
 
@@ -726,7 +723,7 @@ public sealed class MainViewModel : ObservableObject
     {
         if (!Settings.AutoConnect || Active is null) return;
 
-        Append("[cvpn] автоподключение");
+        Append("[cvpn] auto-connecting");
         await ConnectAsync();
     }
 
@@ -750,7 +747,7 @@ public sealed class MainViewModel : ObservableObject
             if (!status.Running && State == TunnelState.Connected)
             {
                 State = TunnelState.Failing;
-                Status = "Служба сообщает, что ядро остановлено";
+                Status = Loc.T("Service_CoreStopped");
             }
         };
 
@@ -767,9 +764,9 @@ public sealed class MainViewModel : ObservableObject
         var direct = active.Count(r => r.Action == RouteAction.Direct);
         var blocked = active.Count(r => r.Action == RouteAction.Block);
 
-        Append($"[cvpn] набор «{ActiveRouting.Name}»: правил {active.Count} " +
-               $"(напрямую {direct}, блок {blocked}), " +
-               $"остальное {(ActiveRouting.ProxyByDefault ? "через прокси" : "напрямую")}");
+        Append($"[cvpn] set “{ActiveRouting.Name}”: {active.Count} rules " +
+               $"(direct {direct}, blocked {blocked}), " +
+               $"everything else {(ActiveRouting.ProxyByDefault ? "through proxy" : "direct")}");
 
         // В DNS переносятся только доменные условия и локальные наборы:
         // остальное на момент инициализации ядру недоступно
@@ -782,9 +779,9 @@ public sealed class MainViewModel : ObservableObject
 
         if (dnsUnfriendly.Count > 0)
         {
-            Append($"[cvpn] правила «напрямую» ({string.Join(", ", dnsUnfriendly)}) действуют " +
-                   "только для соединений, но не для DNS: домены резолвятся через туннель. " +
-                   "Для сайтов с геобалансировкой добавьте правило по домену.");
+            Append($"[cvpn] direct rules ({string.Join(", ", dnsUnfriendly)}) apply " +
+                   "to connections only, not to DNS: those domains resolve through the tunnel. " +
+                   "For geo-balanced sites add a domain rule.");
         }
     }
 
@@ -805,14 +802,14 @@ public sealed class MainViewModel : ObservableObject
 
         if (await _stats.SelectAsync(tag))
         {
-            Append($"[cvpn] переключение на {profile.Name} без перезапуска ядра");
+            Append($"[cvpn] switched to {profile.Name} without restarting the core");
             ConfigBuilder.Write([.. Profiles], profile, ActiveRouting, Settings);
             await MeasureAsync();
         }
         else
         {
-            Status = "Не удалось переключить сервер. Переподключитесь вручную.";
-            Append("[cvpn] селектор не ответил, нужно переподключение");
+            Status = Loc.T("Server_SwitchFailed");
+            Append("[cvpn] the selector did not answer, reconnect needed");
         }
     }
 
@@ -829,8 +826,8 @@ public sealed class MainViewModel : ObservableObject
 
         if (FlagCatalog.Missing.Count == 0) return;
 
-        Append($"[cvpn] флаги не загружены: {string.Join(", ", FlagCatalog.Missing)}");
-        Append("[cvpn] проверьте, что файлы Assets/Flags/*.png добавлены в проект с действием Resource");
+        Append($"[cvpn] flags not loaded: {string.Join(", ", FlagCatalog.Missing)}");
+        Append("[cvpn] check that Assets/Flags/*.png are added to the project with build action Resource");
     }
 
     /// <summary>
@@ -841,16 +838,16 @@ public sealed class MainViewModel : ObservableObject
     {
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
 
-        Append($"[cvpn] сборка {version} · {Environment.ProcessPath}");
+        Append($"[cvpn] build {version} · {Environment.ProcessPath}");
 
         if (!ElevatedTask.Exists || ElevatedTask.PathMatchesCurrent()) return;
-        Append($"[cvpn] внимание: задача планировщика запускает другой файл - {ElevatedTask.RegisteredPath()}");
-        Append("[cvpn] пересоздайте задачу в настройках, иначе изменения не применятся");
+        Append($"[cvpn] warning: the scheduled task launches a different file - {ElevatedTask.RegisteredPath()}");
+        Append("[cvpn] recreate the task in settings, otherwise your changes will not apply");
     }
 
     /// <summary>Отметка о нажатии на круг - для диагностики привязок.</summary>
     public void NoteDialClick() =>
-        Append($"[cvpn] нажатие: состояние {StateLabel}, профиль {Active?.Name ?? "не выбран"}");
+        Append($"[cvpn] dial clicked: state {StateLabel}, profile {Active?.Name ?? "none"}");
 
     // ===================== служебное =====================
 

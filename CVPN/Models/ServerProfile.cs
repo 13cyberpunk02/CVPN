@@ -6,65 +6,58 @@ namespace CVPN.Models;
 
 public sealed class ServerProfile : ObservableObject
 {
-    private string _name = "";
-    private string _host = "";
-    private int _port = 443;
-    private ProtocolKind _protocol = ProtocolKind.VlessReality;
-    private int _latencyMs = -1;
-    private bool _isActive;
-
     public string Name
     {
-        get => _name;
+        get;
         set
         {
-            Set(ref _name, value);
+            Set(ref field, value);
             Raise(nameof(CountryCode));
             Raise(nameof(FlagImage));
         }
-    }
+    } = "";
 
     public string Host
     {
-        get => _host;
-        set => Set(ref _host, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = "";
 
     public int Port
     {
-        get => _port;
-        set => Set(ref _port, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = 443;
 
     public ProtocolKind Protocol
     {
-        get => _protocol;
+        get;
         set
         {
-            Set(ref _protocol, value);
+            Set(ref field, value);
             Raise(nameof(ProtocolLabel));
         }
-    }
+    } = ProtocolKind.VlessReality;
 
     /// <summary>-1 означает «ещё не измеряли».</summary>
     [JsonIgnore]
     public int LatencyMs
     {
-        get => _latencyMs;
+        get;
         set
         {
-            Set(ref _latencyMs, value);
+            Set(ref field, value);
             Raise(nameof(LatencyLabel));
             Raise(nameof(LatencyGrade));
         }
-    }
+    } = -1;
 
     /// <summary>Состояние интерфейса, в файл не пишется.</summary>
     [JsonIgnore]
     public bool IsActive
     {
-        get => _isActive;
-        set => Set(ref _isActive, value);
+        get;
+        set => Set(ref field, value);
     }
 
     // Учётные данные протокола. UUID и пароль - секреты, они шифруются

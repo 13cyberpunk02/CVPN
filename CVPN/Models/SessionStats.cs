@@ -55,10 +55,10 @@ public sealed class SessionStats : ObservableObject
             var elapsed = DateTimeOffset.Now - Started.Value;
 
             return elapsed.TotalHours >= 1
-                ? $"{(int)elapsed.TotalHours} ч {elapsed.Minutes} мин"
+                ? Localization.Loc.T("Duration_HoursMinutes", (int)elapsed.TotalHours, elapsed.Minutes)
                 : elapsed.TotalMinutes >= 1
-                    ? $"{elapsed.Minutes} мин"
-                    : $"{elapsed.Seconds} с";
+                    ? Localization.Loc.T("Duration_Minutes", elapsed.Minutes)
+                    : Localization.Loc.T("Duration_Seconds", elapsed.Seconds);
         }
     }
 

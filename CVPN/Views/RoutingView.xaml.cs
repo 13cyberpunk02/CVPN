@@ -22,7 +22,7 @@ public partial class RoutingView : UserControl
         [MatchKind.DomainKeyword] = Loc.T("Hint_Keyword"),
         [MatchKind.Process] = Loc.T("Hint_Process"),
         [MatchKind.RuleSetRemote] = "https://…/geosite-youtube.srs",
-        [MatchKind.RuleSetLocal] = "C:\\rules\\twitch.srs - файл на диске"
+        [MatchKind.RuleSetLocal] = Loc.T("Hint_SetLocal")
     };
 
     private bool _loaded;
@@ -74,7 +74,7 @@ public partial class RoutingView : UserControl
     {
         if (ValueBox is null || PickSrsButton is null) return;
 
-        ValueBox.Tag = Hints.TryGetValue(SelectedMatch, out var hint) ? hint : "";
+        ValueBox.Tag = Hints.GetValueOrDefault(SelectedMatch, "");
 
         // Кнопка обзора нужна только для локального .srs
         PickSrsButton.Visibility = SelectedMatch == MatchKind.RuleSetLocal
@@ -86,8 +86,8 @@ public partial class RoutingView : UserControl
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Выберите файл набора правил",
-            Filter = "Наборы правил sing-box (*.srs)|*.srs|Все файлы (*.*)|*.*",
+            Title = Loc.T("Routing_PickSrsTitle"),
+            Filter = Loc.T("Routing_SrsFilter"),
             CheckFileExists = true
         };
 
