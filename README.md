@@ -61,6 +61,7 @@ and which get blocked.
 - File logs kept for 7 days, crashes recorded with stack traces
 - Kill switch: traffic outside the tunnel is blocked by the firewall
 - Credentials encrypted with your Windows account key
+- English and Russian interface
 
 ---
 
@@ -324,6 +325,23 @@ from the same counter stream as the live speed - no extra requests to the core.
 The summary stays on screen after disconnecting, which is the point of
 collecting it.
 
+## Interface language
+
+English and Russian, chosen in settings. The default follows the system
+language.
+
+English is the neutral resource language: if a translation is missing, the
+English string is shown rather than a blank. Changing the language requires a
+restart - CVPN offers to do it right away.
+
+Log lines are deliberately English-only. They end up in files people attach to
+bug reports, and a single-language log can be read by everyone rather than just
+its author.
+
+To add a language, copy `Localization/Strings.ru.resx`, translate the values,
+and add the code to `Loc.Available`. The guide is in
+[LOCALIZATION.md](LOCALIZATION.md).
+
 ## Tray icon
 
 Double-click opens the window. The menu offers connect, exit, and a **Server**
@@ -373,9 +391,15 @@ the logs: which rule will match. Enter a domain or a full URL and the
 application names the outcome and the matching rule, without bringing the
 tunnel up.
 
-The contents of `geosite` and `.srs` sets cannot be checked - they are binary
-files the application does not have. If such a set sits above the match found,
-the check says so plainly instead of guessing.
+Not everything can be checked, and that is stated plainly rather than guessed:
+
+- the contents of `geosite` and `.srs` sets live in binary files the
+  application does not have;
+- `geoip` is decided by the address the domain resolves to, and there is no
+  lookup database either.
+
+If such a rule sits above the match found, the check names it and explains
+under which condition it would win.
 
 ### Rule sets
 
@@ -418,8 +442,9 @@ jade for direct, indigo for proxied.
 It is the fastest way to understand why a site goes somewhere unexpected: no
 need to enable verbose logging and hunt for the domain among thousands of lines.
 
-Each row has **Direct** and **Block** buttons. They add a `domain_suffix` rule
-for the second-level domain - `sun9-40.vkuserphoto.ru` becomes
+Each row has buttons. The first offers the opposite of the current outbound:
+**Direct** for a proxied connection, **Through proxy** for a direct one. The
+second blocks. They add a `domain_suffix` rule for the second-level domain - `sun9-40.vkuserphoto.ru` becomes
 `vkuserphoto.ru`. The rule applies after reconnecting.
 
 The cross closes the connection so the application reopens it under the new
@@ -653,9 +678,15 @@ the logs: which rule will match. Enter a domain or a full URL and the
 application names the outcome and the matching rule, without bringing the
 tunnel up.
 
-The contents of `geosite` and `.srs` sets cannot be checked - they are binary
-files the application does not have. If such a set sits above the match found,
-the check says so plainly instead of guessing.
+Not everything can be checked, and that is stated plainly rather than guessed:
+
+- the contents of `geosite` and `.srs` sets live in binary files the
+  application does not have;
+- `geoip` is decided by the address the domain resolves to, and there is no
+  lookup database either.
+
+If such a rule sits above the match found, the check names it and explains
+under which condition it would win.
 
 ### Rule sets do not download
 
@@ -722,6 +753,12 @@ foreign configs, and the service sanitiser. Those are exactly the places where
 bugs were found by hand - a missing selector tag, `geoip` in DNS rules, the
 resolver transport.
 
+Localization is covered too: a test walks the whole codebase and checks that
+every key used in markup and code exists in the resources, that the Russian
+translation is complete, and that placeholders like `{0}` match between
+languages. That replaces the compile-time checking a generated resource class
+would have given.
+
 Tests run in CI on every push and pull request
 (`.github/workflows/tests.yml`).
 
@@ -772,6 +809,7 @@ CVPN.sln
 │   ├── Core/                Mvvm, Elevation, Secret
 │   ├── Services/            ConfigBuilder, ClashApiClient, TrayIcon, …
 │   ├── Ipc/                 service client
+│   ├── Localization/        Loc + Strings.resx / Strings.ru.resx
 │   └── Assets/              icons and flags
 │
 ├── CVPN.Service/            Windows service (Worker Service)
@@ -824,6 +862,7 @@ otherwise the serialiser will try to write it too.
 - [x] Quick server switching from the tray menu
 - [x] Automatic daily subscription refresh
 - [x] Per-session statistics
+- [x] English interface
 - [ ] Code-signed installer
 
 Suggestions welcome in [issues](https://github.com/13CyberPunk02/CVPN/issues).
