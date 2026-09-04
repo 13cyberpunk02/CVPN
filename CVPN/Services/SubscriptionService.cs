@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Text;
+using CVPN.Localization;
 using CVPN.Models;
 
 namespace CVPN.Services;
@@ -18,7 +19,7 @@ public static class SubscriptionService
     {
         var profiles = new List<ServerProfile>();
 
-        if (string.IsNullOrWhiteSpace(url)) return (profiles, "Ссылка подписки не указана");
+        if (string.IsNullOrWhiteSpace(url)) return (profiles, Loc.T("Sub_NoUrl"));
 
         string body;
 
@@ -30,16 +31,17 @@ public static class SubscriptionService
 
             using var response = await Http.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
-                return (profiles, $"Сервер подписки ответил {(int)response.StatusCode}");
+                return (profiles, Loc.T("Sub_HttpError", (int)response.StatusCode));
 
             body = await response.Content.ReadAsStringAsync(ct);
         }
         catch (Exception ex)
         {
-            return (profiles, $"Не удалось загрузить подписку: {ex.Message}");
+            return (profiles, Loc.T("Sub_LoadFailed", ex.Message));
         }
 
-        foreach (var line in Decode(body).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        foreach (var line in Decode(body)
+                     .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (LinkParser.TryParse(line, out var profile, out _))
             {
@@ -50,7 +52,7 @@ public static class SubscriptionService
 
         return profiles.Count > 0
             ? (profiles, "")
-            : (profiles, "В подписке не нашлось поддерживаемых серверов");
+            : (profiles, Loc.T("Sub_NoServers"));
     }
 
     /// <summary>Если тело - base64, разворачиваем; иначе возвращаем как есть.</summary>

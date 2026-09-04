@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using CVPN.Localization;
 using CVPN.Services;
 using CVPN.ViewModels;
 using CVPN.Views;
@@ -121,7 +122,7 @@ public partial class MainWindow : Window
             Hide();
 
             if (Vm.IsConnected)
-                _tray.Notify("CVPN работает", "Приложение свёрнуто в трей. Выход - через меню значка.");
+                _tray.Notify(Loc.T("Tray_StillRunning"), Loc.T("Tray_StillRunningHint"));
 
             return;
         }

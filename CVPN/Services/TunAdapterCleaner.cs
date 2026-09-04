@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using CVPN.Localization;
 
 namespace CVPN.Services;
 
@@ -23,14 +24,14 @@ public static class TunAdapterCleaner
     public static async Task<string> RemoveStaleAsync(CancellationToken ct = default)
     {
         if (!Core.Elevation.IsElevated) return "";
- 
+
         // Get-NetAdapter показывает и отключённые адаптеры, поэтому -IncludeHidden
         const string script =
             "$found = Get-NetAdapter -IncludeHidden -ErrorAction SilentlyContinue | " +
             "Where-Object { $_.InterfaceDescription -like '*Wintun*' -or $_.Name -like '*sing-box*' }; " +
             "if ($found) { $found | Remove-NetAdapter -Confirm:$false -ErrorAction SilentlyContinue; " +
             "$found.Count } else { 0 }";
- 
+
         try
         {
             var info = new ProcessStartInfo
@@ -41,23 +42,23 @@ public static class TunAdapterCleaner
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
- 
+
             info.ArgumentList.Add("-NoProfile");
             info.ArgumentList.Add("-NonInteractive");
             info.ArgumentList.Add("-Command");
             info.ArgumentList.Add(script);
- 
+
             using var process = Process.Start(info);
             if (process is null) return "";
- 
+
             var output = await process.StandardOutput.ReadToEndAsync(ct);
- 
+
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(TimeSpan.FromSeconds(10));
             await process.WaitForExitAsync(cts.Token);
- 
+
             return int.TryParse(output.Trim(), out var count) && count > 0
-                ? $"удалено зависших адаптеров: {count}"
+                ? Loc.T("Tun_AdaptersRemoved", count)
                 : "";
         }
         catch (Exception)

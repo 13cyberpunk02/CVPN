@@ -33,6 +33,12 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Action_Connect" xml:space="preserve">
+    <value>Подключить</value>
+  </data>
+  <data name="Action_Disconnect" xml:space="preserve">
+    <value>Отключить</value>
+  </data>
   <data name="Common_Active" xml:space="preserve">
     <value>активных</value>
   </data>
@@ -83,6 +89,24 @@
   </data>
   <data name="Common_ViaProxy" xml:space="preserve">
     <value>через прокси</value>
+  </data>
+  <data name="Config_BuildFailed" xml:space="preserve">
+    <value>не удалось собрать конфигурацию: {0}</value>
+  </data>
+  <data name="Config_NotBuilt" xml:space="preserve">
+    <value>Конфигурация ещё не собрана</value>
+  </data>
+  <data name="Config_OpenFailed" xml:space="preserve">
+    <value>Не удалось открыть конфигурацию: {0}</value>
+  </data>
+  <data name="Config_Rejected" xml:space="preserve">
+    <value>конфигурация отклонена ядром: {0}</value>
+  </data>
+  <data name="Connect_NoActiveProfile" xml:space="preserve">
+    <value>Профиль не выбран. Откройте «Профили» и нажмите «Выбрать».</value>
+  </data>
+  <data name="Connect_NoProfiles" xml:space="preserve">
+    <value>Нет ни одного профиля. Добавьте его на странице «Профили».</value>
   </data>
   <data name="Connection_CheckConfig" xml:space="preserve">
     <value>Проверить конфиг</value>
@@ -144,17 +168,80 @@
   <data name="Connections_MakeProxyHint" xml:space="preserve">
     <value>Добавить правило: домен пойдёт через туннель</value>
   </data>
+  <data name="Connections_RuleAdded" xml:space="preserve">
+    <value>{0} - «{1}». Применится после переподключения.</value>
+  </data>
+  <data name="Connections_RuleChanged" xml:space="preserve">
+    <value>Правило для {0} изменено на «{1}». Применится после переподключения.</value>
+  </data>
+  <data name="Connections_RuleExists" xml:space="preserve">
+    <value>Правило для {0} уже есть</value>
+  </data>
   <data name="Connections_Subtitle" xml:space="preserve">
     <value>Что куда идёт прямо сейчас и по какому правилу</value>
   </data>
+  <data name="Core_ConfigValid" xml:space="preserve">
+    <value>Конфигурация корректна</value>
+  </data>
+  <data name="Core_ExitCode" xml:space="preserve">
+    <value>Ядро вернуло код {0}</value>
+  </data>
+  <data name="Core_Exited" xml:space="preserve">
+    <value>Ядро завершилось с кодом {0}. Подробности в логах.</value>
+  </data>
+  <data name="Core_FileNotFound" xml:space="preserve">
+    <value>sing-box.exe не найден: {0}</value>
+  </data>
+  <data name="Core_NotFound" xml:space="preserve">
+    <value>ядро не найдено</value>
+  </data>
+  <data name="Core_NotResponding" xml:space="preserve">
+    <value>ядро не отвечает</value>
+  </data>
+  <data name="Core_StartFailed" xml:space="preserve">
+    <value>Не удалось запустить ядро</value>
+  </data>
+  <data name="Core_Timeout" xml:space="preserve">
+    <value>Ядро не ответило за {0} с</value>
+  </data>
+  <data name="Crash_Message" xml:space="preserve">
+    <value>Произошла ошибка:
+
+{0}
+
+Подробности записаны в {1}
+
+Продолжить работу? При отказе приложение закроется.</value>
+  </data>
+  <data name="Editor_BadPort" xml:space="preserve">
+    <value>Порт должен быть числом от 1 до 65535</value>
+  </data>
+  <data name="Editor_BadUuid" xml:space="preserve">
+    <value>UUID указан неверно: ожидается вид 8f1ce66e-719d-48b8-9ee6-804b52887082</value>
+  </data>
   <data name="Editor_Country" xml:space="preserve">
     <value>страна</value>
+  </data>
+  <data name="Editor_Edit" xml:space="preserve">
+    <value>Изменение профиля</value>
   </data>
   <data name="Editor_Host" xml:space="preserve">
     <value>адрес сервера</value>
   </data>
   <data name="Editor_Name" xml:space="preserve">
     <value>название</value>
+  </data>
+  <data name="Editor_NeedCredentials" xml:space="preserve">
+    <value>Для NaiveProxy нужны имя пользователя и пароль</value>
+  </data>
+  <data name="Editor_NeedHost" xml:space="preserve">
+    <value>Укажите адрес сервера</value>
+  </data>
+  <data name="Editor_NeedPassword" xml:space="preserve">
+    <value>Укажите пароль</value>
+  </data>
+  <data name="Editor_NeedPublicKey" xml:space="preserve">
+    <value>Для Reality нужен public key</value>
   </data>
   <data name="Editor_New" xml:space="preserve">
     <value>Новый профиль</value>
@@ -183,6 +270,49 @@
   <data name="Editor_WsPath" xml:space="preserve">
     <value>путь websocket</value>
   </data>
+  <data name="Elevation_Cancelled" xml:space="preserve">
+    <value>Подключение отменено: для TUN нужны права администратора</value>
+  </data>
+  <data name="Elevation_Denied" xml:space="preserve">
+    <value>Windows отклонила запрос на повышение прав</value>
+  </data>
+  <data name="Elevation_Question" xml:space="preserve">
+    <value>Режим TUN перехватывает весь системный трафик и требует прав администратора.
+
+Перезапустить CVPN с повышением прав?
+
+Если отказаться, можно выключить TUN в настройках - тогда трафик пойдёт через системный прокси, но только для приложений, которые его учитывают.</value>
+  </data>
+  <data name="Error_NetshCode" xml:space="preserve">
+    <value>netsh вернул код {0}</value>
+  </data>
+  <data name="Error_NetshStart" xml:space="preserve">
+    <value>не удалось запустить netsh</value>
+  </data>
+  <data name="Error_NoAppPath" xml:space="preserve">
+    <value>Не удалось определить путь к приложению</value>
+  </data>
+  <data name="Error_ScCode" xml:space="preserve">
+    <value>sc.exe вернул код {0}</value>
+  </data>
+  <data name="Error_ScStart" xml:space="preserve">
+    <value>Не удалось запустить sc.exe</value>
+  </data>
+  <data name="Error_SchtasksCode" xml:space="preserve">
+    <value>schtasks вернул код {0}</value>
+  </data>
+  <data name="Error_SchtasksStart" xml:space="preserve">
+    <value>Не удалось запустить schtasks.exe</value>
+  </data>
+  <data name="Error_UacCancelled" xml:space="preserve">
+    <value>Операция отменена в окне UAC</value>
+  </data>
+  <data name="Export_Copied" xml:space="preserve">
+    <value>Скопировано</value>
+  </data>
+  <data name="Export_CopyFailed" xml:space="preserve">
+    <value>Не удалось скопировать</value>
+  </data>
   <data name="Export_CopyLink" xml:space="preserve">
     <value>Копировать ссылку</value>
   </data>
@@ -191,6 +321,48 @@
   </data>
   <data name="Export_Title" xml:space="preserve">
     <value>Экспорт профиля</value>
+  </data>
+  <data name="Hint_Domain" xml:space="preserve">
+    <value>example.com - точное совпадение</value>
+  </data>
+  <data name="Hint_Geoip" xml:space="preserve">
+    <value>ru · de · us - код страны</value>
+  </data>
+  <data name="Hint_Keyword" xml:space="preserve">
+    <value>google - подстрока в имени домена</value>
+  </data>
+  <data name="Hint_Process" xml:space="preserve">
+    <value>Telegram.exe - имя процесса</value>
+  </data>
+  <data name="Hint_Suffix" xml:space="preserve">
+    <value>openai.com - домен и все поддомены</value>
+  </data>
+  <data name="Import_NoOutbounds" xml:space="preserve">
+    <value>В файле не нашлось outbound'ов vless, anytls или naive</value>
+  </data>
+  <data name="Import_NotJson" xml:space="preserve">
+    <value>Это не похоже на JSON: {0}</value>
+  </data>
+  <data name="Import_ReadFailed" xml:space="preserve">
+    <value>Не удалось прочитать файл: {0}</value>
+  </data>
+  <data name="Import_UnnamedProfile" xml:space="preserve">
+    <value>профиль</value>
+  </data>
+  <data name="KillSwitch_EnableFailed" xml:space="preserve">
+    <value>Не удалось включить kill switch: {0}</value>
+  </data>
+  <data name="KillSwitch_NeedsAdmin" xml:space="preserve">
+    <value>Kill switch требует прав администратора</value>
+  </data>
+  <data name="Link_Empty" xml:space="preserve">
+    <value>Пустая ссылка</value>
+  </data>
+  <data name="Link_ParseFailed" xml:space="preserve">
+    <value>Не удалось разобрать ссылку: {0}</value>
+  </data>
+  <data name="Link_RealityNeedsPbk" xml:space="preserve">
+    <value>для reality нужен параметр pbk</value>
   </data>
   <data name="Logs_CopiedLines" xml:space="preserve">
     <value>Скопировано строк: {0}</value>
@@ -213,6 +385,21 @@
   <data name="Logs_Title" xml:space="preserve">
     <value>Логи</value>
   </data>
+  <data name="Mode_AllTraffic" xml:space="preserve">
+    <value>весь трафик системы</value>
+  </data>
+  <data name="Mode_PendingProxy" xml:space="preserve">
+    <value>после переподключения: прокси</value>
+  </data>
+  <data name="Mode_PendingTun" xml:space="preserve">
+    <value>после переподключения: TUN</value>
+  </data>
+  <data name="Mode_SystemProxy" xml:space="preserve">
+    <value>Системный прокси</value>
+  </data>
+  <data name="Mode_TunService" xml:space="preserve">
+    <value>TUN · служба</value>
+  </data>
   <data name="Nav_Connection" xml:space="preserve">
     <value>Соединение</value>
   </data>
@@ -231,11 +418,32 @@
   <data name="Nav_Settings" xml:space="preserve">
     <value>Настройки</value>
   </data>
+  <data name="Profiles_Added" xml:space="preserve">
+    <value>Профиль «{0}» добавлен</value>
+  </data>
+  <data name="Profiles_AddedMany" xml:space="preserve">
+    <value>Добавлено профилей: {0}</value>
+  </data>
+  <data name="Profiles_AllSubtitle" xml:space="preserve">
+    <value>Список из {0} серверов в формате подписки (base64)</value>
+  </data>
+  <data name="Profiles_AllTitle" xml:space="preserve">
+    <value>Все профили</value>
+  </data>
   <data name="Profiles_CheckAll" xml:space="preserve">
     <value>Проверить все</value>
   </data>
+  <data name="Profiles_Checking" xml:space="preserve">
+    <value>Проверка серверов…</value>
+  </data>
+  <data name="Profiles_ConfigFilter" xml:space="preserve">
+    <value>Конфигурации (*.json)|*.json|Все файлы (*.*)|*.*</value>
+  </data>
   <data name="Profiles_Create" xml:space="preserve">
     <value>Создать вручную</value>
+  </data>
+  <data name="Profiles_Created" xml:space="preserve">
+    <value>Профиль «{0}» создан</value>
   </data>
   <data name="Profiles_ExportAll" xml:space="preserve">
     <value>Экспорт всех</value>
@@ -246,8 +454,20 @@
   <data name="Profiles_ImportFile" xml:space="preserve">
     <value>Импорт из файла</value>
   </data>
+  <data name="Profiles_LoadingSubscription" xml:space="preserve">
+    <value>Загрузка подписки…</value>
+  </data>
+  <data name="Profiles_NoLinkForProtocol" xml:space="preserve">
+    <value>Для этого протокола ссылка не поддерживается</value>
+  </data>
   <data name="Profiles_ParseLink" xml:space="preserve">
     <value>Разобрать ссылку</value>
+  </data>
+  <data name="Profiles_PickConfig" xml:space="preserve">
+    <value>Выберите конфигурацию sing-box</value>
+  </data>
+  <data name="Profiles_Responded" xml:space="preserve">
+    <value>Ответили {0} из {1}</value>
   </data>
   <data name="Profiles_Share" xml:space="preserve">
     <value>Поделиться</value>
@@ -255,11 +475,23 @@
   <data name="Profiles_SubscriptionHint" xml:space="preserve">
     <value>https://…  -  ссылка подписки</value>
   </data>
+  <data name="Profiles_SubscriptionLoaded" xml:space="preserve">
+    <value>Из подписки загружено серверов: {0}</value>
+  </data>
   <data name="Profiles_Subtitle" xml:space="preserve">
     <value>Вставьте ссылку или импортируйте конфигурацию sing-box</value>
   </data>
   <data name="Profiles_UpdateSubscription" xml:space="preserve">
     <value>Обновить подписку</value>
+  </data>
+  <data name="Profiles_Updated" xml:space="preserve">
+    <value>Профиль «{0}» обновлён</value>
+  </data>
+  <data name="Routing_DefaultSet" xml:space="preserve">
+    <value>Основной</value>
+  </data>
+  <data name="Routing_EnterDomain" xml:space="preserve">
+    <value>Введите домен</value>
   </data>
   <data name="Routing_Fallback" xml:space="preserve">
     <value>Всё остальное</value>
@@ -267,14 +499,35 @@
   <data name="Routing_FallbackHint" xml:space="preserve">
     <value>Что делать с трафиком, не попавшим ни в одно правило</value>
   </data>
+  <data name="Routing_MatchedRule" xml:space="preserve">
+    <value>правило {0} {1}</value>
+  </data>
   <data name="Routing_MoveDownHint" xml:space="preserve">
     <value>Ниже по списку</value>
   </data>
   <data name="Routing_MoveUpHint" xml:space="preserve">
     <value>Выше по списку - правило сработает раньше</value>
   </data>
+  <data name="Routing_NewSet" xml:space="preserve">
+    <value>Новый набор</value>
+  </data>
+  <data name="Routing_NoRuleMatched" xml:space="preserve">
+    <value>ни одно правило не подошло, сработает «всё остальное»</value>
+  </data>
+  <data name="Routing_OrderAfterReconnect" xml:space="preserve">
+    <value>Порядок правил применится после переподключения</value>
+  </data>
   <data name="Routing_PickSrs" xml:space="preserve">
     <value>Выбрать .srs</value>
+  </data>
+  <data name="Routing_SetAfterReconnect" xml:space="preserve">
+    <value>Набор правил применится после переподключения</value>
+  </data>
+  <data name="Routing_SetCreated" xml:space="preserve">
+    <value>Создан набор «{0}». Правила пока пусты.</value>
+  </data>
+  <data name="Routing_SetDeleted" xml:space="preserve">
+    <value>Набор «{0}» удалён</value>
   </data>
   <data name="Routing_SetLocal" xml:space="preserve">
     <value>rule_set · файл</value>
@@ -287,6 +540,27 @@
   </data>
   <data name="Routing_TestHint" xml:space="preserve">
     <value>проверить домен: youtube.com</value>
+  </data>
+  <data name="Routing_UnknownGeoip" xml:space="preserve">
+    <value>Выше есть geoip ({0}): сработает, если домен резолвится в адрес этой страны - проверить это без подключения нельзя.</value>
+  </data>
+  <data name="Routing_UnknownSets" xml:space="preserve">
+    <value>Выше есть наборы, содержимое которых не проверить: {0} - если домен в одном из них, сработает оно.</value>
+  </data>
+  <data name="Routing_WillBeBlocked" xml:space="preserve">
+    <value>будет заблокирован</value>
+  </data>
+  <data name="Server_SwitchFailed" xml:space="preserve">
+    <value>Не удалось переключить сервер. Переподключитесь вручную.</value>
+  </data>
+  <data name="Service_CoreStopped" xml:space="preserve">
+    <value>Служба сообщает, что ядро остановлено</value>
+  </data>
+  <data name="Service_FilesMissing" xml:space="preserve">
+    <value>Не найден {0}. Пересоберите решение целиком: служба копируется в подпапку service при сборке проекта CVPN.</value>
+  </data>
+  <data name="Service_NoAnswer" xml:space="preserve">
+    <value>служба не ответила</value>
   </data>
   <data name="Settings_AutoConnect" xml:space="preserve">
     <value>Подключаться при запуске</value>
@@ -318,11 +592,17 @@
   <data name="Settings_CheckUpdates" xml:space="preserve">
     <value>Проверять при запуске</value>
   </data>
+  <data name="Settings_Checking" xml:space="preserve">
+    <value>проверка…</value>
+  </data>
   <data name="Settings_CloseToTray" xml:space="preserve">
     <value>Сворачивать в трей</value>
   </data>
   <data name="Settings_CloseToTrayHint" xml:space="preserve">
     <value>Крестик прячет окно вместо выхода. Выйти можно из меню значка.</value>
+  </data>
+  <data name="Settings_CoreFilter" xml:space="preserve">
+    <value>sing-box (sing-box.exe)|sing-box.exe|Исполняемые файлы (*.exe)|*.exe</value>
   </data>
   <data name="Settings_CorePath" xml:space="preserve">
     <value>путь к ядру</value>
@@ -360,8 +640,14 @@
   <data name="Settings_MixedPortHint" xml:space="preserve">
     <value>Когда TUN выключен, этот порт прописывается системным прокси Windows</value>
   </data>
+  <data name="Settings_OpenPageFailed" xml:space="preserve">
+    <value>Не удалось открыть страницу: {0}</value>
+  </data>
   <data name="Settings_OpenRelease" xml:space="preserve">
     <value>Открыть страницу релиза</value>
+  </data>
+  <data name="Settings_PickCore" xml:space="preserve">
+    <value>Укажите sing-box.exe</value>
   </data>
   <data name="Settings_RestartFailed" xml:space="preserve">
     <value>Не удалось перезапустить: {0}</value>
@@ -370,6 +656,12 @@
     <value>Язык интерфейса применяется после перезапуска.
 
 Перезапустить CVPN сейчас?</value>
+  </data>
+  <data name="Settings_RestoreDone" xml:space="preserve">
+    <value>Правила брандмауэра сняты, сеть восстановлена</value>
+  </data>
+  <data name="Settings_RestoreFailed" xml:space="preserve">
+    <value>Не удалось снять правила: {0}</value>
   </data>
   <data name="Settings_RestoreNetwork" xml:space="preserve">
     <value>Восстановить сеть</value>
@@ -380,8 +672,29 @@
   <data name="Settings_Service" xml:space="preserve">
     <value>служба туннеля</value>
   </data>
+  <data name="Settings_ServiceFilesMissing" xml:space="preserve">
+    <value>файлы службы не найдены: {0}</value>
+  </data>
   <data name="Settings_ServiceHint" xml:space="preserve">
     <value>Служба работает под системной учётной записью и поднимает TUN без запроса прав администратора. Устанавливается один раз.</value>
+  </data>
+  <data name="Settings_ServiceInstallFailed" xml:space="preserve">
+    <value>Не удалось установить службу: {0}</value>
+  </data>
+  <data name="Settings_ServiceInstalled" xml:space="preserve">
+    <value>Служба установлена</value>
+  </data>
+  <data name="Settings_ServiceMissing" xml:space="preserve">
+    <value>служба не установлена - нажмите «Установить службу»</value>
+  </data>
+  <data name="Settings_ServiceOk" xml:space="preserve">
+    <value>служба установлена и отвечает</value>
+  </data>
+  <data name="Settings_ServiceRemoveFailed" xml:space="preserve">
+    <value>Не удалось удалить службу: {0}</value>
+  </data>
+  <data name="Settings_ServiceRemoved" xml:space="preserve">
+    <value>Служба удалена</value>
   </data>
   <data name="Settings_Subtitle" xml:space="preserve">
     <value>Ядро, режим перехвата трафика и запуск</value>
@@ -389,8 +702,29 @@
   <data name="Settings_Task" xml:space="preserve">
     <value>или задача планировщика</value>
   </data>
+  <data name="Settings_TaskCreateFailed" xml:space="preserve">
+    <value>Не удалось создать задачу: {0}</value>
+  </data>
+  <data name="Settings_TaskCreated" xml:space="preserve">
+    <value>Задача планировщика создана</value>
+  </data>
+  <data name="Settings_TaskDeleteFailed" xml:space="preserve">
+    <value>Не удалось удалить задачу: {0}</value>
+  </data>
+  <data name="Settings_TaskDeleted" xml:space="preserve">
+    <value>Задача планировщика удалена</value>
+  </data>
   <data name="Settings_TaskHint" xml:space="preserve">
     <value>Проще службы: отдельный проект не нужен. Приложение целиком запускается с правами администратора, а туннель живёт только внутри вашего сеанса.</value>
+  </data>
+  <data name="Settings_TaskMissing" xml:space="preserve">
+    <value>задача не создана - при включении TUN появится окно UAC</value>
+  </data>
+  <data name="Settings_TaskOk" xml:space="preserve">
+    <value>задача создана - права выдаются без запроса</value>
+  </data>
+  <data name="Settings_TaskStale" xml:space="preserve">
+    <value>задача указывает на другой файл - пересоздайте её</value>
   </data>
   <data name="Settings_Tun" xml:space="preserve">
     <value>Режим TUN</value>
@@ -400,6 +734,12 @@
   </data>
   <data name="Settings_UninstallService" xml:space="preserve">
     <value>Удалить службу</value>
+  </data>
+  <data name="Settings_UpToDate" xml:space="preserve">
+    <value>Установлена последняя версия</value>
+  </data>
+  <data name="Settings_UpdateFound" xml:space="preserve">
+    <value>Доступна версия {0} - откройте страницу релиза</value>
   </data>
   <data name="Settings_UseService" xml:space="preserve">
     <value>Использовать службу</value>
@@ -413,4 +753,89 @@
   <data name="Settings_Version" xml:space="preserve">
     <value>версия</value>
   </data>
+  <data name="Settings_VersionAvailable" xml:space="preserve">
+    <value>доступна версия {0}</value>
+  </data>
+  <data name="Settings_VersionInstalled" xml:space="preserve">
+    <value>установлена версия {0}</value>
+  </data>
+  <data name="State_Connected" xml:space="preserve">
+    <value>подключено</value>
+  </data>
+  <data name="State_ConnectedCaps" xml:space="preserve">
+    <value>ПОДКЛЮЧЕНО</value>
+  </data>
+  <data name="State_Connecting" xml:space="preserve">
+    <value>подключение</value>
+  </data>
+  <data name="State_ConnectingCaps" xml:space="preserve">
+    <value>ПОДКЛЮЧЕНИЕ</value>
+  </data>
+  <data name="State_Disconnected" xml:space="preserve">
+    <value>отключено</value>
+  </data>
+  <data name="State_DisconnectedCaps" xml:space="preserve">
+    <value>ОТКЛЮЧЕНО</value>
+  </data>
+  <data name="State_Failed" xml:space="preserve">
+    <value>ошибка</value>
+  </data>
+  <data name="State_FailedCaps" xml:space="preserve">
+    <value>ОШИБКА</value>
+  </data>
+  <data name="Store_DecryptFailed" xml:space="preserve">
+    <value>Не удалось расшифровать значений: {0}. Учётные данные придётся ввести заново.</value>
+  </data>
+  <data name="Sub_HttpError" xml:space="preserve">
+    <value>Сервер подписки ответил {0}</value>
+  </data>
+  <data name="Sub_LoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить подписку: {0}</value>
+  </data>
+  <data name="Sub_NoServers" xml:space="preserve">
+    <value>В подписке не нашлось поддерживаемых серверов</value>
+  </data>
+  <data name="Sub_NoUrl" xml:space="preserve">
+    <value>Ссылка подписки не указана</value>
+  </data>
+  <data name="Tray_Exit" xml:space="preserve">
+    <value>Выход</value>
+  </data>
+  <data name="Tray_Open" xml:space="preserve">
+    <value>Открыть CVPN</value>
+  </data>
+  <data name="Tray_Server" xml:space="preserve">
+    <value>Сервер</value>
+  </data>
+  <data name="Tray_StillRunning" xml:space="preserve">
+    <value>CVPN работает</value>
+  </data>
+  <data name="Tray_StillRunningHint" xml:space="preserve">
+    <value>Приложение свёрнуто в трей. Выход - через меню значка.</value>
+  </data>
+  <data name="Tun_AdaptersRemoved" xml:space="preserve">
+    <value>удалено зависших адаптеров: {0}</value>
+  </data>
+  <data name="Tun_Releasing" xml:space="preserve">
+    <value>Освобождение сетевого интерфейса…</value>
+  </data>
+  <data name="Unit_B" xml:space="preserve">
+    <value>{0} Б</value>
+  </data>
+  <data name="Unit_GB" xml:space="preserve">
+    <value>{0} ГБ</value>
+  </data>
+  <data name="Unit_KB" xml:space="preserve">
+    <value>{0} КБ</value>
+  </data>
+  <data name="Unit_KBps" xml:space="preserve">
+    <value>КБ/с</value>
+  </data>
+  <data name="Unit_MB" xml:space="preserve">
+    <value>{0} МБ</value>
+  </data>
+  <data name="Unit_MBps" xml:space="preserve">
+    <value>МБ/с</value>
+  </data>
 </root>
+

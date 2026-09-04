@@ -11,7 +11,7 @@ namespace CVPN.Models;
 /// </summary>
 public sealed class RoutingProfile : ObservableObject
 {
-    private string _name = "Основной";
+    private string _name = Localization.Loc.T("Routing_DefaultSet");
     private bool _proxyByDefault = true;
 
     public string Name

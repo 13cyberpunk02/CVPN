@@ -13,21 +13,19 @@ public sealed class SessionStats : ObservableObject
     private long _download;
     private long _peakUpload;
     private long _peakDownload;
-    private DateTimeOffset? _started;
-    private string _server = "";
 
     /// <summary>Когда сессия началась. null - сессии ещё не было.</summary>
     public DateTimeOffset? Started
     {
-        get => _started;
-        private set => Set(ref _started, value);
+        get;
+        private set => Set(ref field, value);
     }
 
     public string Server
     {
-        get => _server;
-        private set => Set(ref _server, value);
-    }
+        get;
+        private set => Set(ref field, value);
+    } = "";
 
     [JsonIgnore] public long Upload => _upload;
 

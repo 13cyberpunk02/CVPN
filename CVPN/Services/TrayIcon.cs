@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows.Forms;
+using CVPN.Localization;
 using CVPN.Models.Enums;
 using Application = System.Windows.Application;
 
@@ -24,18 +25,18 @@ public sealed class TrayIcon : IDisposable
         _connected = Load("cvpn-connected.ico");
         _failing = Load("cvpn.ico");
 
-        _toggleItem = new ToolStripMenuItem("Подключить", null, (_, _) => ToggleRequested?.Invoke());
+        _toggleItem = new ToolStripMenuItem(Loc.T("Action_Connect"), null, (_, _) => ToggleRequested?.Invoke());
 
         // Сервер меняют чаще, чем открывают окно, - список прямо в меню
-        _serversItem = new ToolStripMenuItem("Сервер") { Enabled = false };
+        _serversItem = new ToolStripMenuItem(Loc.T("Tray_Server")) { Enabled = false };
 
         var menu = new ContextMenuStrip();
-        menu.Items.Add(new ToolStripMenuItem("Открыть CVPN", null, (_, _) => ShowRequested?.Invoke()));
+        menu.Items.Add(new ToolStripMenuItem(Loc.T("Tray_Open"), null, (_, _) => ShowRequested?.Invoke()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_toggleItem);
         menu.Items.Add(_serversItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(new ToolStripMenuItem("Выход", null, (_, _) => ExitRequested?.Invoke()));
+        menu.Items.Add(new ToolStripMenuItem(Loc.T("Tray_Exit"), null, (_, _) => ExitRequested?.Invoke()));
 
         _icon = new NotifyIcon
         {
@@ -93,10 +94,10 @@ public sealed class TrayIcon : IDisposable
 
         var status = state switch
         {
-            TunnelState.Connected => "подключено",
-            TunnelState.Connecting => "подключение",
-            TunnelState.Failing => "ошибка",
-            _ => "отключено"
+            TunnelState.Connected => Loc.T("State_Connected"),
+            TunnelState.Connecting => Loc.T("State_Connecting"),
+            TunnelState.Failing => Loc.T("State_Failed"),
+            _ => Loc.T("State_Disconnected")
         };
 
         var text = profileName is { Length: > 0 }
@@ -107,8 +108,8 @@ public sealed class TrayIcon : IDisposable
         _icon.Text = text.Length > 63 ? text[..63] : text;
 
         _toggleItem.Text = state is TunnelState.Connected or TunnelState.Connecting
-            ? "Отключить"
-            : "Подключить";
+            ? Loc.T("Action_Disconnect")
+            : Loc.T("Action_Connect");
     }
 
     public void Notify(string title, string message)

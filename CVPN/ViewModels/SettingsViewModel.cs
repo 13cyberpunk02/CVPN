@@ -20,10 +20,6 @@ namespace CVPN.ViewModels;
 /// </summary>
 public sealed class SettingsViewModel : PageViewModel
 {
-    private string _serviceStatus = "проверка…";
-    private string _taskStatus = "";
-    private ReleaseInfo? _update;
-
     public SettingsViewModel(MainViewModel shell) : base(shell)
     {
         BrowseCore = new RelayCommand(PickCore);
@@ -67,24 +63,24 @@ public sealed class SettingsViewModel : PageViewModel
     /// <summary>Состояние службы для страницы настроек.</summary>
     public string ServiceStatus
     {
-        get => _serviceStatus;
-        private set => Set(ref _serviceStatus, value);
-    }
+        get;
+        private set => Set(ref field, value);
+    } = Loc.T("Settings_Checking");
 
     /// <summary>Состояние задачи планировщика.</summary>
     public string TaskStatus
     {
-        get => _taskStatus;
-        private set => Set(ref _taskStatus, value);
-    }
+        get;
+        private set => Set(ref field, value);
+    } = "";
 
     /// <summary>Найденное обновление; null - установлена последняя версия.</summary>
     public ReleaseInfo? Update
     {
-        get => _update;
+        get;
         private set
         {
-            Set(ref _update, value);
+            Set(ref field, value);
             Raise(nameof(HasUpdate));
             Raise(nameof(UpdateLabel));
         }
@@ -93,8 +89,8 @@ public sealed class SettingsViewModel : PageViewModel
     public bool HasUpdate => Update is not null;
 
     public string UpdateLabel => Update is null
-        ? $"установлена версия {UpdateChecker.CurrentVersion.ToString(3)}"
-        : $"доступна версия {Update.Version}";
+        ? Loc.T("Settings_VersionInstalled", UpdateChecker.CurrentVersion.ToString(3))
+        : Loc.T("Settings_VersionAvailable", Update.Version);
 
     /// <summary>Состояние окружения могло измениться, пока страница была закрыта.</summary>
     public override void Activate()
@@ -154,8 +150,8 @@ public sealed class SettingsViewModel : PageViewModel
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Укажите sing-box.exe",
-            Filter = "sing-box (sing-box.exe)|sing-box.exe|Исполняемые файлы (*.exe)|*.exe",
+            Title = Loc.T("Settings_PickCore"),
+            Filter = Loc.T("Settings_CoreFilter"),
             CheckFileExists = true,
             InitialDirectory = Directory.Exists(Path.GetDirectoryName(Settings.CorePath) ?? "")
                 ? Path.GetDirectoryName(Settings.CorePath)!
@@ -180,8 +176,8 @@ public sealed class SettingsViewModel : PageViewModel
         var problem = await KillSwitch.DisableAsync();
 
         Shell.Notify(problem.Length > 0
-            ? $"Не удалось снять правила: {problem}"
-            : "Правила брандмауэра сняты, сеть восстановлена");
+            ? Loc.T("Settings_RestoreFailed", problem)
+            : Loc.T("Settings_RestoreDone"));
     }
 
     // ===================== обновления =====================
@@ -195,11 +191,11 @@ public sealed class SettingsViewModel : PageViewModel
             Update = release;
 
             if (release is not null)
-                Shell.Notify($"Доступна версия {release.Version} - откройте страницу релиза");
+                Shell.Notify(Loc.T("Settings_UpdateFound", release.Version));
 
             // При автоматической проверке молчим: сообщать «обновлений нет»
             // на каждом запуске - лишний шум
-            else if (manual) Shell.Notify("Установлена последняя версия");
+            else if (manual) Shell.Notify(Loc.T("Settings_UpToDate"));
         });
     }
 
@@ -213,7 +209,7 @@ public sealed class SettingsViewModel : PageViewModel
         }
         catch (Exception ex)
         {
-            Shell.Notify($"Не удалось открыть страницу: {ex.Message}");
+            Shell.Notify(Loc.T("Settings_OpenPageFailed", ex.Message));
         }
     }
 
@@ -222,17 +218,17 @@ public sealed class SettingsViewModel : PageViewModel
     private async Task RefreshServiceStatusAsync()
     {
         ServiceStatus = await ServiceClient.IsAvailableAsync()
-            ? "служба установлена и отвечает"
+            ? Loc.T("Settings_ServiceOk")
             : ServiceInstaller.IsInstalledOnDisk
-                ? "служба не установлена - нажмите «Установить службу»"
-                : $"файлы службы не найдены: {ServiceInstaller.ExecutablePath}";
+                ? Loc.T("Settings_ServiceMissing")
+                : Loc.T("Settings_ServiceFilesMissing", ServiceInstaller.ExecutablePath);
     }
 
     private void InstallTunnelService()
     {
         Shell.Notify(ServiceInstaller.Install(out var error)
-            ? "Служба установлена"
-            : $"Не удалось установить службу: {error}");
+            ? Loc.T("Settings_ServiceInstalled")
+            : Loc.T("Settings_ServiceInstallFailed", error));
 
         _ = RefreshServiceStatusAsync();
     }
@@ -240,8 +236,8 @@ public sealed class SettingsViewModel : PageViewModel
     private void UninstallTunnelService()
     {
         Shell.Notify(ServiceInstaller.Uninstall(out var error)
-            ? "Служба удалена"
-            : $"Не удалось удалить службу: {error}");
+            ? Loc.T("Settings_ServiceRemoved")
+            : Loc.T("Settings_ServiceRemoveFailed", error));
 
         _ = RefreshServiceStatusAsync();
     }
@@ -252,20 +248,20 @@ public sealed class SettingsViewModel : PageViewModel
     {
         if (!ElevatedTask.Exists)
         {
-            TaskStatus = "задача не создана - при включении TUN появится окно UAC";
+            TaskStatus = Loc.T("Settings_TaskMissing");
             return;
         }
 
         TaskStatus = ElevatedTask.PathMatchesCurrent()
-            ? "задача создана - права выдаются без запроса"
-            : "задача указывает на другой файл - пересоздайте её";
+            ? Loc.T("Settings_TaskOk")
+            : Loc.T("Settings_TaskStale");
     }
 
     private void InstallElevatedTask()
     {
         Shell.Notify(ElevatedTask.Install(Settings.AutoStart, out var error)
-            ? "Задача планировщика создана"
-            : $"Не удалось создать задачу: {error}");
+            ? Loc.T("Settings_TaskCreated")
+            : Loc.T("Settings_TaskCreateFailed", error));
 
         RefreshTaskStatus();
     }
@@ -273,8 +269,8 @@ public sealed class SettingsViewModel : PageViewModel
     private void UninstallElevatedTask()
     {
         Shell.Notify(ElevatedTask.Uninstall(out var error)
-            ? "Задача планировщика удалена"
-            : $"Не удалось удалить задачу: {error}");
+            ? Loc.T("Settings_TaskDeleted")
+            : Loc.T("Settings_TaskDeleteFailed", error));
 
         RefreshTaskStatus();
     }

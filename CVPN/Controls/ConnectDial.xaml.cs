@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using CVPN.Localization;
 using CVPN.Models.Enums;
 
 namespace CVPN.Controls;
@@ -29,7 +30,7 @@ public partial class ConnectDial : UserControl
         new PropertyMetadata(TunnelState.Disconnected));
 
     public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
-        nameof(Title), typeof(string), typeof(ConnectDial), new PropertyMetadata("Не выбран"));
+        nameof(Title), typeof(string), typeof(ConnectDial), new PropertyMetadata(Loc.T("Connection_NoProfile")));
 
     public static readonly DependencyProperty SubtitleProperty = DependencyProperty.Register(
         nameof(Subtitle), typeof(string), typeof(ConnectDial), new PropertyMetadata(""));
@@ -38,7 +39,7 @@ public partial class ConnectDial : UserControl
         nameof(Metric), typeof(string), typeof(ConnectDial), new PropertyMetadata(""));
 
     public static readonly DependencyProperty ActionLabelProperty = DependencyProperty.Register(
-        nameof(ActionLabel), typeof(string), typeof(ConnectDial), new PropertyMetadata("Подключить"));
+        nameof(ActionLabel), typeof(string), typeof(ConnectDial), new PropertyMetadata(Loc.T("Action_Connect")));
 
     /// <summary>Двухбуквенный код страны. Пустая строка прячет значок.</summary>
     public static readonly DependencyProperty CountryProperty = DependencyProperty.Register(

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Windows.Threading;
 using CVPN.Core;
+using CVPN.Localization;
 using CVPN.Models;
 using CVPN.Models.Enums;
 
@@ -100,28 +101,27 @@ public sealed class ConnectionsViewModel : PageViewModel
             // Правило уже есть, но ведёт не туда - меняем действие вместо отказа
             if (existing.Action == action)
             {
-                Shell.Notify($"Правило для {domain} уже есть");
+                Shell.Notify(Loc.T("Connections_RuleExists", domain));
                 return;
             }
 
             existing.Action = action;
             Shell.Persist();
 
-            Shell.Notify($"Правило для {domain} изменено на «{Describe(action)}». " +
-                         "Применится после переподключения.");
+            Shell.Notify(Loc.T("Connections_RuleChanged", domain, Describe(action)));
             return;
         }
 
         Shell.AddRule(MatchKind.DomainSuffix, domain, action);
 
-        Shell.Notify($"{domain} - «{Describe(action)}». Применится после переподключения.");
+        Shell.Notify(Loc.T("Connections_RuleAdded", domain, Describe(action)));
     }
 
     private static string Describe(RouteAction action) => action switch
     {
-        RouteAction.Direct => "напрямую",
-        RouteAction.Block => "блокировать",
-        _ => "через прокси"
+        RouteAction.Direct => Loc.T("Common_Direct"),
+        RouteAction.Block => Loc.T("Common_Block"),
+        _ => Loc.T("Common_ViaProxy")
     };
 
     private async Task CloseAsync(ConnectionInfo connection)

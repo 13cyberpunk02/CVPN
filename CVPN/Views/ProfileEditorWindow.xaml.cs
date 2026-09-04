@@ -1,4 +1,5 @@
 using System.Windows;
+using CVPN.Localization;
 using CVPN.Models;
 using CVPN.Models.Enums;
 
@@ -19,7 +20,7 @@ public partial class ProfileEditorWindow : Window
         _draft = Clone(existing);
         DataContext = _draft;
 
-        if (existing is not null) HeaderText.Text = "Изменение профиля";
+        if (existing is not null) HeaderText.Text = Loc.T("Editor_Edit");
 
         ProtocolBox.SelectedIndex = (int)_draft.Protocol;
         ApplyProtocolFields();
@@ -56,7 +57,7 @@ public partial class ProfileEditorWindow : Window
     }
 
     /// <summary>
-    /// Каждый протокол требует своего набора полей. Показывать все сразу -
+    /// Каждый протокол требует своего набора полей. Показывать все сразу —
     /// значит заставлять гадать, какие из них обязательны.
     /// </summary>
     private void ApplyProtocolFields()
@@ -98,19 +99,21 @@ public partial class ProfileEditorWindow : Window
         error = "";
 
         if (string.IsNullOrWhiteSpace(_draft.Host))
-            error = "Укажите адрес сервера";
+            error = Loc.T("Editor_NeedHost");
         else if (_draft.Port is < 1 or > 65535)
-            error = "Порт должен быть числом от 1 до 65535";
-        else if (_draft.Protocol is ProtocolKind.VlessReality or ProtocolKind.VlessWs
-                 && !Guid.TryParse(_draft.Uuid, out _))
-            error = "UUID указан неверно: ожидается вид 8f1ce66e-719d-48b8-9ee6-804b52887082";
-        else if (_draft.Protocol is ProtocolKind.VlessReality && string.IsNullOrWhiteSpace(_draft.PublicKey))
-            error = "Для Reality нужен public key";
-        else if (_draft.Protocol is ProtocolKind.AnyTls && string.IsNullOrWhiteSpace(_draft.Password))
-            error = "Укажите пароль";
-        else if (_draft.Protocol is ProtocolKind.Naive
-                 && (string.IsNullOrWhiteSpace(_draft.Username) || string.IsNullOrWhiteSpace(_draft.Password)))
-            error = "Для NaiveProxy нужны имя пользователя и пароль";
+            error = Loc.T("Editor_BadPort");
+        else
+            error = _draft.Protocol switch
+            {
+                ProtocolKind.VlessReality or ProtocolKind.VlessWs when !Guid.TryParse(_draft.Uuid, out _) => Loc.T(
+                    "Editor_BadUuid"),
+                ProtocolKind.VlessReality when string.IsNullOrWhiteSpace(_draft.PublicKey) => Loc.T(
+                    "Editor_NeedPublicKey"),
+                ProtocolKind.AnyTls when string.IsNullOrWhiteSpace(_draft.Password) => Loc.T("Editor_NeedPassword"),
+                ProtocolKind.Naive when (string.IsNullOrWhiteSpace(_draft.Username) ||
+                                         string.IsNullOrWhiteSpace(_draft.Password)) => Loc.T("Editor_NeedCredentials"),
+                _ => error
+            };
 
         return error.Length == 0;
     }

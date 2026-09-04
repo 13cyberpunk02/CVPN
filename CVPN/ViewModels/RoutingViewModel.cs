@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
 using CVPN.Core;
+using CVPN.Localization;
 using CVPN.Models;
 using CVPN.Models.Enums;
 using CVPN.Services;
@@ -17,10 +18,6 @@ namespace CVPN.ViewModels;
 /// </summary>
 public sealed class RoutingViewModel : PageViewModel
 {
-    private string _testDomain = "";
-    private string _testResult = "";
-    private RouteAction? _testOutcome;
-
     public RoutingViewModel(MainViewModel shell) : base(shell)
     {
         TestDomain = new RelayCommand(RunTest);
@@ -66,24 +63,24 @@ public sealed class RoutingViewModel : PageViewModel
     /// <summary>Домен, который проверяем против текущих правил.</summary>
     public string TestInput
     {
-        get => _testDomain;
-        set => Set(ref _testDomain, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = "";
 
     /// <summary>Человеческое объяснение результата проверки.</summary>
     public string TestResult
     {
-        get => _testResult;
-        private set => Set(ref _testResult, value);
-    }
+        get;
+        private set => Set(ref field, value);
+    } = "";
 
     /// <summary>Исход проверки - по нему подсвечивается результат.</summary>
     public RouteAction? TestOutcome
     {
-        get => _testOutcome;
+        get;
         private set
         {
-            Set(ref _testOutcome, value);
+            Set(ref field, value);
             Raise(nameof(HasTestResult));
         }
     }
@@ -101,7 +98,7 @@ public sealed class RoutingViewModel : PageViewModel
         if (domain.Length == 0)
         {
             TestOutcome = null;
-            TestResult = "Введите домен";
+            TestResult = Loc.T("Routing_EnterDomain");
             return;
         }
 
@@ -111,14 +108,14 @@ public sealed class RoutingViewModel : PageViewModel
 
         var outcome = match.Outcome switch
         {
-            RouteAction.Direct => "напрямую",
-            RouteAction.Block => "будет заблокирован",
-            _ => "через прокси"
+            RouteAction.Direct => Loc.T("Common_Direct"),
+            RouteAction.Block => Loc.T("Routing_WillBeBlocked"),
+            _ => Loc.T("Common_ViaProxy")
         };
 
         var reason = match.Rule is null
-            ? "ни одно правило не подошло, сработает «всё остальное»"
-            : $"правило {match.Rule.MatchLabel} {match.Rule.DisplayValue}";
+            ? Loc.T("Routing_NoRuleMatched")
+            : Loc.T("Routing_MatchedRule", match.Rule.MatchLabel, match.Rule.DisplayValue);
 
         TestResult = $"{domain} - {outcome}: {reason}.";
 
@@ -133,15 +130,13 @@ public sealed class RoutingViewModel : PageViewModel
             if (bySet.Count > 0)
             {
                 var names = bySet.Select(r => $"{r.MatchLabel} {r.DisplayValue}");
-                TestResult += $" Выше есть наборы, содержимое которых не проверить: " +
-                              $"{string.Join(", ", names)} - если домен в одном из них, сработает оно.";
+                TestResult += " " + Loc.T("Routing_UnknownSets", string.Join(", ", names));
             }
 
             if (byIp.Count > 0)
             {
                 var names = byIp.Select(r => r.DisplayValue);
-                TestResult += $" Выше есть geoip ({string.Join(", ", names)}): сработает, если домен " +
-                              "резолвится в адрес этой страны - проверить это без подключения нельзя.";
+                TestResult += " " + Loc.T("Routing_UnknownGeoip", string.Join(", ", names));
             }
         }
     }
@@ -179,18 +174,18 @@ public sealed class RoutingViewModel : PageViewModel
         Rules.Move(from, to);
         Shell.Persist();
 
-        if (Shell.IsConnected) Shell.Notify("Порядок правил применится после переподключения");
+        if (Shell.IsConnected) Shell.Notify(Loc.T("Routing_OrderAfterReconnect"));
     }
 
     private void AddRoutingProfile()
     {
-        var name = UniqueName("Новый набор");
+        var name = UniqueName(Loc.T("Routing_NewSet"));
         var profile = new RoutingProfile { Name = name, ProxyByDefault = ActiveRouting.ProxyByDefault };
 
         RoutingProfiles.Add(profile);
         ActiveRouting = profile;
 
-        Shell.Notify($"Создан набор «{name}». Правила пока пусты.");
+        Shell.Notify(Loc.T("Routing_SetCreated", name));
     }
 
     private void RemoveRoutingProfile()
@@ -204,7 +199,7 @@ public sealed class RoutingViewModel : PageViewModel
         RoutingProfiles.Remove(doomed);
         Shell.Persist();
 
-        Shell.Notify($"Набор «{doomed.Name}» удалён");
+        Shell.Notify(Loc.T("Routing_SetDeleted", doomed.Name));
     }
 
     private string UniqueName(string basis)
@@ -220,10 +215,8 @@ public sealed class RoutingViewModel : PageViewModel
 
     private void OnShellChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(MainViewModel.Rules) or nameof(MainViewModel.ActiveRouting))
-        {
-            Raise(nameof(Rules));
-            Raise(nameof(ActiveRouting));
-        }
+        if (e.PropertyName is not (nameof(MainViewModel.Rules) or nameof(MainViewModel.ActiveRouting))) return;
+        Raise(nameof(Rules));
+        Raise(nameof(ActiveRouting));
     }
 }

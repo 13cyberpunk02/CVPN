@@ -21,7 +21,7 @@ public partial class App : Application
         FileLog.Initialize(System.IO.Path.Combine(AppPaths.DataDir, "logs"));
 
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        FileLog.Current.Write($"=== запуск CVPN {version} · {Environment.ProcessPath}");
+        FileLog.Current.Write($"=== CVPN {version} started · {Environment.ProcessPath}");
 
         // Если прошлый запуск завершился аварийно с включённым kill switch,
         // система осталась без интернета. Чиним до всего остального.
@@ -32,30 +32,28 @@ public partial class App : Application
 
         // Исключение в фоновом потоке: процесс уже не спасти, но записать успеем
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
-            Record("Необработанное исключение", args.ExceptionObject as Exception);
+            Record("Unhandled exception", args.ExceptionObject as Exception);
 
         // Задача упала, и её результат никто не проверил
         TaskScheduler.UnobservedTaskException += (_, args) =>
         {
-            Record("Исключение в фоновой задаче", args.Exception);
+            Record("Exception in a background task", args.Exception);
             args.SetObserved();
         };
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
-        FileLog.Current.Write($"=== выход, код {e.ApplicationExitCode}");
+        FileLog.Current.Write($"=== exit, code {e.ApplicationExitCode}");
         base.OnExit(e);
     }
 
     private void OnDispatcherException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        Record("Ошибка в интерфейсе", e.Exception);
+        Record("UI exception", e.Exception);
 
         var answer = MessageBox.Show(
-            $"Произошла ошибка:\n\n{e.Exception.Message}\n\n" +
-            $"Подробности записаны в {FileLog.Current.CurrentFile}\n\n" +
-            "Продолжить работу? При отказе приложение закроется.",
+            Localization.Loc.T("Crash_Message", e.Exception.Message, FileLog.Current.CurrentFile),
             "CVPN", MessageBoxButton.YesNo, MessageBoxImage.Error);
 
         // Продолжать после ошибки рискованно, но принудительное закрытие
@@ -69,13 +67,13 @@ public partial class App : Application
     {
         if (!KillSwitch.IsActive) return;
 
-        FileLog.Current.Write("[cvpn] обнаружены правила kill switch от прошлого запуска, снимаем");
+        FileLog.Current.Write("[cvpn] kill switch rules left from a previous run, removing them");
 
         var problem = await KillSwitch.DisableAsync();
 
         FileLog.Current.Write(problem.Length > 0
-            ? $"[cvpn] снять правила не удалось: {problem}"
-            : "[cvpn] правила сняты, сеть восстановлена");
+            ? $"[cvpn] could not remove the rules: {problem}"
+            : "[cvpn] rules removed, network restored");
     }
 
     private static void Record(string title, Exception? exception)

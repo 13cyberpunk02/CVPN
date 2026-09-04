@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using CVPN.Localization;
 using CVPN.Models.Enums;
 using CVPN.ViewModels;
 using Microsoft.Win32;
@@ -15,11 +16,11 @@ public partial class RoutingView : UserControl
     private static readonly Dictionary<MatchKind, string> Hints = new()
     {
         [MatchKind.Geosite] = "youtube · twitch · category-ads-all",
-        [MatchKind.Geoip] = "ru · de · us - код страны",
-        [MatchKind.Domain] = "example.com - точное совпадение",
-        [MatchKind.DomainSuffix] = "openai.com - домен и все поддомены",
-        [MatchKind.DomainKeyword] = "google - подстрока в имени домена",
-        [MatchKind.Process] = "Telegram.exe - имя процесса",
+        [MatchKind.Geoip] = Loc.T("Hint_Geoip"),
+        [MatchKind.Domain] = Loc.T("Hint_Domain"),
+        [MatchKind.DomainSuffix] = Loc.T("Hint_Suffix"),
+        [MatchKind.DomainKeyword] = Loc.T("Hint_Keyword"),
+        [MatchKind.Process] = Loc.T("Hint_Process"),
         [MatchKind.RuleSetRemote] = "https://…/geosite-youtube.srs",
         [MatchKind.RuleSetLocal] = "C:\\rules\\twitch.srs - файл на диске"
     };

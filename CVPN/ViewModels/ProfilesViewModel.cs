@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using CVPN.Core;
+using CVPN.Localization;
 using CVPN.Models;
 using CVPN.Services;
 using Microsoft.Win32;
@@ -16,9 +17,6 @@ namespace CVPN.ViewModels;
 /// </summary>
 public sealed class ProfilesViewModel : PageViewModel
 {
-    private string _linkText = "";
-    private bool _busy;
-
     public ProfilesViewModel(MainViewModel shell) : base(shell)
     {
         ImportLink = new RelayCommand(Import);
@@ -54,15 +52,15 @@ public sealed class ProfilesViewModel : PageViewModel
     /// <summary>Текст в поле импорта по ссылке.</summary>
     public string LinkText
     {
-        get => _linkText;
-        set => Set(ref _linkText, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = "";
 
     /// <summary>Идёт долгая операция: проверка серверов или загрузка подписки.</summary>
     public bool IsBusy
     {
-        get => _busy;
-        private set => Set(ref _busy, value);
+        get;
+        private set => Set(ref field, value);
     }
 
     public ICommand ImportLink { get; }
@@ -114,7 +112,7 @@ public sealed class ProfilesViewModel : PageViewModel
         Shell.Active ??= profile;
         LinkText = "";
 
-        Shell.Notify($"Профиль «{profile.Name}» добавлен");
+        Shell.Notify(Loc.T("Profiles_Added", profile.Name));
         Shell.Persist();
     }
 
@@ -123,8 +121,8 @@ public sealed class ProfilesViewModel : PageViewModel
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Выберите конфигурацию sing-box",
-            Filter = "Конфигурации (*.json)|*.json|Все файлы (*.*)|*.*",
+            Title = Loc.T("Profiles_PickConfig"),
+            Filter = Loc.T("Profiles_ConfigFilter"),
             CheckFileExists = true
         };
 
@@ -141,8 +139,8 @@ public sealed class ProfilesViewModel : PageViewModel
         Shell.Active ??= Profiles.FirstOrDefault();
 
         Shell.Notify(imported.Count == 1
-            ? $"Профиль «{imported[0].Name}» добавлен"
-            : $"Добавлено профилей: {imported.Count}");
+            ? Loc.T("Profiles_Added", imported[0].Name)
+            : Loc.T("Profiles_AddedMany", imported.Count));
 
         Shell.Persist();
     }
@@ -164,7 +162,7 @@ public sealed class ProfilesViewModel : PageViewModel
         {
             Profiles.Add(result);
             Shell.Active ??= result;
-            Shell.Notify($"Профиль «{result.Name}» создан");
+            Shell.Notify(Loc.T("Profiles_Created", result.Name));
         }
         else
         {
@@ -173,7 +171,7 @@ public sealed class ProfilesViewModel : PageViewModel
             if (index >= 0) Profiles[index] = result;
 
             if (ReferenceEquals(Shell.Active, existing)) Shell.Active = result;
-            Shell.Notify($"Профиль «{result.Name}» обновлён");
+            Shell.Notify(Loc.T("Profiles_Updated", result.Name));
         }
 
         Shell.Persist();
@@ -196,7 +194,7 @@ public sealed class ProfilesViewModel : PageViewModel
 
         if (link.Length == 0)
         {
-            Shell.Notify("Для этого протокола ссылка не поддерживается");
+            Shell.Notify(Loc.T("Profiles_NoLinkForProtocol"));
             return;
         }
 
@@ -211,8 +209,8 @@ public sealed class ProfilesViewModel : PageViewModel
     {
         var payload = ProfileLink.BuildSubscription(Profiles);
 
-        new Views.ExportWindow(payload, "Все профили",
-            $"Список из {Profiles.Count} серверов в формате подписки (base64)")
+        new Views.ExportWindow(payload, Loc.T("Profiles_AllTitle"),
+            Loc.T("Profiles_AllSubtitle", Profiles.Count))
         {
             Owner = Application.Current?.MainWindow
         }.ShowDialog();
@@ -241,7 +239,7 @@ public sealed class ProfilesViewModel : PageViewModel
         if (targets.Count == 0) return;
 
         IsBusy = true;
-        Shell.Notify("Проверка серверов…");
+        Shell.Notify(Loc.T("Profiles_Checking"));
 
         try
         {
@@ -254,7 +252,7 @@ public sealed class ProfilesViewModel : PageViewModel
             await Task.WhenAll(probes);
 
             var alive = targets.Count(p => p.LatencyMs >= 0);
-            Shell.Notify($"Ответили {alive} из {targets.Count}");
+            Shell.Notify(Loc.T("Profiles_Responded", alive, targets.Count));
         }
         finally
         {
@@ -269,7 +267,7 @@ public sealed class ProfilesViewModel : PageViewModel
     private async Task UpdateSubscriptionAsync()
     {
         IsBusy = true;
-        Shell.Notify("Загрузка подписки…");
+        Shell.Notify(Loc.T("Profiles_LoadingSubscription"));
 
         try
         {
@@ -293,7 +291,7 @@ public sealed class ProfilesViewModel : PageViewModel
 
             Settings.SubscriptionUpdated = DateTimeOffset.Now;
 
-            Shell.Notify($"Из подписки загружено серверов: {fetched.Count}");
+            Shell.Notify(Loc.T("Profiles_SubscriptionLoaded", fetched.Count));
             Shell.Persist();
         }
         finally

@@ -33,8 +33,7 @@ public static class ProfileStore
             // Файл перенесли с другой машины или из другой учётной записи:
             // DPAPI привязан к пользователю, и секреты стали нечитаемыми
             if (Core.Secret.FailureCount > 0)
-                LastLoadWarning = $"Не удалось расшифровать значений: {Core.Secret.FailureCount}. " +
-                                  "Учётные данные придётся ввести заново.";
+                LastLoadWarning = Localization.Loc.T("Store_DecryptFailed", Core.Secret.FailureCount);
 
             return state;
         }
@@ -60,10 +59,11 @@ public static class ProfileStore
             [
                 new RoutingProfile
                 {
-                    Name = "Основной",
+                    Name = Localization.Loc.T("Routing_DefaultSet"),
                     Rules =
                     [
-                        new RouteRule { Match = MatchKind.Geosite, Value = "category-ads-all", Action = RouteAction.Block },
+                        new RouteRule
+                            { Match = MatchKind.Geosite, Value = "category-ads-all", Action = RouteAction.Block },
                         new RouteRule { Match = MatchKind.Geoip, Value = "ru", Action = RouteAction.Direct }
                     ]
                 }
