@@ -42,8 +42,12 @@ public static class Loc
             ? CultureInfo.CurrentUICulture
             : new CultureInfo(code);
 
+        // Числа и даты форматируем по тому же языку, что и текст: иначе
+        // получается «1,5 MB» - разделитель от системы, единица от перевода
         CultureInfo.CurrentUICulture = Culture;
+        CultureInfo.CurrentCulture = Culture;
         CultureInfo.DefaultThreadCurrentUICulture = Culture;
+        CultureInfo.DefaultThreadCurrentCulture = Culture;
     }
 
     /// <summary>

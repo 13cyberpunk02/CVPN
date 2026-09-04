@@ -2,6 +2,7 @@ using CVPN.Models;
 
 namespace CVPN.Tests;
 
+[Collection("Localization")]
 public class ConnectionInfoTests
 {
     private static ConnectionInfo Make(string host, long up = 0, long down = 0) => new()
@@ -17,7 +18,7 @@ public class ConnectionInfoTests
         Download = down,
         Started = DateTimeOffset.Now
     };
- 
+
     /// <summary>В правило имеет смысл вносить домен второго уровня, а не полный хост.</summary>
     [Theory]
     [InlineData("sun9-40.vkuserphoto.ru", "vkuserphoto.ru")]
@@ -28,23 +29,24 @@ public class ConnectionInfoTests
     {
         Assert.Equal(expected, Make(host).RuleCandidate);
     }
- 
+
     /// <summary>Для соединения по IP резать нечего - вернём адрес как есть.</summary>
     [Fact]
     public void Адрес_не_превращается_в_домен()
     {
         Assert.Equal("142.251.39.130", Make("142.251.39.130").RuleCandidate);
     }
- 
+
+    /// <summary>Язык зафиксирован коллекцией, поэтому ожидаем английские единицы.</summary>
     [Theory]
-    [InlineData(512, "512 Б")]
-    [InlineData(2048, "2 КБ")]
-    [InlineData(5 * 1024 * 1024, "5 МБ")]
+    [InlineData(512, "512 B")]
+    [InlineData(2048, "2 KB")]
+    [InlineData(5 * 1024 * 1024, "5 MB")]
     public void Трафик_переводится_в_читаемые_единицы(long bytes, string expected)
     {
         Assert.Contains(expected, Make("example.com", down: bytes).TrafficLabel);
     }
- 
+
     [Fact]
     public void Прямое_соединение_распознаётся_без_учёта_регистра()
     {
@@ -54,7 +56,7 @@ public class ConnectionInfoTests
             Outbound = "DIRECT", Rule = "-", Process = "",
             Upload = 0, Download = 0, Started = DateTimeOffset.Now
         };
- 
+
         Assert.True(connection.IsDirect);
     }
 }

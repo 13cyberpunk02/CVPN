@@ -3,17 +3,22 @@ using CVPN.Models;
 
 namespace CVPN.Tests;
 
+[Collection("Localization")]
 public class ByteFormatTests
 {
+    /// <summary>
+    /// Разделитель дробной части тоже зависит от языка, поэтому и число,
+    /// и единица проверяются на зафиксированном английском.
+    /// </summary>
     [Theory]
-    [InlineData(0, "0 Б")]
-    [InlineData(512, "512 Б")]
-    [InlineData(1024, "1 КБ")]
-    [InlineData(1536, "1,5 КБ")]
-    [InlineData(5 * 1024 * 1024, "5 МБ")]
+    [InlineData(0, "0 B")]
+    [InlineData(512, "512 B")]
+    [InlineData(1024, "1 KB")]
+    [InlineData(1536, "1.5 KB")]
+    [InlineData(5 * 1024 * 1024, "5 MB")]
     public void Объём_переводится_в_читаемый_вид(long bytes, string expected)
     {
-        Assert.Equal(expected, ByteFormat.Size(bytes).Replace('.', ','));
+        Assert.Equal(expected, ByteFormat.Size(bytes));
     }
 
     [Fact]
@@ -24,14 +29,15 @@ public class ByteFormatTests
 
     /// <summary>До мегабайта показываем килобайты: иначе на обычном канале одни нули.</summary>
     [Theory]
-    [InlineData(2048, "КБ/с")]
-    [InlineData(5 * 1024 * 1024, "МБ/с")]
+    [InlineData(2048, "KB/s")]
+    [InlineData(5 * 1024 * 1024, "MB/s")]
     public void Единица_скорости_подбирается_по_величине(long bytes, string unit)
     {
         Assert.Equal(unit, ByteFormat.Rate(bytes).Unit);
     }
 }
 
+[Collection("Localization")]
 public class SessionStatsTests
 {
     [Fact]
@@ -67,7 +73,7 @@ public class SessionStatsTests
         stats.Add(0, 5 * 1024 * 1024);
         stats.Add(0, 2048);
 
-        Assert.Contains("МБ/с", stats.PeakLabel);
+        Assert.Contains("MB/s", stats.PeakLabel);
     }
 
     [Fact]
@@ -94,7 +100,7 @@ public class SessionStatsTests
         stats.Add(1000, 2000);
 
         Assert.True(stats.HasData);
-        Assert.Equal("2 КБ", stats.DownloadLabel.Replace('.', ','));
+        Assert.Equal("2 KB", stats.DownloadLabel);
     }
 
     [Fact]
@@ -104,6 +110,6 @@ public class SessionStatsTests
         stats.Begin("Frankfurt");
 
         // только что началась - секунды
-        Assert.EndsWith("с", stats.DurationLabel);
+        Assert.EndsWith("s", stats.DurationLabel);
     }
 }
