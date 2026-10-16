@@ -282,6 +282,15 @@ Continue running? Choosing no will close the application.</value>
   <data name="Editor_WsPath" xml:space="preserve">
     <value>websocket path</value>
   </data>
+  <data name="Editor_XhttpHost" xml:space="preserve">
+    <value>xhttp host header</value>
+  </data>
+  <data name="Editor_XhttpMode" xml:space="preserve">
+    <value>xhttp mode</value>
+  </data>
+  <data name="Editor_XhttpPath" xml:space="preserve">
+    <value>xhttp path</value>
+  </data>
   <data name="Elevation_Cancelled" xml:space="preserve">
     <value>Connection cancelled: TUN needs administrator rights</value>
   </data>
@@ -861,5 +870,130 @@ Restart CVPN now?</value>
   <data name="Unit_MBps" xml:space="preserve">
     <value>MB/s</value>
   </data>
+  <data name="Common_ByeDpi" xml:space="preserve">
+    <value>via ByeDPI</value>
+  </data>
+  <data name="Nav_ByeDpi" xml:space="preserve">
+    <value>ByeDPI</value>
+  </data>
+  <data name="ByeDpi_Subtitle" xml:space="preserve">
+    <value>A local helper that disguises the start of a connection from your ISP's filtering. Sites routed “via ByeDPI” go straight to the internet through it, NOT through your proxy server, so they use none of its traffic.</value>
+  </data>
+  <data name="ByeDpi_Enable" xml:space="preserve">
+    <value>Use ByeDPI</value>
+  </data>
+  <data name="ByeDpi_EnableHint" xml:space="preserve">
+    <value>Starts together with the tunnel. While it is off, “via ByeDPI” rules go through the regular proxy.</value>
+  </data>
+  <data name="ByeDpi_Path" xml:space="preserve">
+    <value>Path to ciadpi.exe</value>
+  </data>
+  <data name="ByeDpi_PathHint" xml:space="preserve">
+    <value>ByeDPI comes with the installer and is filled in automatically. Point to another ciadpi.exe only if you want your own version.</value>
+  </data>
+  <data name="ByeDpi_Args" xml:space="preserve">
+    <value>Arguments</value>
+  </data>
+  <data name="ByeDpi_ArgsHint" xml:space="preserve">
+    <value>The defaults are the ones from byedpi.bat in the official Windows build. The address and port are set by the app.</value>
+  </data>
+  <data name="ByeDpi_WillRun" xml:space="preserve">
+    <value>Will be started as</value>
+  </data>
+  <data name="ByeDpi_IgnoredNote" xml:space="preserve">
+    <value>Ignored (the app sets these itself): {0}</value>
+  </data>
+  <data name="ByeDpi_Port" xml:space="preserve">
+    <value>Local port</value>
+  </data>
+  <data name="ByeDpi_PortHint" xml:space="preserve">
+    <value>SOCKS5 on 127.0.0.1 only. The port must differ from the mixed and Clash API ports.</value>
+  </data>
+  <data name="ByeDpi_PortBusy" xml:space="preserve">
+    <value>Port {0} is already used by CVPN itself.</value>
+  </data>
+  <data name="ByeDpi_BadPort" xml:space="preserve">
+    <value>The port must be between 1 and 65535.</value>
+  </data>
+  <data name="ByeDpi_State" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ByeDpi_Stopped" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="ByeDpi_Starting" xml:space="preserve">
+    <value>Starting…</value>
+  </data>
+  <data name="ByeDpi_Running" xml:space="preserve">
+    <value>Running on 127.0.0.1:{0}</value>
+  </data>
+  <data name="ByeDpi_Crashed" xml:space="preserve">
+    <value>Stopped unexpectedly (exit code {0})</value>
+  </data>
+  <data name="ByeDpi_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="ByeDpi_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="ByeDpi_AddYoutube" xml:space="preserve">
+    <value>Route YouTube through ByeDPI</value>
+  </data>
+  <data name="ByeDpi_AddYoutubeHint" xml:space="preserve">
+    <value>Adds the rule geosite youtube → via ByeDPI to the current routing profile</value>
+  </data>
+  <data name="ByeDpi_RuleAdded" xml:space="preserve">
+    <value>Rule added: geosite youtube → via ByeDPI</value>
+  </data>
+  <data name="ByeDpi_RuleAddedDisabled" xml:space="preserve">
+    <value>Rule added, but ByeDPI is off: for now it goes through the regular proxy</value>
+  </data>
+  <data name="ByeDpi_PickExe" xml:space="preserve">
+    <value>Select ciadpi.exe</value>
+  </data>
+  <data name="ByeDpi_ExeFilter" xml:space="preserve">
+    <value>ByeDPI (*.exe)|*.exe|All files (*.*)|*.*</value>
+  </data>
+  <data name="ByeDpi_NoExe" xml:space="preserve">
+    <value>ciadpi.exe not found: check the path on the ByeDPI page</value>
+  </data>
+  <data name="ByeDpi_StartFailed" xml:space="preserve">
+    <value>Could not start ciadpi: {0}</value>
+  </data>
+  <data name="ByeDpi_ArgIgnored" xml:space="preserve">
+    <value>argument ignored, the app sets the address and port itself: {0}</value>
+  </data>
+  <data name="ByeDpi_NotListening" xml:space="preserve">
+    <value>ciadpi did not start listening. Its output: {0}</value>
+  </data>
+  <data name="ByeDpi_NotListeningNoOutput" xml:space="preserve">
+    <value>ciadpi did not start listening on port {0} and printed nothing</value>
+  </data>
+  <data name="ByeDpi_TunTitle" xml:space="preserve">
+    <value>Please note: TUN mode</value>
+  </data>
+  <data name="ByeDpi_TunNote" xml:space="preserve">
+    <value>Everything above is about TUN mode: ciadpi is bound to your real adapter so its traffic bypasses the tunnel. This relies on how Windows routes sockets bound to an address and has not been verified on every system. To check: connect, open a YouTube video, then look at the Connections page. If you see connections from ciadpi.exe there, the bypass did not work; --tlsrec will still help, but --split, --disorder, --oob and --fake probably will not. In that case use the system proxy mode.</value>
+  </data>
+  <data name="ByeDpi_PortInUse" xml:space="preserve">
+    <value>Port {0} is already in use. If it is a leftover ciadpi from a crashed session, end it in Task Manager or choose another port.</value>
+  </data>
+  <data name="ByeDpi_BypassTun" xml:space="preserve">
+    <value>Bypass TUN for ciadpi</value>
+  </data>
+  <data name="ByeDpi_BypassTunHint" xml:space="preserve">
+    <value>In TUN mode, binds ciadpi to your real network adapter so its traffic goes straight out, not through the tunnel. Needed for --split, --disorder and the like.</value>
+  </data>
+  <data name="ByeDpi_BlockQuic" xml:space="preserve">
+    <value>Block QUIC for these sites</value>
+  </data>
+  <data name="ByeDpi_BlockQuicHint" xml:space="preserve">
+    <value>Browsers prefer QUIC (UDP), where ByeDPI does little. Blocking it makes them fall back to regular TCP.</value>
+  </data>
+  <data name="ByeDpi_NoAdapter" xml:space="preserve">
+    <value>could not find a real network adapter; ciadpi is not bound and its traffic may enter the tunnel</value>
+  </data>
+  <data name="ByeDpi_BoundTo" xml:space="preserve">
+    <value>outgoing connections are bound to {0} (bypassing the tunnel)</value>
+  </data>
 </root>
-

@@ -38,7 +38,6 @@
             </StackPanel>
         </Grid>
 
-        <!-- Конструктор правила -->
         <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,18,0,0" Padding="14">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -70,6 +69,7 @@
                     <ComboBoxItem Content="{loc:T Common_ViaProxy}" />
                     <ComboBoxItem Content="{loc:T Common_Direct}" />
                     <ComboBoxItem Content="{loc:T Common_Block}" />
+                    <ComboBoxItem Content="{loc:T Common_ByeDpi}" />
                 </ComboBox>
 
                 <Button Grid.Column="4" Content="{loc:T Common_Add}" Style="{StaticResource Btn.Primary}"
@@ -78,8 +78,6 @@
             </Grid>
         </Border>
 
-        <!-- Проверка домена: отвечает на вопрос «какое правило сработает»
-             без подключения и без чтения логов -->
         <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,10,0,0" Padding="14,12">
             <StackPanel>
                 <Grid>
@@ -110,6 +108,10 @@
                                 <DataTrigger Binding="{Binding TestOutcome}"
                                              Value="{x:Static enums:RouteAction.Block}">
                                     <Setter Property="Foreground" Value="{StaticResource Danger}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding TestOutcome}"
+                                             Value="{x:Static enums:RouteAction.ByeDpi}">
+                                    <Setter Property="Foreground" Value="{StaticResource Warning}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding TestOutcome}"
                                              Value="{x:Static enums:RouteAction.Proxy}">
@@ -160,6 +162,10 @@
                                                          Value="{x:Static enums:RouteAction.Block}">
                                                 <Setter Property="Background" Value="{StaticResource Tint.Danger}" />
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding Action}"
+                                                         Value="{x:Static enums:RouteAction.ByeDpi}">
+                                                <Setter Property="Background" Value="{StaticResource Tint.Warning}" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
@@ -177,6 +183,10 @@
                                                              Value="{x:Static enums:RouteAction.Block}">
                                                     <Setter Property="Foreground" Value="{StaticResource Danger}" />
                                                 </DataTrigger>
+                                                <DataTrigger Binding="{Binding Action}"
+                                                             Value="{x:Static enums:RouteAction.ByeDpi}">
+                                                    <Setter Property="Foreground" Value="{StaticResource Warning}" />
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </TextBlock.Style>
@@ -184,7 +194,6 @@
                             </Border>
 
                             <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="8,0,0,0">
-                                <!-- Порядок решает: первое совпадение выигрывает -->
                                 <Button Content="▲" Style="{StaticResource Btn.Ghost}" Padding="8,4"
                                         ToolTip="{loc:T Routing_MoveUpHint}"
                                         Command="{Binding DataContext.MoveUp,

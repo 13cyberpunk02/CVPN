@@ -5,8 +5,6 @@ namespace CVPN.Tests;
 
 public class ConfigBuilderTests
 {
-    // ===================== выходы и селектор =====================
-
     [Fact]
     public void Каждый_outbound_имеет_непустой_тег()
     {
@@ -114,8 +112,6 @@ public class ConfigBuilderTests
         Assert.Equal("auto", config.OutboundOfType("selector").Str("default"));
     }
 
-    // ===================== протоколы =====================
-
     [Fact]
     public void Reality_несёт_ключ_и_flow()
     {
@@ -166,9 +162,7 @@ public class ConfigBuilderTests
         foreach (var proxy in proxies)
             Assert.Equal("dns-local", proxy.GetProperty("domain_resolver").Str("server"));
     }
-
-    // ===================== маршруты =====================
-
+    
     [Fact]
     public void Служебные_правила_идут_первыми_и_в_нужном_порядке()
     {
@@ -178,8 +172,10 @@ public class ConfigBuilderTests
         Assert.Equal("sniff", rules[0].Str("action"));
         Assert.Equal("dns", rules[1].Str("protocol"));
         Assert.Equal("hijack-dns", rules[1].Str("action"));
-        Assert.True(rules[2].GetProperty("ip_is_private").GetBoolean());
-        Assert.Equal("direct", rules[2].Str("outbound"));
+
+        var border = rules.FindIndex(r => r.TryGetProperty("ip_is_private", out _));
+        Assert.True(border >= 2);
+        Assert.Equal("direct", rules[border].Str("outbound"));
     }
 
     /// <summary>Спецвыход block удалён из ядра - блокировка стала действием правила.</summary>
@@ -227,7 +223,7 @@ public class ConfigBuilderTests
 
         var config = TestData.BuildConfig(routing: routing);
 
-        var domains = config.GetProperty("route").GetProperty("rules").EnumerateArray()
+        var domains = config.UserRouteRules()
             .Where(r => r.TryGetProperty("domain_suffix", out _))
             .Select(r => r.GetProperty("domain_suffix").EnumerateArray().Single().GetString())
             .ToList();
@@ -243,10 +239,10 @@ public class ConfigBuilderTests
             TestData.Rule(MatchKind.Domain, "example.com", RouteAction.Direct));
 
         var config = TestData.BuildConfig(routing: routing);
-        var rules = config.GetProperty("route").GetProperty("rules").EnumerateArray().ToList();
+        var user = config.UserRouteRules();
 
-        Assert.Equal(4, rules.Count);
-        Assert.True(rules[3].TryGetProperty("domain", out _));
+        Assert.Single(user);
+        Assert.True(user[0].TryGetProperty("domain", out _));
     }
 
     [Fact]
@@ -257,8 +253,7 @@ public class ConfigBuilderTests
 
         var config = TestData.BuildConfig(routing: TestData.Routing(rule));
 
-        // остаются только три служебных
-        Assert.Equal(3, config.GetProperty("route").GetProperty("rules").GetArrayLength());
+        Assert.Empty(config.UserRouteRules());
     }
 
     [Fact]
@@ -271,9 +266,7 @@ public class ConfigBuilderTests
 
         Assert.Equal("direct", config.GetProperty("route").Str("final"));
     }
-
-    // ===================== наборы правил =====================
-
+    
     [Fact]
     public void Geosite_превращается_в_удалённый_набор()
     {
@@ -286,8 +279,6 @@ public class ConfigBuilderTests
         Assert.Equal("remote", set.Str("type"));
         Assert.Equal("geosite-youtube", set.Str("tag"));
         Assert.Contains("geosite-youtube.srs", set.Str("url"));
-
-        // качается через туннель: raw.githubusercontent.com часто недоступен напрямую
         Assert.Equal("proxy", set.Str("download_detour"));
     }
 
@@ -317,8 +308,6 @@ public class ConfigBuilderTests
         Assert.Equal(@"C:\rules\twitch.srs", set.Str("path"));
     }
 
-    // ===================== dns =====================
-
     /// <summary>
     /// Иначе домен резолвится через туннель, и сайт с геобалансировкой отдаёт
     /// адрес узла рядом с выходной нодой - «прямое» соединение уезжает за границу.
@@ -330,7 +319,7 @@ public class ConfigBuilderTests
             TestData.Rule(MatchKind.DomainSuffix, "vk.com", RouteAction.Direct));
 
         var config = TestData.BuildConfig(routing: routing);
-        var rule = config.GetProperty("dns").GetProperty("rules").EnumerateArray().Single();
+        var rule = config.UserDnsRules().Single();
 
         Assert.Equal("dns-local", rule.Str("server"));
         Assert.Equal("vk.com", rule.GetProperty("domain_suffix").EnumerateArray().Single().GetString());
@@ -349,9 +338,8 @@ public class ConfigBuilderTests
         var routing = TestData.Routing(TestData.Rule(match, value, RouteAction.Direct));
         var config = TestData.BuildConfig(routing: routing);
 
-        Assert.Equal(0, config.GetProperty("dns").GetProperty("rules").GetArrayLength());
+        Assert.Empty(config.UserDnsRules());
 
-        // при этом в маршрутах набор остаётся
         Assert.Equal(1, config.GetProperty("route").GetProperty("rule_set").GetArrayLength());
     }
 
@@ -363,7 +351,7 @@ public class ConfigBuilderTests
             TestData.Rule(MatchKind.RuleSetLocal, @"C:\rules\ru.srs", RouteAction.Direct));
 
         var config = TestData.BuildConfig(routing: routing);
-        var rule = config.GetProperty("dns").GetProperty("rules").EnumerateArray().Single();
+        var rule = config.UserDnsRules().Single();
 
         Assert.Equal("dns-local", rule.Str("server"));
         Assert.Equal("ru", rule.GetProperty("rule_set").EnumerateArray().Single().GetString());
@@ -391,9 +379,9 @@ public class ConfigBuilderTests
         var referenced = new List<string>();
 
         foreach (var section in new[] { config.GetProperty("route"), config.GetProperty("dns") })
-            foreach (var rule in section.GetProperty("rules").EnumerateArray())
-                if (rule.TryGetProperty("rule_set", out var sets))
-                    referenced.AddRange(sets.EnumerateArray().Select(x => x.GetString()!));
+        foreach (var rule in section.GetProperty("rules").EnumerateArray())
+            if (rule.TryGetProperty("rule_set", out var sets))
+                referenced.AddRange(sets.EnumerateArray().Select(x => x.GetString()!));
 
         Assert.NotEmpty(referenced);
         Assert.All(referenced, tag => Assert.Contains(tag, declared));
@@ -408,7 +396,7 @@ public class ConfigBuilderTests
 
         var config = TestData.BuildConfig(routing: routing);
 
-        Assert.Equal(0, config.GetProperty("dns").GetProperty("rules").GetArrayLength());
+        Assert.Empty(config.UserDnsRules());
     }
 
     [Fact]
@@ -419,7 +407,7 @@ public class ConfigBuilderTests
 
         var config = TestData.BuildConfig(routing: routing);
 
-        Assert.Equal(0, config.GetProperty("dns").GetProperty("rules").GetArrayLength());
+        Assert.Empty(config.UserDnsRules());
     }
 
     [Theory]
@@ -453,9 +441,7 @@ public class ConfigBuilderTests
 
         Assert.Equal("local", local.Str("type"));
     }
-
-    // ===================== входы =====================
-
+    
     [Fact]
     public void Tun_добавляется_только_когда_включён()
     {

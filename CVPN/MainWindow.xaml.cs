@@ -28,7 +28,6 @@ public partial class MainWindow : Window
         {
             Subscribe();
 
-            // Запуск из автозагрузки: окно не показываем, только значок в трее
             if (Environment.GetCommandLineArgs().Contains(AutoStart.MinimizedArgument)) Hide();
 
             if (Vm is not null) await Vm.StartupAsync();
@@ -44,7 +43,6 @@ public partial class MainWindow : Window
         Vm.PropertyChanged -= OnVmChanged;
         Vm.PropertyChanged += OnVmChanged;
 
-        // Профиль могли добавить, удалить или переименовать - меню должно поспевать
         Vm.Profiles.CollectionChanged -= OnProfilesChanged;
         Vm.Profiles.CollectionChanged += OnProfilesChanged;
 
@@ -77,18 +75,14 @@ public partial class MainWindow : Window
 
         if (profile is not null) _ = Vm!.SelectServerAsync(profile);
     }
-
-    // ===================== заголовок окна =====================
-
+    
     private void OnMinimize(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void OnMaximize(object sender, RoutedEventArgs e) =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
     private void OnClose(object sender, RoutedEventArgs e) => Close();
-
-    // ===================== трей =====================
-
+    
     private void RestoreFromTray()
     {
         Show();
@@ -104,7 +98,6 @@ public partial class MainWindow : Window
 
     protected override void OnStateChanged(EventArgs e)
     {
-        // Свёрнутое окно уходит с панели задач: значок в трее его заменяет
         if (WindowState == WindowState.Minimized) Hide();
 
         base.OnStateChanged(e);
@@ -147,15 +140,13 @@ public partial class MainWindow : Window
     {
         if (PageHost is null || sender is not RadioButton { Tag: string tag }) return;
 
-        // Страницы, переехавшие на вьюмодели, подставляются как объекты -
-        // разметку для них WPF найдёт по DataTemplate. Остальные пока
-        // создаются напрямую и своё состояние при переходе теряют.
         PageHost.Content = tag switch
         {
             "profiles" => Vm?.ProfilesPage,
             "routing" => Vm?.RoutingPage,
             "connections" => Vm?.ConnectionsPage,
             "logs" => Vm?.LogsPage,
+            "byedpi" => Vm?.ByeDpiPage,
             "settings" => Vm?.SettingsPage,
             _ => new ConnectionView()
         };

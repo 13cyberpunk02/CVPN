@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using CVPN.Localization;
 
 namespace CVPN.Services;
 
@@ -30,24 +31,22 @@ public static class KillSwitch
         await DisableAsync();
     }
 
-    public static async Task<string> EnableAsync(string corePath)
+    public static async Task<string> EnableAsync(string corePath, string? byeDpiPath = null)
     {
         if (!Core.Elevation.IsElevated)
-            return "Kill switch требует прав администратора";
+            return Loc.T("KillSwitch_NeedsAdmin");
 
         var app = Environment.ProcessPath;
-        if (string.IsNullOrEmpty(app)) return "Не удалось определить путь к приложению";
+        if (string.IsNullOrEmpty(app)) return Loc.T("Error_NoAppPath");
 
-        // Отметку ставим ДО применения правил: если процесс упадёт посередине,
-        // следующий запуск всё равно узнает, что систему надо чинить
         MarkActive();
 
-        var failed = await RunAsync(KillSwitchCommands.Enable(corePath, app, allowLocalNetwork: true));
+        var failed = await RunAsync(KillSwitchCommands.Enable(corePath, app, allowLocalNetwork: true, byeDpiPath));
 
         if (failed.Length > 0)
         {
             await DisableAsync();
-            return $"Не удалось включить kill switch: {failed}";
+            return Loc.T("KillSwitch_EnableFailed", failed);
         }
 
         return "";
@@ -57,7 +56,6 @@ public static class KillSwitch
     {
         var failed = await RunAsync(KillSwitchCommands.Disable(), ignoreErrors: true);
 
-        // Отметку снимаем только после успешного возврата политики
         if (failed.Length == 0) ClearMarker();
 
         return failed;
@@ -101,7 +99,7 @@ public static class KillSwitch
             if (code == 0) continue;
             if (ignoreErrors && i > 0) continue;
 
-            return output.Length > 0 ? output : $"netsh вернул код {code}";
+            return output.Length > 0 ? output : Loc.T("Error_NetshCode", code);
         }
 
         return "";
@@ -122,7 +120,7 @@ public static class KillSwitch
             };
 
             using var process = Process.Start(info);
-            if (process is null) return (-1, "не удалось запустить netsh");
+            if (process is null) return (-1, Loc.T("Error_NetshStart"));
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var error = await process.StandardError.ReadToEndAsync();

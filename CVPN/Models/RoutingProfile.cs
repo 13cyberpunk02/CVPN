@@ -11,21 +11,18 @@ namespace CVPN.Models;
 /// </summary>
 public sealed class RoutingProfile : ObservableObject
 {
-    private string _name = Localization.Loc.T("Routing_DefaultSet");
-    private bool _proxyByDefault = true;
-
     public string Name
     {
-        get => _name;
-        set => Set(ref _name, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = Localization.Loc.T("Routing_DefaultSet");
 
     /// <summary>Что делать с трафиком вне правил: true - через прокси, false - напрямую.</summary>
     public bool ProxyByDefault
     {
-        get => _proxyByDefault;
-        set => Set(ref _proxyByDefault, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = true;
 
     public ObservableCollection<RouteRule> Rules { get; set; } = [];
 

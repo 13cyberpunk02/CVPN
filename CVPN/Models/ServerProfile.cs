@@ -15,13 +15,13 @@ public sealed class ServerProfile : ObservableObject
             Raise(nameof(CountryCode));
             Raise(nameof(FlagImage));
         }
-    } = "";
+    } = string.Empty;
 
     public string Host
     {
         get;
         set => Set(ref field, value);
-    } = "";
+    } = string.Empty;
 
     public int Port
     {
@@ -60,31 +60,39 @@ public sealed class ServerProfile : ObservableObject
         set => Set(ref field, value);
     }
 
-    // Учётные данные протокола. UUID и пароль - секреты, они шифруются
-    // при записи в файл; остальное восстанавливается из ссылки и тайной не является.
     [JsonConverter(typeof(ProtectedStringConverter))]
-    public string Uuid { get; set; } = "";
+    public string Uuid { get; set; } = string.Empty;
 
     [JsonConverter(typeof(ProtectedStringConverter))]
-    public string Password { get; set; } = "";
+    public string Password { get; set; } = string.Empty;
 
-    public string Sni { get; set; } = "";
-    public string PublicKey { get; set; } = "";
-    public string ShortId { get; set; } = "";
+    public string Sni { get; set; } = string.Empty;
+    public string PublicKey { get; set; } = string.Empty;
+    public string ShortId { get; set; } = string.Empty;
     public string Flow { get; set; } = "xtls-rprx-vision";
     public string Path { get; set; } = "/";
-    public string Username { get; set; } = "";
+
+    /// <summary>
+    /// Заголовок Host для XHTTP. Отдельно от адреса сервера и от SNI:
+    /// у провайдеров там нередко длинная строка с параметрами.
+    /// </summary>
+    public string HttpHost { get; set; } = "";
+
+    /// <summary>Режим XHTTP: auto, packet-up, stream-up, stream-one.</summary>
+    public string Mode { get; set; } = "auto";
+
+    public string Username { get; set; } = string.Empty;
 
     /// <summary>
     /// Ссылка подписки, из которой пришёл профиль. Пусто - создан вручную.
     /// По этому признаку обновление подписки заменяет только свои профили
     /// и не трогает добавленные руками.
     /// </summary>
-    public string Subscription { get; set; } = "";
+    public string Subscription { get; set; } = string.Empty;
 
     [JsonIgnore] public string Endpoint => $"{Host}:{Port}";
 
-    private string _countryCode = "";
+    private string _countryCode = string.Empty;
 
     /// <summary>
     /// Двухбуквенный код страны: заданный вручную либо определённый по названию.
@@ -136,7 +144,7 @@ public sealed class ServerProfile : ObservableObject
         var head = Host.Split('.', '-').FirstOrDefault() ?? "";
         if (head.Length == 2 && head.All(char.IsLetter)) return head.ToUpperInvariant();
 
-        return "";
+        return string.Empty;
     }
 
     private static readonly (string Name, string Code)[] Countries =
@@ -163,6 +171,7 @@ public sealed class ServerProfile : ObservableObject
     {
         ProtocolKind.VlessReality => "vless · reality",
         ProtocolKind.VlessWs => "vless · ws + tls",
+        ProtocolKind.VlessXhttp => "vless · xhttp",
         ProtocolKind.AnyTls => "anytls",
         ProtocolKind.Naive => "naive",
         _ => "-"

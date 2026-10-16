@@ -77,9 +77,6 @@ public sealed class ConnectionsViewModel : PageViewModel
         }
 
         var fresh = await Shell.Api.GetConnectionsAsync();
-
-        // Список перерисовывается целиком: соединения живут секунды,
-        // и точечная синхронизация тут дороже полной замены
         Connections.Clear();
 
         foreach (var item in fresh.OrderByDescending(c => c.Download + c.Upload))
@@ -98,7 +95,6 @@ public sealed class ConnectionsViewModel : PageViewModel
 
         if (existing is not null)
         {
-            // Правило уже есть, но ведёт не туда - меняем действие вместо отказа
             if (existing.Action == action)
             {
                 Shell.Notify(Loc.T("Connections_RuleExists", domain));
@@ -121,6 +117,7 @@ public sealed class ConnectionsViewModel : PageViewModel
     {
         RouteAction.Direct => Loc.T("Common_Direct"),
         RouteAction.Block => Loc.T("Common_Block"),
+        RouteAction.ByeDpi => Loc.T("Common_ByeDpi"),
         _ => Loc.T("Common_ViaProxy")
     };
 

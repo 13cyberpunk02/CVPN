@@ -1,0 +1,167 @@
+<UserControl x:Class="CVPN.Views.ByeDpiView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:CVPN.ViewModels"
+             xmlns:loc="clr-namespace:CVPN.Localization"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:ByeDpiViewModel, IsDesignTimeCreatable=False}">
+    <Grid Margin="28,22,28,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{loc:T Nav_ByeDpi}" Style="{StaticResource T.Title}" />
+            <TextBlock Text="{loc:T ByeDpi_Subtitle}" Style="{StaticResource T.Secondary}"
+                       Margin="0,4,0,0" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Margin="0,18,0,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T ByeDpi_Enable}" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="{loc:T ByeDpi_EnableHint}"
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                           MaxWidth="420" HorizontalAlignment="Left" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.ByeDpiEnabled}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <TextBlock Text="{loc:T ByeDpi_Path}" Style="{StaticResource T.Label}" />
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Style="{StaticResource Input}"
+                                     Text="{Binding Settings.ByeDpiPath, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Grid.Column="1" Content="{loc:T Common_Browse}" Style="{StaticResource Btn.Base}"
+                                    Margin="8,0,0,0" Command="{Binding Browse}" />
+                        </Grid>
+                        <TextBlock Text="{loc:T ByeDpi_PathHint}" Style="{StaticResource T.Caption}"
+                                   Margin="0,8,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T ByeDpi_Args}" Style="{StaticResource T.Label}" />
+                        <TextBox Style="{StaticResource Input}" Margin="0,8,0,0"
+                                 Text="{Binding Settings.ByeDpiArgs, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="{loc:T ByeDpi_ArgsHint}" Style="{StaticResource T.Caption}"
+                                   Margin="0,8,0,0" TextWrapping="Wrap" />
+
+                        <TextBlock Text="{loc:T ByeDpi_WillRun}" Style="{StaticResource T.Label}" Margin="0,14,0,0" />
+                        <TextBlock Text="{Binding CommandPreview}" Style="{StaticResource T.Mono}"
+                                   Foreground="{StaticResource TextFaint}" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Text="{Binding IgnoredNote}" Margin="0,8,0,0" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource T.Caption}">
+                                    <Setter Property="Foreground" Value="{StaticResource Warning}" />
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasIgnored}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T ByeDpi_Port}" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="{loc:T ByeDpi_PortHint}"
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                           MaxWidth="420" HorizontalAlignment="Left" />
+                            </StackPanel>
+                            <TextBox Style="{StaticResource Input}" Width="96"
+                                     Text="{Binding Settings.ByeDpiPort, UpdateSourceTrigger=PropertyChanged}"
+                                     HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T ByeDpi_BypassTun}" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="{loc:T ByeDpi_BypassTunHint}"
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                           MaxWidth="420" HorizontalAlignment="Left" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}"
+                                          IsChecked="{Binding Settings.ByeDpiBypassTun}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,0,0" />
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,14" />
+
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T ByeDpi_BlockQuic}" Style="{StaticResource T.Body}" />
+                                <TextBlock Text="{loc:T ByeDpi_BlockQuicHint}"
+                                           Style="{StaticResource T.Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                                           MaxWidth="420" HorizontalAlignment="Left" />
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}"
+                                          IsChecked="{Binding Settings.ByeDpiBlockQuic}"
+                                          HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,0,0" />
+                        </Grid>
+
+                        <TextBlock Text="{Binding PortWarning}" Margin="0,8,0,0" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource T.Caption}">
+                                    <Setter Property="Foreground" Value="{StaticResource Danger}" />
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasPortWarning}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T ByeDpi_State}" Style="{StaticResource T.Label}" />
+                        <TextBlock Text="{Binding State}" Style="{StaticResource T.Body}"
+                                   Margin="0,6,0,0" TextWrapping="Wrap" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="{Binding RunLabel}" Style="{StaticResource Btn.Primary}"
+                                    Command="{Binding ToggleRun}" />
+                            <Button Content="{loc:T ByeDpi_AddYoutube}" Style="{StaticResource Btn.Base}"
+                                    Margin="8,0,0,0" Command="{Binding AddYoutubeRule}"
+                                    ToolTip="{loc:T ByeDpi_AddYoutubeHint}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T ByeDpi_TunTitle}" Style="{StaticResource T.Label}" />
+                        <TextBlock Text="{loc:T ByeDpi_TunNote}" Style="{StaticResource T.Caption}"
+                                   Foreground="{StaticResource Warning}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

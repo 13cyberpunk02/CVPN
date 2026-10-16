@@ -20,7 +20,7 @@ public static class TestData
         Sni = "www.google.com",
         Flow = "xtls-rprx-vision"
     };
- 
+
     public static ServerProfile WebSocket(string name = "Amsterdam") => new()
     {
         Name = name,
@@ -31,7 +31,22 @@ public static class TestData
         Sni = "cdn.example.net",
         Path = "/ws"
     };
- 
+
+    public static ServerProfile Xhttp(string name = "Tokyo-XHTTP") => new()
+    {
+        Name = name,
+        Host = "xh.example.net",
+        Port = 443,
+        Protocol = ProtocolKind.VlessXhttp,
+        Uuid = "1ad30723-7772-4d8b-855e-933650f6906b",
+        PublicKey = "5bgoms49YpXoZJwtyrij9wbIq9Qe68APgIjK-J-x-g4",
+        ShortId = "cf8d48a6",
+        Sni = "www.varzesh3.com",
+        Path = "/",
+        HttpHost = "cdn.example.net",
+        Mode = "stream-one"
+    };
+
     public static ServerProfile AnyTls(string name = "Helsinki") => new()
     {
         Name = name,
@@ -41,7 +56,7 @@ public static class TestData
         Password = "s3cret",
         Sni = "fi.example.net"
     };
- 
+
     public static ServerProfile Naive(string name = "Tokyo") => new()
     {
         Name = name,
@@ -51,17 +66,17 @@ public static class TestData
         Username = "user",
         Password = "s3cret"
     };
- 
+
     public static RoutingProfile Routing(params RouteRule[] rules) => new()
     {
         Name = "Основной",
         ProxyByDefault = true,
         Rules = [.. rules]
     };
- 
+
     public static RouteRule Rule(MatchKind match, string value, RouteAction action) =>
         new() { Match = match, Value = value, Action = action };
- 
+
     public static AppSettings Settings() => new()
     {
         TunEnabled = true,
@@ -70,7 +85,7 @@ public static class TestData
         RemoteDns = "https://1.1.1.1/dns-query",
         LogLevel = "info"
     };
- 
+
     /// <summary>Собирает конфиг и возвращает его разобранным.</summary>
     public static JsonElement BuildConfig(
         IReadOnlyList<ServerProfile>? profiles = null,
@@ -80,18 +95,33 @@ public static class TestData
     {
         profiles ??= [Reality()];
         active ??= profiles[0];
- 
+
         var json = ConfigBuilder.Build(profiles, active, routing ?? Routing(), settings ?? Settings());
- 
+
         return JsonDocument.Parse(json).RootElement.Clone();
     }
- 
+
     public static IEnumerable<JsonElement> Outbounds(this JsonElement config) =>
         config.GetProperty("outbounds").EnumerateArray();
- 
+
     public static JsonElement OutboundOfType(this JsonElement config, string type) =>
         config.Outbounds().Single(o => o.GetProperty("type").GetString() == type);
- 
+
+    /// <summary>
+    /// Правила маршрута после служебных (sniff, DNS, локальные, ip_is_private).
+    /// Граница - правило ip_is_private: оно замыкает служебный блок.
+    /// </summary>
+    public static List<JsonElement> UserRouteRules(this JsonElement config)
+    {
+        var rules = config.GetProperty("route").GetProperty("rules").EnumerateArray().ToList();
+        var border = rules.FindIndex(r => r.TryGetProperty("ip_is_private", out _));
+        return [.. rules.Skip(border + 1)];
+    }
+
+    /// <summary>DNS-правила без встроенного первого - «локальные имена через системный резолвер».</summary>
+    public static List<JsonElement> UserDnsRules(this JsonElement config) =>
+        [.. config.GetProperty("dns").GetProperty("rules").EnumerateArray().Skip(1)];
+
     public static string? Str(this JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) ? value.GetString() : null;
 }

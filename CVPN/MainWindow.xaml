@@ -14,9 +14,6 @@
     </Window.DataContext>
 
     <Window.Resources>
-        <!-- Страница задаётся вьюмоделью, разметку WPF подбирает по типу.
-             Так состояние страницы переживает переходы: пересоздаётся
-             только визуальное дерево. -->
         <DataTemplate DataType="{x:Type vm:ConnectionsViewModel}">
             <views:ConnectionsView />
         </DataTemplate>
@@ -31,6 +28,10 @@
 
         <DataTemplate DataType="{x:Type vm:ProfilesViewModel}">
             <views:ProfilesView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ByeDpiViewModel}">
+            <views:ByeDpiView />
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
@@ -49,7 +50,6 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- ============ Заголовок окна ============ -->
             <Grid Grid.Row="0" Background="{StaticResource Bg}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -80,7 +80,6 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- ============ Навигация ============ -->
                     <Border Grid.Column="0" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -101,6 +100,8 @@
                                              Checked="OnNavChanged" Tag="connections" />
                                 <RadioButton Style="{StaticResource NavItem}" Content="{loc:T Nav_Logs}"
                                              Checked="OnNavChanged" Tag="logs" />
+                                <RadioButton Style="{StaticResource NavItem}" Content="{loc:T Nav_ByeDpi}"
+                                             Checked="OnNavChanged" Tag="byedpi" />
                                 <RadioButton Style="{StaticResource NavItem}" Content="{loc:T Nav_Settings}"
                                              Checked="OnNavChanged" Tag="settings" />
                             </StackPanel>
@@ -111,7 +112,6 @@
                                     <TextBlock Text="{loc:T Common_Mode}" Style="{StaticResource T.Label}" />
 
                                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                                        <!-- Точка горит, только когда режим реально работает -->
                                         <Ellipse Width="6" Height="6" VerticalAlignment="Center" Margin="0,0,7,0">
                                             <Ellipse.Style>
                                                 <Style TargetType="Ellipse">
@@ -143,7 +143,6 @@
                                                FontSize="{StaticResource Size.Caption}" Margin="13,2,0,0"
                                                TextTrimming="CharacterEllipsis" />
 
-                                    <!-- Настройку сменили на ходу: к текущей сессии она не применится -->
                                     <TextBlock Text="{Binding ModePendingHint}"
                                                Foreground="{StaticResource Warning}" Margin="13,5,0,0"
                                                TextWrapping="Wrap">
@@ -162,8 +161,6 @@
                             </Border>
                         </Grid>
                     </Border>
-
-                    <!-- ============ Страница ============ -->
                     <ContentControl x:Name="PageHost" Grid.Column="1">
                         <views:ConnectionView />
                     </ContentControl>

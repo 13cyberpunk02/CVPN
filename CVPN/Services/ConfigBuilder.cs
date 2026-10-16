@@ -10,10 +10,10 @@ namespace CVPN.Services;
 /// Собирает config.json под sing-box 1.12+.
 ///
 /// Что важно знать про эту версию:
-///  • geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
-///  • спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
-///  • legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
-///  • DNS-серверы описываются новым форматом с полями type/server.
+///  1. geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
+///  2. спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
+///  3. legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
+///  4. DNS-серверы описываются новым форматом с полями type/server.
 /// </summary>
 public static class ConfigBuilder
 {
@@ -24,6 +24,23 @@ public static class ConfigBuilder
     public const string AutoTag = "auto";
 
     public const string DirectTag = "direct";
+
+    /// <summary>Локальный SOCKS ByeDPI (ciadpi), в который заворачиваются выбранные правила.</summary>
+    public const string ByeDpiTag = "byedpi";
+
+    /// <summary>
+    /// Имена, которые всегда живут в этой же машине или в этой же локальной сети.
+    /// Их нельзя отдавать прокси: удалённый сервер не знает ни «localhost», ни
+    /// «nas.lan» и в лучшем случае не откроет ничего, в худшем - откроет чужое.
+    /// </summary>
+    public static readonly string[] LocalSuffixes = ["localhost", "local", "lan", "home.arpa"];
+
+    /// <summary>Адреса петли: трафик к собственной машине не должен покидать её никогда.</summary>
+    public static readonly string[] LoopbackCidrs = ["127.0.0.0/8", "::1/128"];
+
+    /// <summary>ByeDPI участвует в конфиге, только если включён и указан файл.</summary>
+    public static bool ByeDpiActive(AppSettings s) =>
+        s.ByeDpiEnabled && !string.IsNullOrWhiteSpace(s.ByeDpiPath);
 
     private const string GeositeBase = "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set";
     private const string GeoipBase = "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set";
@@ -55,7 +72,7 @@ public static class ConfigBuilder
         var seenSets = new HashSet<string>(StringComparer.Ordinal);
 
         var dns = BuildDns(rulesList, settings, ruleSets, seenSets);
-        var route = BuildRoute(rulesList, routing, ruleSets, seenSets);
+        var route = BuildRoute(rulesList, routing, settings, ruleSets, seenSets);
 
         var outbounds = new JsonArray();
 
@@ -80,8 +97,6 @@ public static class ConfigBuilder
                 ["outbounds"] = new JsonArray(servers.Select(x => (JsonNode)tags[x]!).ToArray()),
                 ["url"] = "https://cp.cloudflare.com/generate_204",
                 ["interval"] = "3m",
-                // Меняем сервер, только если новый заметно быстрее - иначе туннель
-                // будет прыгать между узлами с близкой задержкой
                 ["tolerance"] = 50
             });
         }
@@ -94,11 +109,22 @@ public static class ConfigBuilder
             ["tag"] = ProxyTag,
             ["outbounds"] = members,
             ["default"] = settings.AutoSelectFastest && hasAuto ? AutoTag : activeTag,
-            // Живые соединения не рвём: переключение затронет только новые
             ["interrupt_exist_connections"] = false
         });
 
         outbounds.Add(new JsonObject { ["type"] = "direct", ["tag"] = DirectTag });
+
+        if (ByeDpiActive(settings))
+        {
+            outbounds.Add(new JsonObject
+            {
+                ["type"] = "socks",
+                ["tag"] = ByeDpiTag,
+                ["server"] = ByeDpiArguments.LoopbackAddress,
+                ["server_port"] = settings.ByeDpiPort,
+                ["version"] = "5"
+            });
+        }
 
         var root = new JsonObject
         {
@@ -146,7 +172,7 @@ public static class ConfigBuilder
     public static Dictionary<ServerProfile, string> BuildTags(IReadOnlyList<ServerProfile> profiles)
     {
         var result = new Dictionary<ServerProfile, string>();
-        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ProxyTag, AutoTag, DirectTag };
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ProxyTag, AutoTag, DirectTag, ByeDpiTag };
 
         foreach (var profile in profiles)
         {
@@ -173,7 +199,6 @@ public static class ConfigBuilder
         return safe.Length > 0 ? safe : "server";
     }
 
-    // ===================== outbound =====================
 
     /// <summary>
     /// Адрес самого прокси-сервера обязан резолвиться мимо туннеля, иначе получается
@@ -197,6 +222,7 @@ public static class ConfigBuilder
     {
         ProtocolKind.VlessReality => Vless(p, reality: true),
         ProtocolKind.VlessWs => Vless(p, reality: false),
+        ProtocolKind.VlessXhttp => VlessXhttp(p),
         ProtocolKind.AnyTls => AnyTls(p),
         ProtocolKind.Naive => Naive(p),
         _ => throw new NotSupportedException(Localization.Loc.T("Config_UnsupportedProtocol", p.Protocol))
@@ -230,7 +256,6 @@ public static class ConfigBuilder
             ["tls"] = tls
         };
 
-        // flow имеет смысл только с Reality/XTLS; на ws он сломает соединение
         if (reality && !string.IsNullOrWhiteSpace(p.Flow))
             outbound["flow"] = p.Flow;
 
@@ -248,6 +273,53 @@ public static class ConfigBuilder
         }
 
         return outbound;
+    }
+
+    /// <summary>
+    /// VLESS поверх XHTTP. Транспорта нет в официальном sing-box: его добавляют
+    /// форки ядра. Если ядро без него, проверка конфигурации скажет об этом
+    /// до запуска - отдельно ничего ловить не нужно.
+    ///
+    /// Reality включается по наличию публичного ключа: XHTTP работает
+    /// и поверх reality, и поверх обычного TLS.
+    /// </summary>
+    private static JsonObject VlessXhttp(ServerProfile p)
+    {
+        var tls = new JsonObject
+        {
+            ["enabled"] = true,
+            ["server_name"] = string.IsNullOrWhiteSpace(p.Sni) ? p.Host : p.Sni,
+            ["utls"] = new JsonObject { ["enabled"] = true, ["fingerprint"] = "chrome" }
+        };
+
+        if (!string.IsNullOrWhiteSpace(p.PublicKey))
+        {
+            tls["reality"] = new JsonObject
+            {
+                ["enabled"] = true,
+                ["public_key"] = p.PublicKey,
+                ["short_id"] = p.ShortId
+            };
+        }
+
+        var transport = new JsonObject
+        {
+            ["type"] = "xhttp",
+            ["path"] = string.IsNullOrWhiteSpace(p.Path) ? "/" : p.Path,
+            ["mode"] = string.IsNullOrWhiteSpace(p.Mode) ? "auto" : p.Mode
+        };
+
+        if (!string.IsNullOrWhiteSpace(p.HttpHost)) transport["host"] = p.HttpHost;
+
+        return new JsonObject
+        {
+            ["type"] = "vless",
+            ["server"] = p.Host,
+            ["server_port"] = p.Port,
+            ["uuid"] = p.Uuid,
+            ["tls"] = tls,
+            ["transport"] = transport
+        };
     }
 
     private static JsonObject AnyTls(ServerProfile p) => new()
@@ -285,7 +357,6 @@ public static class ConfigBuilder
         }
     };
 
-    // ===================== inbounds =====================
 
     private static JsonArray BuildInbounds(AppSettings s)
     {
@@ -317,27 +388,54 @@ public static class ConfigBuilder
         return inbounds;
     }
 
-    // ===================== route =====================
 
     private static JsonObject BuildRoute(
-        List<RouteRule> rules, RoutingProfile routing, JsonArray ruleSets, HashSet<string> seen)
+        List<RouteRule> rules, RoutingProfile routing, AppSettings settings,
+        JsonArray ruleSets, HashSet<string> seen)
     {
+        var byeDpi = ByeDpiActive(settings);
+
         var routeRules = new JsonArray
         {
-            // Определяем протокол до маршрутизации - иначе доменные правила
-            // не сработают для соединений, пришедших по IP из TUN
             new JsonObject { ["action"] = "sniff" },
-            new JsonObject { ["protocol"] = "dns", ["action"] = "hijack-dns" },
-            new JsonObject { ["ip_is_private"] = true, ["outbound"] = DirectTag }
+            new JsonObject { ["protocol"] = "dns", ["action"] = "hijack-dns" }
         };
+
+        if (byeDpi)
+        {
+            routeRules.Add(new JsonObject
+            {
+                ["process_name"] = new JsonArray { Path.GetFileName(settings.ByeDpiPath) },
+                ["outbound"] = DirectTag
+            });
+        }
+
+        routeRules.Add(new JsonObject
+        {
+            ["ip_cidr"] = new JsonArray(LoopbackCidrs.Select(x => (JsonNode)x).ToArray()),
+            ["outbound"] = DirectTag
+        });
+
+        routeRules.Add(new JsonObject
+        {
+            ["domain_suffix"] = new JsonArray(LocalSuffixes.Select(x => (JsonNode)x).ToArray()),
+            ["outbound"] = DirectTag
+        });
+
+        routeRules.Add(new JsonObject { ["ip_is_private"] = true, ["outbound"] = DirectTag });
 
         foreach (var rule in rules)
         {
-            var node = ToRouteRule(rule, ruleSets, seen);
-            if (node is not null) routeRules.Add(node);
+            var node = ToRouteRule(rule, ruleSets, seen, byeDpi);
+            if (node is null) continue;
+
+            if (byeDpi && settings.ByeDpiBlockQuic && rule.Action == RouteAction.ByeDpi)
+                routeRules.Add(QuicTwin(node));
+
+            routeRules.Add(node);
         }
 
-        return new JsonObject
+        var route = new JsonObject
         {
             ["rules"] = routeRules,
             ["rule_set"] = ruleSets,
@@ -345,9 +443,14 @@ public static class ConfigBuilder
             ["auto_detect_interface"] = true,
             ["default_domain_resolver"] = "dns-local"
         };
+
+        if (byeDpi) route["find_process"] = true;
+
+        return route;
     }
 
-    private static JsonObject? ToRouteRule(RouteRule rule, JsonArray ruleSets, HashSet<string> seen)
+    private static JsonObject? ToRouteRule(
+        RouteRule rule, JsonArray ruleSets, HashSet<string> seen, bool byeDpiActive)
     {
         var value = rule.Value.Trim();
         if (value.Length == 0) return null;
@@ -402,14 +505,37 @@ public static class ConfigBuilder
                 return null;
         }
 
-        // reject - действие правила: спецвыход block удалён из ядра
         if (rule.Action == RouteAction.Block)
             node["action"] = "reject";
         else
-            node["outbound"] = rule.Action == RouteAction.Direct ? DirectTag : ProxyTag;
+            node["outbound"] = OutboundFor(rule.Action, byeDpiActive);
 
         return node;
     }
+
+    private static JsonObject QuicTwin(JsonObject original)
+    {
+        var twin = (JsonObject)original.DeepClone();
+
+        twin.Remove("outbound");
+        twin["network"] = "udp";
+        twin["port"] = new JsonArray { 443 };
+        twin["action"] = "reject";
+
+        return twin;
+    }
+
+    /// <summary>
+    /// «Через ByeDPI» при выключенном ByeDPI превращается в обычный прокси: лучше,
+    /// чтобы сайт открывался через туннель, чем правило ссылалось на несуществующий
+    /// выход, и ядро отказалось запускаться.
+    /// </summary>
+    private static string OutboundFor(RouteAction action, bool byeDpiActive) => action switch
+    {
+        RouteAction.Direct => DirectTag,
+        RouteAction.ByeDpi when byeDpiActive => ByeDpiTag,
+        _ => ProxyTag
+    };
 
     /// <summary>
     /// Тег набора выводится из имени файла: ядро требует уникальный идентификатор,
@@ -450,14 +576,10 @@ public static class ConfigBuilder
             ["tag"] = tag,
             ["format"] = "binary",
             ["url"] = url,
-            // Наборы качаются через туннель: raw.githubusercontent.com часто недоступен напрямую.
-            // Результат кладётся в cache_file, так что скачивание разовое.
             ["download_detour"] = ProxyTag,
             ["update_interval"] = "7d"
         });
     }
-
-    // ===================== dns =====================
 
     /// <summary>
     /// Домены, которые ходят напрямую, и резолвиться должны локально.
@@ -469,7 +591,14 @@ public static class ConfigBuilder
     private static JsonObject BuildDns(
         List<RouteRule> rules, AppSettings s, JsonArray ruleSets, HashSet<string> seen)
     {
-        var dnsRules = new JsonArray();
+        var dnsRules = new JsonArray
+        {
+            new JsonObject
+            {
+                ["domain_suffix"] = new JsonArray(LocalSuffixes.Select(x => (JsonNode)x).ToArray()),
+                ["server"] = "dns-local"
+            }
+        };
 
         foreach (var rule in rules.Where(r => r.Action == RouteAction.Direct))
         {
@@ -482,7 +611,6 @@ public static class ConfigBuilder
             ["servers"] = new JsonArray
             {
                 RemoteDnsServer(s),
-                // type "local" берёт системные резолверы - работает и в отеле, и за корпоративным NAT
                 new JsonObject
                 {
                     ["tag"] = "dns-local",
@@ -587,8 +715,6 @@ public static class ConfigBuilder
                 break;
             }
             default:
-                // geosite и rule_set по ссылке - скачиваются, на старте их ещё нет.
-                // geoip и process_name на этапе резолва неприменимы в принципе.
                 return null;
         }
 

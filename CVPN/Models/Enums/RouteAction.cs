@@ -4,5 +4,6 @@ public enum RouteAction
 {
     Proxy,
     Direct,
-    Block
+    Block,
+    ByeDpi
 }

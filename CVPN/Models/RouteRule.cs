@@ -26,7 +26,7 @@ public sealed class RouteRule : ObservableObject
             Set(ref field, value);
             Raise(nameof(DisplayValue));
         }
-    } = "";
+    } = string.Empty;
 
     public RouteAction Action
     {
@@ -68,7 +68,7 @@ public sealed class RouteRule : ObservableObject
 
     private static string ShortName(string value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return "";
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
 
         var name = value.Split('/', '\\').LastOrDefault() ?? value;
         return name.EndsWith(".srs", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
@@ -80,6 +80,7 @@ public sealed class RouteRule : ObservableObject
         RouteAction.Proxy => Loc.T("Common_ViaProxy"),
         RouteAction.Direct => Loc.T("Common_Direct"),
         RouteAction.Block => Loc.T("Common_Block"),
+        RouteAction.ByeDpi => Loc.T("Common_ByeDpi"),
         _ => "-"
     };
 }

@@ -11,7 +11,10 @@ on:
         default: '1.0.0'
 
 env:
-  SINGBOX_VERSION: '1.13.19'
+  SINGBOX_VERSION: '1.14.3'
+  # При смене версии нужно обновить и хеш: сборка с чужим архивом остановится
+  BYEDPI_VERSION: '0.17.3'
+  BYEDPI_SHA256: '70d2c94147193cb915f9c6eb5144b8d404dacbcfa90bda2383b6b211afafa456'
 
 permissions:
   contents: write
@@ -37,7 +40,7 @@ jobs:
             '${{ github.event.inputs.version }}'
           }
           "value=$version" >> $env:GITHUB_OUTPUT
-                
+
       - name: Публикация приложения
         run: >
           dotnet publish CVPN/CVPN.csproj -c Release -r win-x64
@@ -70,6 +73,32 @@ jobs:
             Select-Object -First 1 |
             Copy-Item -Destination installer/payload/LICENSE.sing-box.txt
 
+      - name: Загрузка ByeDPI
+        shell: pwsh
+        run: |
+          # Тег v0.17.3, а файл byedpi-17.3-...: ведущий «0.» в имени архива опущен
+          $short = $env:BYEDPI_VERSION -replace '^0\.', ''
+          $url = "https://github.com/hufrea/byedpi/releases/download/v$env:BYEDPI_VERSION/byedpi-$short-x86_64-w64.zip"
+          Invoke-WebRequest -Uri $url -OutFile byedpi.zip
+
+          $actual = (Get-FileHash byedpi.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $env:BYEDPI_SHA256) {
+            throw "Хеш ByeDPI не совпал: ожидался $env:BYEDPI_SHA256, получен $actual"
+          }
+
+          Expand-Archive byedpi.zip -DestinationPath byedpi -Force
+
+          $ciadpi = Get-ChildItem byedpi -Filter ciadpi.exe -Recurse | Select-Object -First 1
+          if (-not $ciadpi) { throw "В архиве ByeDPI нет ciadpi.exe" }
+
+          # Только сам исполняемый файл: процессом управляет приложение
+          New-Item -ItemType Directory -Path installer/payload/byedpi -Force | Out-Null
+          Copy-Item $ciadpi.FullName -Destination installer/payload/byedpi
+
+          # MIT: уведомление об авторских правах обязано ехать с бинарником, в архиве его нет
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/hufrea/byedpi/v$env:BYEDPI_VERSION/LICENSE" `
+            -OutFile installer/payload/LICENSE.byedpi.txt
+
       - name: Установка Inno Setup
         shell: pwsh
         run: choco install innosetup -y --no-progress
@@ -100,6 +129,8 @@ jobs:
 
           Copy-Item installer/payload/core -Destination $out -Recurse
           Copy-Item installer/payload/LICENSE.sing-box.txt -Destination $out
+          Copy-Item installer/payload/byedpi -Destination $out -Recurse
+          Copy-Item installer/payload/LICENSE.byedpi.txt -Destination $out
 
           New-Item -ItemType Directory -Path dist -Force | Out-Null
           Compress-Archive -Path "$out/*" `

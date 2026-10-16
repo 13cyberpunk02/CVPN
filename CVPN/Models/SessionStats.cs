@@ -25,7 +25,7 @@ public sealed class SessionStats : ObservableObject
     {
         get;
         private set => Set(ref field, value);
-    } = "";
+    } = string.Empty;
 
     [JsonIgnore] public long Upload => _upload;
 

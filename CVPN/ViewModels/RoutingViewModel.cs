@@ -38,7 +38,6 @@ public sealed class RoutingViewModel : PageViewModel
         AddSet = new RelayCommand(AddRoutingProfile);
         RemoveSet = new RelayCommand(RemoveRoutingProfile, () => RoutingProfiles.Count > 1);
 
-        // Смена набора подменяет коллекцию правил целиком
         shell.PropertyChanged += OnShellChanged;
     }
 
@@ -65,14 +64,14 @@ public sealed class RoutingViewModel : PageViewModel
     {
         get;
         set => Set(ref field, value);
-    } = "";
+    } = string.Empty;
 
     /// <summary>Человеческое объяснение результата проверки.</summary>
     public string TestResult
     {
         get;
         private set => Set(ref field, value);
-    } = "";
+    } = string.Empty;
 
     /// <summary>Исход проверки - по нему подсвечивается результат.</summary>
     public RouteAction? TestOutcome
@@ -110,6 +109,7 @@ public sealed class RoutingViewModel : PageViewModel
         {
             RouteAction.Direct => Loc.T("Common_Direct"),
             RouteAction.Block => Loc.T("Routing_WillBeBlocked"),
+            RouteAction.ByeDpi => Loc.T("Common_ByeDpi"),
             _ => Loc.T("Common_ViaProxy")
         };
 
@@ -119,9 +119,6 @@ public sealed class RoutingViewModel : PageViewModel
 
         TestResult = $"{domain} - {outcome}: {reason}.";
 
-        // Часть правил проверить нечем: содержимое наборов и база geoip
-        // приложению недоступны. Честно называем их, а не делаем вид,
-        // что ответ окончательный.
         if (!match.IsCertain)
         {
             var byIp = match.Unknown.Where(r => r.Match == MatchKind.Geoip).ToList();
@@ -215,8 +212,10 @@ public sealed class RoutingViewModel : PageViewModel
 
     private void OnShellChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (nameof(MainViewModel.Rules) or nameof(MainViewModel.ActiveRouting))) return;
-        Raise(nameof(Rules));
-        Raise(nameof(ActiveRouting));
+        if (e.PropertyName is nameof(MainViewModel.Rules) or nameof(MainViewModel.ActiveRouting))
+        {
+            Raise(nameof(Rules));
+            Raise(nameof(ActiveRouting));
+        }
     }
 }

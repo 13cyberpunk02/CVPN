@@ -282,6 +282,15 @@
   <data name="Editor_WsPath" xml:space="preserve">
     <value>путь websocket</value>
   </data>
+  <data name="Editor_XhttpHost" xml:space="preserve">
+    <value>заголовок host для xhttp</value>
+  </data>
+  <data name="Editor_XhttpMode" xml:space="preserve">
+    <value>режим xhttp</value>
+  </data>
+  <data name="Editor_XhttpPath" xml:space="preserve">
+    <value>путь xhttp</value>
+  </data>
   <data name="Elevation_Cancelled" xml:space="preserve">
     <value>Подключение отменено: для TUN нужны права администратора</value>
   </data>
@@ -860,5 +869,131 @@
   </data>
   <data name="Unit_MBps" xml:space="preserve">
     <value>МБ/с</value>
+  </data>
+  <data name="Common_ByeDpi" xml:space="preserve">
+    <value>через ByeDPI</value>
+  </data>
+  <data name="Nav_ByeDpi" xml:space="preserve">
+    <value>ByeDPI</value>
+  </data>
+  <data name="ByeDpi_Subtitle" xml:space="preserve">
+    <value>Локальный помощник, который скрывает начало соединения от фильтрации провайдера. Сайты с действием «через ByeDPI» идут сразу в интернет через него, а НЕ через ваш прокси-сервер, поэтому его трафик они не расходуют.</value>
+  </data>
+  <data name="ByeDpi_Enable" xml:space="preserve">
+    <value>Использовать ByeDPI</value>
+  </data>
+  <data name="ByeDpi_EnableHint" xml:space="preserve">
+    <value>Запускается вместе с туннелем. Пока выключено, правила «через ByeDPI» идут через обычный прокси.</value>
+  </data>
+  <data name="ByeDpi_Path" xml:space="preserve">
+    <value>Путь к ciadpi.exe</value>
+  </data>
+  <data name="ByeDpi_PathHint" xml:space="preserve">
+    <value>ByeDPI ставится вместе с приложением, путь подставляется сам. Другой ciadpi.exe указывайте, только если нужна своя версия.</value>
+  </data>
+  <data name="ByeDpi_Args" xml:space="preserve">
+    <value>Аргументы</value>
+  </data>
+  <data name="ByeDpi_ArgsHint" xml:space="preserve">
+    <value>По умолчанию - аргументы из byedpi.bat официальной сборки под Windows. Адрес и порт подставляет приложение.</value>
+  </data>
+  <data name="ByeDpi_WillRun" xml:space="preserve">
+    <value>Будет запущено как</value>
+  </data>
+  <data name="ByeDpi_IgnoredNote" xml:space="preserve">
+    <value>Проигнорировано (приложение задаёт это само): {0}</value>
+  </data>
+  <data name="ByeDpi_Port" xml:space="preserve">
+    <value>Локальный порт</value>
+  </data>
+  <data name="ByeDpi_PortHint" xml:space="preserve">
+    <value>SOCKS5 только на 127.0.0.1. Порт должен отличаться от mixed и Clash API.</value>
+  </data>
+  <data name="ByeDpi_PortBusy" xml:space="preserve">
+    <value>Порт {0} уже занят самим CVPN.</value>
+  </data>
+  <data name="ByeDpi_BadPort" xml:space="preserve">
+    <value>Порт должен быть от 1 до 65535.</value>
+  </data>
+  <data name="ByeDpi_State" xml:space="preserve">
+    <value>Состояние</value>
+  </data>
+  <data name="ByeDpi_Stopped" xml:space="preserve">
+    <value>Остановлен</value>
+  </data>
+  <data name="ByeDpi_Starting" xml:space="preserve">
+    <value>Запускается…</value>
+  </data>
+  <data name="ByeDpi_Running" xml:space="preserve">
+    <value>Работает на 127.0.0.1:{0}</value>
+  </data>
+  <data name="ByeDpi_Crashed" xml:space="preserve">
+    <value>Неожиданно остановился (код {0})</value>
+  </data>
+  <data name="ByeDpi_Start" xml:space="preserve">
+    <value>Запустить</value>
+  </data>
+  <data name="ByeDpi_Stop" xml:space="preserve">
+    <value>Остановить</value>
+  </data>
+  <data name="ByeDpi_AddYoutube" xml:space="preserve">
+    <value>Пустить YouTube через ByeDPI</value>
+  </data>
+  <data name="ByeDpi_AddYoutubeHint" xml:space="preserve">
+    <value>Добавляет в текущий профиль правило geosite youtube → через ByeDPI</value>
+  </data>
+  <data name="ByeDpi_RuleAdded" xml:space="preserve">
+    <value>Правило добавлено: geosite youtube → через ByeDPI</value>
+  </data>
+  <data name="ByeDpi_RuleAddedDisabled" xml:space="preserve">
+    <value>Правило добавлено, но ByeDPI выключен: пока идёт через обычный прокси</value>
+  </data>
+  <data name="ByeDpi_PickExe" xml:space="preserve">
+    <value>Выберите ciadpi.exe</value>
+  </data>
+  <data name="ByeDpi_ExeFilter" xml:space="preserve">
+    <value>ByeDPI (*.exe)|*.exe|Все файлы (*.*)|*.*</value>
+  </data>
+  <data name="ByeDpi_NoExe" xml:space="preserve">
+    <value>ciadpi.exe не найден: проверьте путь на странице ByeDPI</value>
+  </data>
+  <data name="ByeDpi_StartFailed" xml:space="preserve">
+    <value>Не удалось запустить ciadpi: {0}</value>
+  </data>
+  <data name="ByeDpi_ArgIgnored" xml:space="preserve">
+    <value>аргумент проигнорирован, адрес и порт приложение задаёт само: {0}</value>
+  </data>
+  <data name="ByeDpi_NotListening" xml:space="preserve">
+    <value>ciadpi не начал слушать порт. Его вывод: {0}</value>
+  </data>
+  <data name="ByeDpi_NotListeningNoOutput" xml:space="preserve">
+    <value>ciadpi не начал слушать порт {0} и ничего не написал</value>
+  </data>
+  <data name="ByeDpi_TunTitle" xml:space="preserve">
+    <value>Важно: режим TUN</value>
+  </data>
+  <data name="ByeDpi_TunNote" xml:space="preserve">
+    <value>Всё выше относится к режиму TUN: ciadpi привязывается к реальному адаптеру, чтобы его трафик шёл мимо туннеля. Это опирается на то, как Windows маршрутизирует сокеты, привязанные к адресу, и не проверено на всех системах. Как проверить: подключитесь, откройте видео на YouTube и посмотрите страницу «Соединения». Если там есть соединения от ciadpi.exe, обход не сработал: --tlsrec всё равно поможет, а --split, --disorder, --oob и --fake, скорее всего, нет. Тогда используйте режим системного прокси.</value>
+  </data>
+  <data name="ByeDpi_PortInUse" xml:space="preserve">
+    <value>Порт {0} уже занят. Если это ciadpi, оставшийся после аварийного закрытия, завершите его в диспетчере задач или выберите другой порт.</value>
+  </data>
+  <data name="ByeDpi_BypassTun" xml:space="preserve">
+    <value>Обходить TUN для ciadpi</value>
+  </data>
+  <data name="ByeDpi_BypassTunHint" xml:space="preserve">
+    <value>В режиме TUN привязывает ciadpi к реальному сетевому адаптеру, чтобы его трафик шёл сразу в сеть, а не через туннель. Нужно для --split, --disorder и подобных.</value>
+  </data>
+  <data name="ByeDpi_BlockQuic" xml:space="preserve">
+    <value>Блокировать QUIC для этих сайтов</value>
+  </data>
+  <data name="ByeDpi_BlockQuicHint" xml:space="preserve">
+    <value>Браузеры предпочитают QUIC (UDP), где ByeDPI почти не помогает. Блокировка заставляет их перейти на обычный TCP.</value>
+  </data>
+  <data name="ByeDpi_NoAdapter" xml:space="preserve">
+    <value>не удалось найти реальный сетевой адаптер; ciadpi не привязан, и его трафик может попасть в туннель</value>
+  </data>
+  <data name="ByeDpi_BoundTo" xml:space="preserve">
+    <value>исходящие соединения привязаны к {0} (мимо туннеля)</value>
   </data>
 </root>

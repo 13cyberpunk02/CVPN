@@ -65,6 +65,7 @@ public sealed class MainViewModel : ObservableObject
         RoutingPage = new RoutingViewModel(this);
         ProfilesPage = new ProfilesViewModel(this);
         SettingsPage = new SettingsViewModel(this);
+        ByeDpiPage = new ByeDpiViewModel(this);
 
         SubscribeRules();
 
@@ -117,6 +118,7 @@ public sealed class MainViewModel : ObservableObject
     public LogsViewModel LogsPage { get; }
     public ProfilesViewModel ProfilesPage { get; }
     public SettingsViewModel SettingsPage { get; }
+    public ByeDpiViewModel ByeDpiPage { get; }
 
     /// <summary>Имя активного профиля для круга подключения.</summary>
     public string ActiveName => Active?.Name ?? Loc.T("Connection_NoProfile");
@@ -335,7 +337,14 @@ public sealed class MainViewModel : ObservableObject
 
         State = TunnelState.Connecting;
         Append("[cvpn] building configuration");
-
+        var byeDpiProblem = await ByeDpiPage.EnsureStartedAsync();
+        if (byeDpiProblem.Length > 0)
+        {
+            // Туннель не рушим: без ByeDPI пострадают только сайты по его правилам
+            Append($"[cvpn] ByeDPI: {byeDpiProblem}");
+            Notify(byeDpiProblem);
+        }
+        
         string configPath;
         try
         {
@@ -416,7 +425,9 @@ public sealed class MainViewModel : ObservableObject
 
         if (Settings.KillSwitch)
         {
-            var problem = await KillSwitch.EnableAsync(Settings.CorePath);
+            var problem = await KillSwitch.EnableAsync(
+                Settings.CorePath,
+                ConfigBuilder.ByeDpiActive(Settings) ? Settings.ByeDpiPath : null);
 
             if (problem.Length > 0)
             {
@@ -469,6 +480,7 @@ public sealed class MainViewModel : ObservableObject
 
     private async Task TeardownAsync()
     {
+        await ByeDpiPage.StopAsync();
         if (KillSwitch.IsActive)
         {
             var problem = await KillSwitch.DisableAsync();
@@ -867,7 +879,7 @@ public sealed class MainViewModel : ObservableObject
         line.Contains("configure tun interface", StringComparison.OrdinalIgnoreCase)
         || line.Contains("create adapter", StringComparison.OrdinalIgnoreCase);
 
-    private void Append(string line)
+    public void Append(string line)
     {
         if (string.IsNullOrWhiteSpace(line)) return;
 
