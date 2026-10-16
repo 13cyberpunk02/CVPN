@@ -31,6 +31,7 @@ and which get blocked.
 - [Kill switch](#kill-switch)
 - [Autostart](#autostart)
 - [Routing](#routing)
+- [ByeDPI](#byedpi)
 - [Connections](#connections)
 - [File locations](#file-locations)
 - [What goes into config.json](#what-goes-into-configjson)
@@ -46,7 +47,7 @@ and which get blocked.
 
 ## Features
 
-- VLESS+Reality, VLESS+WebSocket, AnyTLS and NaiveProxy
+- VLESS+Reality, VLESS+WebSocket, VLESS+XHTTP, AnyTLS and NaiveProxy
 - Import from a share link, from an existing `config.json`, or from a subscription
 - Export a profile as a link and a QR code
 - Routing rules: geosite, geoip, domain, suffix, keyword, process name
@@ -60,6 +61,8 @@ and which get blocked.
 - Tray icon, autostart, real-time core output
 - File logs kept for 7 days, crashes recorded with stack traces
 - Kill switch: traffic outside the tunnel is blocked by the firewall
+- ByeDPI (`ciadpi`) as a managed local helper, with a routing action to send chosen sites through it
+- Local traffic (`localhost`, `127.0.0.0/8`, `::1`, `.local`, `.lan`) is never sent to the proxy
 - Credentials encrypted with your Windows account key
 - English and Russian interface
 
@@ -74,7 +77,7 @@ Grab a build from the [releases page](https://github.com/13CyberPunk02/CVPN/rele
 | `CVPN-x.y.z-setup.exe` | installer: Program Files, service, shortcuts |
 | `CVPN-x.y.z-portable.zip` | portable build, just unpack it |
 
-Both bundle `sing-box`. The installer is about 50 MB and downloads the .NET
+Both bundle `sing-box` and ByeDPI. The installer is about 50 MB and downloads the .NET
 runtime if your system does not have it (~60 MB, once per machine). The
 portable build is self-contained: nothing to download, but it weighs ~200 MB.
 
@@ -119,6 +122,7 @@ means connecting, jade means connected, red means an error.
 ```
 vless://uuid@host:443?security=reality&pbk=<public_key>&sid=<short_id>&sni=www.google.com&flow=xtls-rprx-vision#Name
 vless://uuid@host:443?type=ws&security=tls&path=/ws&host=example.com#Name
+vless://uuid@host:443?type=xhttp&security=reality&pbk=<public_key>&sid=<short_id>&path=/&host=cdn.example.com&mode=auto#Name
 anytls://password@host:8443?sni=example.com#Name
 naive+https://user:password@host:443#Name
 ```
@@ -130,6 +134,26 @@ every proxy outbound at once), an array of outbound objects, and a single
 object. Anything that is not a supported protocol - `direct`, `selector`,
 `urltest` - is skipped silently, so you can feed it someone else's working
 config as is.
+
+### XHTTP needs a forked core
+
+**Upstream sing-box does not support the XHTTP transport.** It implements only
+`http`, `ws`, `quic`, `grpc` and `httpupgrade`; the pull request adding XHTTP
+was closed unmerged, and there is no plugin mechanism for transports.
+
+CVPN builds the configuration correctly, but you need a core build that has the
+transport - `sing-box-lx` or `sing-box-extended`, for example. Point at that
+binary in settings as usual.
+
+With the official core such a profile will not work, and you find out right
+away: the configuration check before launch returns the core's own error.
+
+Reality is optional for XHTTP - it is enabled when a public key is present and
+works over plain TLS otherwise. The XHTTP `host` header is separate from the
+SNI: providers often put a long parameter string there.
+
+Xray's older name for the transport is `splithttp`; links using it are accepted
+too.
 
 ### Subscription
 
@@ -375,7 +399,7 @@ everything else is set separately at the bottom of the page.
 | `rule_set · link` | URL of a rule set | `https://.../geosite-youtube.srs` |
 | `rule_set · file` | path to a file | `C:\rules\twitch.srs` |
 
-Actions: **through proxy**, **direct**, **block**.
+Actions: **through proxy**, **direct**, **block**, **through ByeDPI** (see [ByeDPI](#byedpi)).
 
 Order is controlled by the ▲ ▼ arrows on each rule. This is not cosmetic: the
 core takes the first match, so a rule above overrides everything below it. If
@@ -430,6 +454,67 @@ the path itself.
 
 On first launch two rules are created: ads (`geosite:category-ads-all`) blocked
 and Russian addresses (`geoip:ru`) direct.
+
+---
+
+## ByeDPI
+
+[ByeDPI](https://github.com/hufrea/byedpi) (`ciadpi`) is a small local SOCKS proxy
+that splits and distorts the start of a connection so an ISP's filtering fails
+to recognise the site. **The installer ships it** (the *ByeDPI* component, on by
+default): `ciadpi.exe` goes into `byedpi\` next to the app and the path is filled
+in automatically. To use it, turn on **Use ByeDPI** on the **ByeDPI** page.
+
+The page holds the path, the arguments (by default the ones from `byedpi.bat` in
+the official Windows build: `--split 1 --disorder 3+s --mod-http=h,d --auto=torst
+--tlsrec 1+s`) and the local port. Under the fields
+you see the exact command line that will be started.
+
+**Where the traffic goes.** Sites routed through ByeDPI go
+`app → core → ciadpi → straight to the internet` over your real adapter. They never
+enter your proxy server, so they use none of its traffic quota. That is the point
+of the feature.
+
+Then add a rule with the **through ByeDPI** action - or press
+**Route YouTube through ByeDPI** on the page, which adds `geosite:youtube`.
+Only that traffic goes through `ciadpi`; everything else follows its own rules.
+
+What the app does for you:
+
+- **The address and port are not yours to set.** `ciadpi` listens on `0.0.0.0`
+  by default, which opens the proxy to the whole local network. CVPN always
+  starts it with `--ip 127.0.0.1 --port N`; your own `--ip` / `--port` are
+  dropped and the page says so.
+- **No routing loop.** `ciadpi` makes its own outgoing connections, and in TUN
+  mode they would come back into the core and then into ByeDPI again. A
+  `process_name` rule sends the `ciadpi` process direct, above every other rule.
+  The process name is taken from the path you set.
+- **It starts and stops with the tunnel.** If it does not start listening on
+  its port within three seconds, the page shows its last output lines. A port
+  already held by a leftover process is reported rather than mistaken for success.
+- **It bypasses the tunnel in TUN mode.** `ciadpi` is started with
+  `--conn-ip <your real adapter's IPv4>`, so its outgoing sockets are bound to that
+  adapter and Windows sends them out of it instead of into TUN. Without this, the
+  core would catch them and re-send them, and tricks such as `--split` and
+  `--disorder` would be lost. Your own `--conn-ip` wins if you set one. The switch
+  is on the page, and it only applies when TUN is on.
+- **QUIC is blocked for these sites.** Browsers prefer QUIC (UDP 443), where ByeDPI
+  does very little. A rule rejecting UDP 443 is placed before each ByeDPI rule so
+  the browser falls back to regular TCP. Optional, on the page.
+- **The kill switch lets it through** (the program is allowed in the firewall
+  while the switch is on).
+- **While ByeDPI is off,** “through ByeDPI” rules go through the regular proxy,
+  so the config never references an outbound that does not exist.
+
+> **Check that the bypass worked.** Binding to the adapter relies on how Windows
+> routes sockets bound to an address, and has not been verified on every system.
+> Connect, open a YouTube video and look at the **Connections** page: connections
+> from `ciadpi.exe` should not be there. If they are, the bypass failed - then
+> `--tlsrec` still helps, but `--split`, `--disorder`, `--oob` and `--fake` likely
+> will not, and the system proxy mode is the reliable alternative. The adapter is
+> picked when `ciadpi` starts; after switching networks (for example Wi-Fi to cable),
+> reconnect. IPv6 requests are refused by `ciadpi` in this mode, so clients fall back
+> to IPv4.
 
 ---
 
@@ -545,8 +630,14 @@ The transport comes from the URL scheme in settings: `https://`, `tls://`,
 **Protocol detection before routing.** The first rule is `"action": "sniff"`,
 without which domain rules never match connections arriving from TUN by IP.
 
-**Private addresses always go direct.** The `ip_is_private` rule sits above the
-user rules.
+**Local traffic always goes direct, above the user rules.** Four built-in rules:
+loopback addresses (`127.0.0.0/8`, `::1/128`), the names `localhost`, `*.local`,
+`*.lan`, `*.home.arpa`, and `ip_is_private` for the rest of the private ranges.
+The name rule matters on its own: a request for `localhost` or `nas.lan` often
+arrives as a *name*, and `ip_is_private` can only match once the address is
+known. Without the name rule such a request would go to the remote server, which
+has no `localhost` of its own. The same names are resolved by the system
+resolver rather than the remote DNS.
 
 **The Clash API** listens on `127.0.0.1:9191` - that is where traffic counters,
 latency probes and selector switching come from.
@@ -576,13 +667,28 @@ router: match[3] rule_set=geosite-category-ru => route(direct)   your rule
 outbound/direct[direct]: outbound connection to 87.240.185.168:443
 ```
 
-Indices 0–2 are the built-in rules; yours start at three. If there is no match
+The first rules are built-in (protocol detection, DNS capture, the ByeDPI guard when it is on, loopback, local names, private addresses); yours come after them. If there is no match
 and the connection went to `proxy`, the domain simply is not in the set.
 
 A frequent cause: the site does not live in the zone you assume. `2ip.ru`, for
 example, moved to `2ip.io`, and a list of Russian sites contains no `.io`. It
 takes a minute to check - add a `domain_suffix` rule for that domain and see
 whether the outbound changes.
+
+### A local app on `localhost` is unreachable
+
+The built-in rules send loopback and local names direct, so this should not come
+from CVPN's routing. If it still happens, find out *which* request fails:
+
+1. Enable **Verbose log** and repeat the request. Look for the port in the log -
+   if the connection appears there with `route(proxy)`, send the lines to the
+   issue tracker; that would be a bug.
+2. If the request is not in the log at all, it never reached the core, and the
+   cause is outside CVPN: the app listens on a different address than the one
+   you open (`127.0.0.1` against `::1` - `localhost` may resolve to either), or
+   a firewall rule blocks it.
+3. With the **kill switch** on, local connections still work: loopback and the
+   local subnet are allowed.
 
 ### Connected, but no internet
 
@@ -714,7 +820,8 @@ dotnet run --project CVPN
 
 Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 Put `sing-box.exe` into `CVPN\bin\Debug\net10.0-windows\core\` or point at it in
-settings.
+settings. For ByeDPI, put `ciadpi.exe` into `...\net10.0-windows\byedpi\` or set
+the path on its page.
 
 The service is copied into a `service` subfolder next to the application
 automatically - that is the `CopyServiceOutput` target in its `csproj`. If
@@ -770,8 +877,10 @@ Tests run in CI on every push and pull request
 .\installer\build.ps1 -Version 1.0.0
 ```
 
-The script publishes both projects, downloads `sing-box`, lays out the files
-and invokes Inno Setup. The result is `dist\CVPN-1.0.0-setup.exe`.
+The script publishes both projects, downloads `sing-box` and ByeDPI, lays out
+the files and invokes Inno Setup. The ByeDPI archive is checked against a pinned
+SHA-256; to move to a new version run with `-ByeDpiVersion 0.x.y`, compare the
+hash the script prints with the release page and add it to `$byeDpiHashes`. The result is `dist\CVPN-1.0.0-setup.exe`.
 
 Requires [Inno Setup 6](https://jrsoftware.org/isdl.php) and the .NET 10 SDK.
 
@@ -856,15 +965,6 @@ otherwise the serialiser will try to write it too.
 
 ---
 
-## Roadmap
-
-- [x] Test a domain before saving a rule: show which rule will match
-- [x] Quick server switching from the tray menu
-- [x] Automatic daily subscription refresh
-- [x] Per-session statistics
-- [x] English interface
-- [ ] Code-signed installer
-
 Suggestions welcome in [issues](https://github.com/13CyberPunk02/CVPN/issues).
 
 ---
@@ -878,6 +978,10 @@ a separate process over the command line, does not link against it and contains
 none of its code, so this is aggregation rather than a derivative work. The
 core's licence text ships next to the binary (`LICENSE.sing-box.txt`) as GPL
 requires, and the build script does that automatically.
+
+ByeDPI is released under the MIT licence. Its archive does not include the
+licence text, so the build script downloads it and ships it as
+`LICENSE.byedpi.txt`.
 
 The sing-box licence separately forbids derivative works from using its name or
 implying an association without consent. CVPN therefore does not call itself a
