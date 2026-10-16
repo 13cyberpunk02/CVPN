@@ -40,7 +40,6 @@ and which get blocked.
 - [Tests](#tests)
 - [Building a release](#building-a-release)
 - [Architecture](#architecture)
-- [Roadmap](#roadmap)
 - [Licences](#licences)
 
 ---
