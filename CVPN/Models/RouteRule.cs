@@ -7,42 +7,15 @@ namespace CVPN.Models;
 
 public sealed class RouteRule : ObservableObject
 {
-    public MatchKind Match
-    {
-        get;
-        set
-        {
-            Set(ref field, value);
-            Raise(nameof(MatchLabel));
-            Raise(nameof(DisplayValue));
-        }
-    } = MatchKind.Geosite;
+    private MatchKind _match = MatchKind.Geosite;
+    private string _value = "";
+    private RouteAction _action = RouteAction.Proxy;
+    private bool _enabled = true;
 
-    public string Value
-    {
-        get;
-        set
-        {
-            Set(ref field, value);
-            Raise(nameof(DisplayValue));
-        }
-    } = string.Empty;
-
-    public RouteAction Action
-    {
-        get;
-        set
-        {
-            Set(ref field, value);
-            Raise(nameof(ActionLabel));
-        }
-    } = RouteAction.Proxy;
-
-    public bool Enabled
-    {
-        get;
-        set => Set(ref field, value);
-    } = true;
+    public MatchKind Match { get => _match; set { Set(ref _match, value); Raise(nameof(MatchLabel)); Raise(nameof(DisplayValue)); } }
+    public string Value { get => _value; set { Set(ref _value, value); Raise(nameof(DisplayValue)); } }
+    public RouteAction Action { get => _action; set { Set(ref _action, value); Raise(nameof(ActionLabel)); } }
+    public bool Enabled { get => _enabled; set => Set(ref _enabled, value); }
 
     [JsonIgnore]
     public string MatchLabel => Match switch
@@ -68,7 +41,7 @@ public sealed class RouteRule : ObservableObject
 
     private static string ShortName(string value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(value)) return "";
 
         var name = value.Split('/', '\\').LastOrDefault() ?? value;
         return name.EndsWith(".srs", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;

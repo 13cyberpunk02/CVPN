@@ -37,7 +37,7 @@ public sealed class AppSettings : ObservableObject
     {
         get;
         set => Set(ref field, value);
-    } = "8.8.8.8";
+    } = "77.88.8.8";
 
     /// <summary>Что делать с трафиком вне правил: true - через прокси, false - напрямую.</summary>
     public bool ProxyByDefault
@@ -53,11 +53,7 @@ public sealed class AppSettings : ObservableObject
         set => Set(ref field, value);
     } = 9191;
 
-    public string LogLevel
-    {
-        get => _logLevel;
-        set => Set(ref _logLevel, value);
-    }
+    public string LogLevel { get => _logLevel; set => Set(ref _logLevel, value); }
 
     /// <summary>
     /// Уровень debug заставляет ядро писать, какое правило сработало для каждого
@@ -99,7 +95,7 @@ public sealed class AppSettings : ObservableObject
     /// Ссылка на подписку. Шифруется вместе с остальными секретами: в панелях
     /// её обычно выдают с токеном доступа прямо в адресе.
     /// </summary>
-    [System.Text.Json.Serialization.JsonConverter(typeof(ProtectedStringConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(Core.ProtectedStringConverter))]
     public string SubscriptionUrl
     {
         get;
@@ -181,9 +177,11 @@ public sealed class AppSettings : ObservableObject
     /// <summary>Путь к ciadpi.exe. ByeDPI в приложение не вшит: его ставят отдельно.</summary>
     public string ByeDpiPath
     {
-        get;
+        // Пустое поле - значит «тот, что поставлен с приложением». Так путь
+        // подставляется независимо от того, что лежит в старом profiles.json
+        get => string.IsNullOrWhiteSpace(field) ? AppPaths.DetectByeDpiPath() : field;
         set => Set(ref field, value);
-    } = string.Empty;
+    } = AppPaths.DetectByeDpiPath();
 
     /// <summary>
     /// Аргументы ciadpi как их ввёл человек. Адрес и порт приложение
@@ -193,7 +191,7 @@ public sealed class AppSettings : ObservableObject
     {
         get;
         set => Set(ref field, value);
-    } = "--disorder 1 --auto=torst --tlsrec 1+s";
+    } = "-m1 -d3+s -s5+s -d9+s -r-6+se -r16+s -Qr -o1 -q1 -u2";
 
     /// <summary>Локальный SOCKS-порт ciadpi.</summary>
     public int ByeDpiPort

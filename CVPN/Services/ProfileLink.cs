@@ -14,6 +14,7 @@ public static class ProfileLink
     {
         ProtocolKind.VlessReality => Vless(p, reality: true),
         ProtocolKind.VlessWs => Vless(p, reality: false),
+        ProtocolKind.VlessXhttp => VlessXhttp(p),
         ProtocolKind.AnyTls => AnyTls(p),
         ProtocolKind.Naive => Naive(p),
         _ => ""
@@ -30,7 +31,7 @@ public static class ProfileLink
             Add(query, "pbk", p.PublicKey);
             Add(query, "sid", p.ShortId);
             Add(query, "flow", p.Flow);
-            query.Add("fp=chrome");
+            query.Add($"fp={TlsFingerprint.ForVless(p.Fingerprint)}");
         }
         else
         {
@@ -38,8 +39,35 @@ public static class ProfileLink
             query.Add("security=tls");
             Add(query, "path", p.Path);
             Add(query, "host", p.Sni);
+            query.Add($"fp={TlsFingerprint.ForVless(p.Fingerprint)}");
         }
 
+        Add(query, "sni", p.Sni);
+
+        return $"vless://{p.Uuid}@{p.Host}:{p.Port}?{string.Join('&', query)}{Fragment(p.Name)}";
+    }
+
+    private static string VlessXhttp(ServerProfile p)
+    {
+        var query = new List<string> { "type=xhttp" };
+
+        // reality определяется наличием ключа, как и при сборке конфигурации
+        if (!string.IsNullOrWhiteSpace(p.PublicKey))
+        {
+            query.Add("security=reality");
+            Add(query, "pbk", p.PublicKey);
+            Add(query, "sid", p.ShortId);
+            query.Add($"fp={TlsFingerprint.ForVless(p.Fingerprint)}");
+        }
+        else
+        {
+            query.Add("security=tls");
+            query.Add($"fp={TlsFingerprint.ForVless(p.Fingerprint)}");
+        }
+
+        Add(query, "path", p.Path);
+        Add(query, "host", p.HttpHost);
+        Add(query, "mode", p.Mode);
         Add(query, "sni", p.Sni);
 
         return $"vless://{p.Uuid}@{p.Host}:{p.Port}?{string.Join('&', query)}{Fragment(p.Name)}";
@@ -49,6 +77,7 @@ public static class ProfileLink
     {
         var query = new List<string>();
         Add(query, "sni", p.Sni);
+        Add(query, "fp", TlsFingerprint.Normalize(p.Fingerprint));
 
         var suffix = query.Count > 0 ? $"?{string.Join('&', query)}" : "";
 

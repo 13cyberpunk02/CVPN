@@ -10,10 +10,10 @@ namespace CVPN.Services;
 /// Собирает config.json под sing-box 1.12+.
 ///
 /// Что важно знать про эту версию:
-///  1. geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
-///  2. спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
-///  3. legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
-///  4. DNS-серверы описываются новым форматом с полями type/server.
+///  • geosite/geoip удалены - вместо них удалённые rule-set в формате .srs;
+///  • спецвыходы block/dns устарели - вместо них действия правил reject/hijack-dns;
+///  • legacy-поля inbound (sniff, domain_strategy) заменены действием sniff в маршрутах;
+///  • DNS-серверы описываются новым форматом с полями type/server.
 /// </summary>
 public static class ConfigBuilder
 {
@@ -97,6 +97,8 @@ public static class ConfigBuilder
                 ["outbounds"] = new JsonArray(servers.Select(x => (JsonNode)tags[x]!).ToArray()),
                 ["url"] = "https://cp.cloudflare.com/generate_204",
                 ["interval"] = "3m",
+                // Меняем сервер, только если новый заметно быстрее - иначе туннель
+                // будет прыгать между узлами с близкой задержкой
                 ["tolerance"] = 50
             });
         }
@@ -109,6 +111,7 @@ public static class ConfigBuilder
             ["tag"] = ProxyTag,
             ["outbounds"] = members,
             ["default"] = settings.AutoSelectFastest && hasAuto ? AutoTag : activeTag,
+            // Живые соединения не рвём: переключение затронет только новые
             ["interrupt_exist_connections"] = false
         });
 
@@ -116,6 +119,7 @@ public static class ConfigBuilder
 
         if (ByeDpiActive(settings))
         {
+            // Адрес жёстко петлевой: ciadpi запускается с тем же --ip, см. ByeDpiArguments
             outbounds.Add(new JsonObject
             {
                 ["type"] = "socks",
@@ -199,6 +203,7 @@ public static class ConfigBuilder
         return safe.Length > 0 ? safe : "server";
     }
 
+    // ===================== outbound =====================
 
     /// <summary>
     /// Адрес самого прокси-сервера обязан резолвиться мимо туннеля, иначе получается
@@ -234,7 +239,7 @@ public static class ConfigBuilder
         {
             ["enabled"] = true,
             ["server_name"] = string.IsNullOrWhiteSpace(p.Sni) ? p.Host : p.Sni,
-            ["utls"] = new JsonObject { ["enabled"] = true, ["fingerprint"] = "chrome" }
+            ["utls"] = Utls(TlsFingerprint.ForVless(p.Fingerprint))
         };
 
         if (reality)
@@ -250,12 +255,13 @@ public static class ConfigBuilder
         var outbound = new JsonObject
         {
             ["type"] = "vless",
-            ["server"] = p.Host,
+                ["server"] = p.Host,
             ["server_port"] = p.Port,
             ["uuid"] = p.Uuid,
             ["tls"] = tls
         };
 
+        // flow имеет смысл только с Reality/XTLS; на ws он сломает соединение
         if (reality && !string.IsNullOrWhiteSpace(p.Flow))
             outbound["flow"] = p.Flow;
 
@@ -289,7 +295,7 @@ public static class ConfigBuilder
         {
             ["enabled"] = true,
             ["server_name"] = string.IsNullOrWhiteSpace(p.Sni) ? p.Host : p.Sni,
-            ["utls"] = new JsonObject { ["enabled"] = true, ["fingerprint"] = "chrome" }
+            ["utls"] = Utls(TlsFingerprint.ForVless(p.Fingerprint))
         };
 
         if (!string.IsNullOrWhiteSpace(p.PublicKey))
@@ -309,6 +315,7 @@ public static class ConfigBuilder
             ["mode"] = string.IsNullOrWhiteSpace(p.Mode) ? "auto" : p.Mode
         };
 
+        // Host у XHTTP отдельный от SNI и часто содержит длинную строку
         if (!string.IsNullOrWhiteSpace(p.HttpHost)) transport["host"] = p.HttpHost;
 
         return new JsonObject
@@ -322,7 +329,27 @@ public static class ConfigBuilder
         };
     }
 
-    private static JsonObject AnyTls(ServerProfile p) => new()
+    private static JsonObject Utls(string fingerprint) => new()
+    {
+        ["enabled"] = true,
+        ["fingerprint"] = fingerprint
+    };
+
+    /// <summary>
+    /// AnyTLS получает uTLS только по явному выбору: раньше его не было вовсе,
+    /// и включать молча - значит менять поведение рабочих профилей.
+    /// </summary>
+    private static JsonObject AnyTls(ServerProfile p)
+    {
+        var outbound = AnyTlsBase(p);
+
+        if (TlsFingerprint.Normalize(p.Fingerprint) is { Length: > 0 } fp)
+            outbound["tls"]!["utls"] = Utls(fp);
+
+        return outbound;
+    }
+
+    private static JsonObject AnyTlsBase(ServerProfile p) => new()
     {
         ["type"] = "anytls",
         ["server"] = p.Host,
@@ -357,6 +384,7 @@ public static class ConfigBuilder
         }
     };
 
+    // ===================== inbounds =====================
 
     private static JsonArray BuildInbounds(AppSettings s)
     {
@@ -388,7 +416,6 @@ public static class ConfigBuilder
         return inbounds;
     }
 
-
     private static JsonObject BuildRoute(
         List<RouteRule> rules, RoutingProfile routing, AppSettings settings,
         JsonArray ruleSets, HashSet<string> seen)
@@ -409,7 +436,6 @@ public static class ConfigBuilder
                 ["outbound"] = DirectTag
             });
         }
-
         routeRules.Add(new JsonObject
         {
             ["ip_cidr"] = new JsonArray(LoopbackCidrs.Select(x => (JsonNode)x).ToArray()),
@@ -715,6 +741,8 @@ public static class ConfigBuilder
                 break;
             }
             default:
+                // geosite и rule_set по ссылке - скачиваются, на старте их ещё нет.
+                // geoip и process_name на этапе резолва неприменимы в принципе.
                 return null;
         }
 

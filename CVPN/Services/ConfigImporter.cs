@@ -99,6 +99,10 @@ public static class ConfigImporter
 
         if (profile.Host.Length == 0) return null;
 
+        if (tls.ValueKind == JsonValueKind.Object
+            && tls.TryGetProperty("utls", out var utls) && utls.ValueKind == JsonValueKind.Object)
+            profile.Fingerprint = TlsFingerprint.Normalize(Str(utls, "fingerprint"));
+
         switch (type)
         {
             case "vless":
@@ -119,10 +123,19 @@ public static class ConfigImporter
                 else
                 {
                     profile.Protocol = ProtocolKind.VlessWs;
-                    if (e.TryGetProperty("transport", out var tr) && tr.ValueKind == JsonValueKind.Object)
-                        profile.Path = Str(tr, "path") ?? "/";
                 }
 
+                if (e.TryGetProperty("transport", out var tr) && tr.ValueKind == JsonValueKind.Object)
+                {
+                    profile.Path = Str(tr, "path") ?? "/";
+
+                    if (Str(tr, "type") == "xhttp")
+                    {
+                        profile.Protocol = ProtocolKind.VlessXhttp;
+                        profile.HttpHost = Str(tr, "host") ?? "";
+                        profile.Mode = Str(tr, "mode") ?? "auto";
+                    }
+                }
                 break;
 
             case "anytls":
@@ -137,7 +150,6 @@ public static class ConfigImporter
                 break;
 
             default:
-                // direct, block, selector, urltest и прочее - не профили
                 return null;
         }
 
@@ -146,13 +158,13 @@ public static class ConfigImporter
 
     private static string? Str(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v)
-                                            && v.ValueKind == JsonValueKind.String
+        && v.ValueKind == JsonValueKind.String
             ? v.GetString()
             : null;
 
     private static int? Int(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v)
-                                            && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var i)
+        && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var i)
             ? i
             : null;
 }

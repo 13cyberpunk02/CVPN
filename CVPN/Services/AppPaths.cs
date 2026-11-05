@@ -23,6 +23,14 @@ public static class AppPaths
     public static string DefaultCorePath =>
         Path.Combine(AppContext.BaseDirectory, "core", "sing-box.exe");
 
+    /// <summary>ciadpi из установщика: лежит рядом с приложением, в byedpi\.</summary>
+    public static string BundledByeDpiPath =>
+        Path.Combine(AppContext.BaseDirectory, "byedpi", "ciadpi.exe");
+
+    /// <summary>Путь к поставленному с приложением ciadpi или пустая строка, если его нет.</summary>
+    public static string DetectByeDpiPath() =>
+        File.Exists(BundledByeDpiPath) ? BundledByeDpiPath : "";
+
     public static void EnsureCreated()
     {
         Directory.CreateDirectory(DataDir);

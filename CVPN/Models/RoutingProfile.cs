@@ -26,7 +26,8 @@ public sealed class RoutingProfile : ObservableObject
 
     public ObservableCollection<RouteRule> Rules { get; set; } = [];
 
-    [JsonIgnore] public int ActiveRuleCount => Rules.Count(r => r.Enabled);
+    [JsonIgnore]
+    public int ActiveRuleCount => Rules.Count(r => r.Enabled);
 
     public override string ToString() => Name;
 }

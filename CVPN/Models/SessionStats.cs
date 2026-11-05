@@ -27,13 +27,17 @@ public sealed class SessionStats : ObservableObject
         private set => Set(ref field, value);
     } = string.Empty;
 
-    [JsonIgnore] public long Upload => _upload;
+    [JsonIgnore]
+    public long Upload => _upload;
 
-    [JsonIgnore] public long Download => _download;
+    [JsonIgnore]
+    public long Download => _download;
 
-    [JsonIgnore] public string UploadLabel => ByteFormat.Size(_upload);
+    [JsonIgnore]
+    public string UploadLabel => ByteFormat.Size(_upload);
 
-    [JsonIgnore] public string DownloadLabel => ByteFormat.Size(_download);
+    [JsonIgnore]
+    public string DownloadLabel => ByteFormat.Size(_download);
 
     [JsonIgnore]
     public string PeakLabel
@@ -82,7 +86,6 @@ public sealed class SessionStats : ObservableObject
         _upload += upload;
         _download += download;
 
-        // Пик считаем по секундным отсчётам: он и есть скорость канала
         if (upload > _peakUpload) _peakUpload = upload;
         if (download > _peakDownload) _peakDownload = download;
 

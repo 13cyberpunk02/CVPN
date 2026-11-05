@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:CVPN.Models"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=models:ServerProfile, IsDesignTimeCreatable=False}"
-        Title="Профиль" Width="520" SizeToContent="Height" MinHeight="420"
+        Title="{loc:T Editor_Window}" Width="520" SizeToContent="Height" MinHeight="420"
         Background="{StaticResource Bg}" WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize" ShowInTaskbar="False">
 
@@ -27,6 +27,7 @@
                       SelectionChanged="OnProtocolChanged">
                 <ComboBoxItem Content="VLESS · Reality" />
                 <ComboBoxItem Content="VLESS · WebSocket + TLS" />
+                <ComboBoxItem Content="VLESS · XHTTP" />
                 <ComboBoxItem Content="AnyTLS" />
                 <ComboBoxItem Content="NaiveProxy" />
             </ComboBox>
@@ -60,6 +61,15 @@
             <TextBlock Text="{loc:T Editor_Sni}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
             <TextBox Style="{StaticResource Input}" Tag="www.google.com"
                      Text="{Binding Sni, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!-- ===== отпечаток TLS ===== -->
+            <StackPanel x:Name="FingerprintGroup">
+                <TextBlock Text="{loc:T Editor_Fingerprint}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+                <ComboBox x:Name="FingerprintBox" Style="{StaticResource Select}"
+                          SelectionChanged="OnFingerprintChanged" />
+                <TextBlock Text="{loc:T Editor_FingerprintHint}" Style="{StaticResource T.Caption}"
+                           Margin="0,6,0,0" TextWrapping="Wrap" />
+            </StackPanel>
 
             <!-- ===== VLESS ===== -->
             <StackPanel x:Name="VlessGroup">
@@ -97,6 +107,26 @@
                 <TextBlock Text="{loc:T Editor_WsPath}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
                 <TextBox Style="{StaticResource Input}" Tag="/ws"
                          Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+
+            <!-- ===== XHTTP ===== -->
+            <StackPanel x:Name="XhttpGroup">
+                <TextBlock Text="{loc:T Editor_XhttpPath}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+                <TextBox Style="{StaticResource Input}" Tag="/"
+                         Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="{loc:T Editor_XhttpHost}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+                <TextBox Style="{StaticResource Input}" Tag="example.com"
+                         Text="{Binding HttpHost, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="{loc:T Editor_XhttpMode}" Style="{StaticResource T.Label}" Margin="0,14,0,7" />
+                <ComboBox x:Name="ModeBox" Style="{StaticResource Select}"
+                          SelectionChanged="OnModeChanged">
+                    <ComboBoxItem Content="auto" />
+                    <ComboBoxItem Content="packet-up" />
+                    <ComboBoxItem Content="stream-up" />
+                    <ComboBoxItem Content="stream-one" />
+                </ComboBox>
             </StackPanel>
 
             <!-- ===== логин ===== -->

@@ -42,8 +42,7 @@ public static class LinkParser
             return false;
         }
     }
-
-    // vless://uuid@host:port?type=tcp&security=reality&pbk=…&sid=…&sni=…&flow=…#Имя
+    
     private static ServerProfile ParseVless(string link)
     {
         var uri = new Uri(link);
@@ -64,8 +63,13 @@ public static class LinkParser
             ShortId = q["sid"] ?? "",
             Flow = q["flow"] ?? "",
             Path = q["path"] ?? "/",
-            Protocol = isReality
-                ? ProtocolKind.VlessReality
+            HttpHost = q["host"] ?? "",
+            Mode = q["mode"] ?? "auto",
+            Fingerprint = TlsFingerprint.Normalize(q["fp"]),
+            
+            Protocol = transport.Equals("xhttp", StringComparison.OrdinalIgnoreCase)
+                       || transport.Equals("splithttp", StringComparison.OrdinalIgnoreCase)
+                ? ProtocolKind.VlessXhttp
                 : transport.Equals("ws", StringComparison.OrdinalIgnoreCase)
                     ? ProtocolKind.VlessWs
                     : ProtocolKind.VlessReality
@@ -76,8 +80,7 @@ public static class LinkParser
 
         return profile;
     }
-
-    // anytls://password@host:port?sni=…#Имя
+    
     private static ServerProfile ParseAnyTls(string link)
     {
         var uri = new Uri(link);
@@ -90,11 +93,11 @@ public static class LinkParser
             Port = uri.Port > 0 ? uri.Port : 443,
             Password = Uri.UnescapeDataString(uri.UserInfo),
             Sni = q["sni"] ?? uri.Host,
+            Fingerprint = TlsFingerprint.Normalize(q["fp"]),
             Protocol = ProtocolKind.AnyTls
         };
     }
 
-    // naive+https://user:pass@host:port#Имя
     private static ServerProfile ParseNaive(string link)
     {
         var uri = new Uri(link["naive+".Length..]);

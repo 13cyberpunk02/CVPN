@@ -6,71 +6,50 @@ namespace CVPN.Models;
 
 public sealed class ServerProfile : ObservableObject
 {
+    private string _name = "";
+    private string _host = "";
+    private int _port = 443;
+    private ProtocolKind _protocol = ProtocolKind.VlessReality;
+    private int _latencyMs = -1;
+    private bool _isActive;
+
     public string Name
     {
-        get;
-        set
-        {
-            Set(ref field, value);
-            Raise(nameof(CountryCode));
-            Raise(nameof(FlagImage));
-        }
-    } = string.Empty;
-
-    public string Host
-    {
-        get;
-        set => Set(ref field, value);
-    } = string.Empty;
-
-    public int Port
-    {
-        get;
-        set => Set(ref field, value);
-    } = 443;
-
-    public ProtocolKind Protocol
-    {
-        get;
-        set
-        {
-            Set(ref field, value);
-            Raise(nameof(ProtocolLabel));
-        }
-    } = ProtocolKind.VlessReality;
+        get => _name;
+        set { Set(ref _name, value); Raise(nameof(CountryCode)); Raise(nameof(FlagImage)); }
+    }
+    public string Host { get => _host; set => Set(ref _host, value); }
+    public int Port { get => _port; set => Set(ref _port, value); }
+    public ProtocolKind Protocol { get => _protocol; set { Set(ref _protocol, value); Raise(nameof(ProtocolLabel)); } }
 
     /// <summary>-1 означает «ещё не измеряли».</summary>
     [JsonIgnore]
     public int LatencyMs
     {
-        get;
-        set
-        {
-            Set(ref field, value);
-            Raise(nameof(LatencyLabel));
-            Raise(nameof(LatencyGrade));
-        }
-    } = -1;
+        get => _latencyMs;
+        set { Set(ref _latencyMs, value); Raise(nameof(LatencyLabel)); Raise(nameof(LatencyGrade)); }
+    }
 
     /// <summary>Состояние интерфейса, в файл не пишется.</summary>
     [JsonIgnore]
-    public bool IsActive
-    {
-        get;
-        set => Set(ref field, value);
-    }
+    public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
 
     [JsonConverter(typeof(ProtectedStringConverter))]
-    public string Uuid { get; set; } = string.Empty;
+    public string Uuid { get; set; } = "";
 
     [JsonConverter(typeof(ProtectedStringConverter))]
-    public string Password { get; set; } = string.Empty;
-
-    public string Sni { get; set; } = string.Empty;
-    public string PublicKey { get; set; } = string.Empty;
-    public string ShortId { get; set; } = string.Empty;
+    public string Password { get; set; } = "";
+    public string Sni { get; set; } = "";
+    public string PublicKey { get; set; } = "";
+    public string ShortId { get; set; } = "";
     public string Flow { get; set; } = "xtls-rprx-vision";
     public string Path { get; set; } = "/";
+
+    /// <summary>
+    /// Отпечаток TLS (uTLS): chrome, firefox, safari, ios, random… Пусто - по умолчанию:
+    /// для VLESS это chrome, для AnyTLS uTLS не включается. См. <c>TlsFingerprint</c>.
+    /// </summary>
+    public string Fingerprint { get; set; } = "";
 
     /// <summary>
     /// Заголовок Host для XHTTP. Отдельно от адреса сервера и от SNI:
@@ -80,19 +59,19 @@ public sealed class ServerProfile : ObservableObject
 
     /// <summary>Режим XHTTP: auto, packet-up, stream-up, stream-one.</summary>
     public string Mode { get; set; } = "auto";
-
-    public string Username { get; set; } = string.Empty;
+    public string Username { get; set; } = "";
 
     /// <summary>
     /// Ссылка подписки, из которой пришёл профиль. Пусто - создан вручную.
     /// По этому признаку обновление подписки заменяет только свои профили
     /// и не трогает добавленные руками.
     /// </summary>
-    public string Subscription { get; set; } = string.Empty;
+    public string Subscription { get; set; } = "";
 
-    [JsonIgnore] public string Endpoint => $"{Host}:{Port}";
+    [JsonIgnore]
+    public string Endpoint => $"{Host}:{Port}";
 
-    private string _countryCode = string.Empty;
+    private string _countryCode = "";
 
     /// <summary>
     /// Двухбуквенный код страны: заданный вручную либо определённый по названию.
@@ -144,7 +123,7 @@ public sealed class ServerProfile : ObservableObject
         var head = Host.Split('.', '-').FirstOrDefault() ?? "";
         if (head.Length == 2 && head.All(char.IsLetter)) return head.ToUpperInvariant();
 
-        return string.Empty;
+        return "";
     }
 
     private static readonly (string Name, string Code)[] Countries =
@@ -177,7 +156,8 @@ public sealed class ServerProfile : ObservableObject
         _ => "-"
     };
 
-    [JsonIgnore] public string LatencyLabel => LatencyMs < 0 ? "-" : $"{LatencyMs} ms";
+    [JsonIgnore]
+    public string LatencyLabel => LatencyMs < 0 ? "-" : $"{LatencyMs} ms";
 
     /// <summary>Качество канала для подсветки: unknown · good · fair · poor · dead.</summary>
     [JsonIgnore]

@@ -996,4 +996,17 @@
   <data name="ByeDpi_BoundTo" xml:space="preserve">
     <value>исходящие соединения привязаны к {0} (мимо туннеля)</value>
   </data>
+  <data name="Editor_Fingerprint" xml:space="preserve">
+    <value>Отпечаток TLS · fp</value>
+  </data>
+  <data name="Editor_FingerprintHint" xml:space="preserve">
+    <value>Как соединение выглядит для наблюдателя. Берётся из ссылки, если там есть fp=. Если с одним отпечатком сервер перестал подключаться, попробуйте другой.</value>
+  </data>
+  <data name="Editor_FingerprintDefault" xml:space="preserve">
+    <value>по умолчанию ({0})</value>
+  </data>
+  <data name="Editor_FingerprintNone" xml:space="preserve">
+    <value>по умолчанию (без uTLS)</value>
+  </data>
 </root>
+
