@@ -40,6 +40,7 @@ and which get blocked.
 - [Tests](#tests)
 - [Building a release](#building-a-release)
 - [Architecture](#architecture)
+- [Roadmap](#roadmap)
 - [Licences](#licences)
 
 ---
@@ -170,6 +171,22 @@ server is restored by name.
 public key, short id and flow for Reality; UUID and path for WebSocket; a
 password for AnyTLS; a login and password for NaiveProxy. Validation checks the
 UUID format and the port range before saving.
+
+### TLS fingerprint
+
+The `fp` value from a link (or `tls.utls.fingerprint` from an imported config) is
+kept with the profile and goes into the config as is. It can be changed in the
+profile editor: `chrome`, `firefox`, `safari`, `edge`, `ios`, `android`, `360`,
+`qq`, `random` (one real browser picked at core start) and `randomized`
+(a generated ClientHello).
+
+Without a value VLESS uses `chrome`, as before, and AnyTLS goes without uTLS.
+An unknown value from a link is ignored rather than passed on: the core would
+reject the whole config. NaiveProxy has no such setting - its TLS comes from
+Chromium itself.
+
+Which fingerprint works best depends on the network and changes over time. If a
+server stops connecting, trying another fingerprint is a cheap first step.
 
 ### Export
 
@@ -963,6 +980,15 @@ Models are serialised to JSON, so every computed property needs `[JsonIgnore]` -
 otherwise the serialiser will try to write it too.
 
 ---
+
+## Roadmap
+
+- [x] Test a domain before saving a rule: show which rule will match
+- [x] Quick server switching from the tray menu
+- [x] Automatic daily subscription refresh
+- [x] Per-session statistics
+- [x] English interface
+- [ ] Code-signed installer - applying to [SignPath Foundation](https://signpath.org)
 
 Suggestions welcome in [issues](https://github.com/13CyberPunk02/CVPN/issues).
 
