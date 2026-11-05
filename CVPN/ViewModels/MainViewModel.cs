@@ -422,6 +422,7 @@ public sealed class MainViewModel : ObservableObject
         _stats = new ClashApiClient(Settings.ClashApiPort);
         _stats.TrafficReceived += OnTraffic;
         _stats.Start();
+        await ApplySelectionAsync();
 
         if (Settings.KillSwitch)
         {
@@ -795,6 +796,36 @@ public sealed class MainViewModel : ObservableObject
                    "to connections only, not to DNS: those domains resolve through the tunnel. " +
                    "For geo-balanced sites add a domain rule.");
         }
+    }
+    
+    /// <summary>
+    /// cache_file запоминает выбор селектора между запусками, и ядро берёт его
+    /// вместо default из конфига. Поэтому сервер выбирается явно, когда Clash API
+    /// уже поднят, и в журнал пишется то, что реально выбрано.
+    /// </summary>
+    private async Task ApplySelectionAsync()
+    {
+        if (_stats is null || Active is null) return;
+
+        var tag = Settings.AutoSelectFastest && Profiles.Count > 1
+            ? ConfigBuilder.AutoTag
+            : ConfigBuilder.BuildTags([.. Profiles]).GetValueOrDefault(Active);
+
+        if (tag is null) return;
+
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            if (await _stats.SelectAsync(tag))
+            {
+                var now = await _stats.GetSelectedAsync();
+                Append($"[cvpn] селектор: {now ?? tag}");
+                return;
+            }
+
+            await Task.Delay(300);
+        }
+
+        Append($"[cvpn] не удалось выбрать {Active.Name} через Clash API: ядро может использовать сохранённый выбор");
     }
 
     /// <summary>
