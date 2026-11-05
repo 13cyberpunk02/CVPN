@@ -1008,4 +1008,16 @@ Restart CVPN now?</value>
   <data name="Editor_FingerprintNone" xml:space="preserve">
     <value>default (no uTLS)</value>
   </data>
+  <data name="Settings_StrictRoute" xml:space="preserve">
+    <value>Strict routing (TUN)</value>
+  </data>
+  <data name="Settings_StrictRouteHint" xml:space="preserve">
+    <value>Blocks traffic that tries to go around the tunnel. If local apps (for example a dev server on localhost) do not open while connected, try turning this off and reconnect.</value>
+  </data>
+  <data name="Settings_TunIpv6" xml:space="preserve">
+    <value>IPv6 on the TUN adapter</value>
+  </data>
+  <data name="Settings_TunIpv6Hint" xml:space="preserve">
+    <value>Keeps localhost apps that listen on IPv6 (::1), such as Angular and Vite dev servers, reachable while connected. Internet traffic still goes over IPv4.</value>
+  </data>
 </root>

@@ -5,7 +5,7 @@ namespace CVPN.Services;
 public sealed class AppSettings : ObservableObject
 {
     private string _logLevel = "info";
-
+    
     /// <summary>Полный путь к sing-box.exe.</summary>
     public string CorePath
     {
@@ -37,7 +37,7 @@ public sealed class AppSettings : ObservableObject
     {
         get;
         set => Set(ref field, value);
-    } = "77.88.8.8";
+    } = "8.8.8.8";
 
     /// <summary>Что делать с трафиком вне правил: true - через прокси, false - напрямую.</summary>
     public bool ProxyByDefault
@@ -163,6 +163,29 @@ public sealed class AppSettings : ObservableObject
         get;
         set => Set(ref field, value);
     }
+
+    /// <summary>
+    /// strict_route у TUN. Защищает от утечек мимо туннеля, но на Windows ставит
+    /// фильтры на уровне системы, и под ними могут перестать открываться
+    /// локальные сервисы. Выключатель - для диагностики и обхода.
+    /// </summary>
+    public bool StrictRoute
+    {
+        get;
+        set => Set(ref field, value);
+    } = true;
+
+    /// <summary>
+    /// Дать TUN-адаптеру IPv6-адрес. Без него строгая маршрутизация считает IPv6
+    /// неподдерживаемым и глушит его целиком, вместе с ::1 - а на ::1 по умолчанию
+    /// слушают dev-серверы Node (Angular, Vite и т. п.). Сам IPv6-интернет при этом
+    /// отклоняется правилом маршрута, так что трафик идёт по IPv4, как и раньше.
+    /// </summary>
+    public bool TunIpv6
+    {
+        get;
+        set => Set(ref field, value);
+    } = true;
 
     /// <summary>
     /// Запускать ByeDPI вместе с туннелем. Правила «Через ByeDPI» без этого

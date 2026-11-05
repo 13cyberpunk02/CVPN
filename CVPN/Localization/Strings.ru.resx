@@ -1008,5 +1008,16 @@
   <data name="Editor_FingerprintNone" xml:space="preserve">
     <value>по умолчанию (без uTLS)</value>
   </data>
+  <data name="Settings_StrictRoute" xml:space="preserve">
+    <value>Строгая маршрутизация (TUN)</value>
+  </data>
+  <data name="Settings_StrictRouteHint" xml:space="preserve">
+    <value>Блокирует трафик в обход туннеля. Если при подключении не открываются локальные приложения (например, dev-сервер на localhost), попробуйте выключить и переподключиться.</value>
+  </data>
+  <data name="Settings_TunIpv6" xml:space="preserve">
+    <value>IPv6 на адаптере TUN</value>
+  </data>
+  <data name="Settings_TunIpv6Hint" xml:space="preserve">
+    <value>Чтобы при подключении открывались локальные приложения, которые слушают IPv6 (::1), - например, dev-серверы Angular и Vite. Интернет-трафик по-прежнему идёт по IPv4.</value>
+  </data>
 </root>
-

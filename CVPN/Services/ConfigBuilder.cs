@@ -38,6 +38,9 @@ public static class ConfigBuilder
     /// <summary>Адреса петли: трафик к собственной машине не должен покидать её никогда.</summary>
     public static readonly string[] LoopbackCidrs = ["127.0.0.0/8", "::1/128"];
 
+    /// <summary>IPv6-адрес TUN из официального примера sing-box (ULA, в интернет не маршрутизируется).</summary>
+    public const string TunIpv6Address = "fdfe:dcba:9876::1/126";
+
     /// <summary>ByeDPI участвует в конфиге, только если включён и указан файл.</summary>
     public static bool ByeDpiActive(AppSettings s) =>
         s.ByeDpiEnabled && !string.IsNullOrWhiteSpace(s.ByeDpiPath);
@@ -97,8 +100,6 @@ public static class ConfigBuilder
                 ["outbounds"] = new JsonArray(servers.Select(x => (JsonNode)tags[x]!).ToArray()),
                 ["url"] = "https://cp.cloudflare.com/generate_204",
                 ["interval"] = "3m",
-                // Меняем сервер, только если новый заметно быстрее - иначе туннель
-                // будет прыгать между узлами с близкой задержкой
                 ["tolerance"] = 50
             });
         }
@@ -111,7 +112,6 @@ public static class ConfigBuilder
             ["tag"] = ProxyTag,
             ["outbounds"] = members,
             ["default"] = settings.AutoSelectFastest && hasAuto ? AutoTag : activeTag,
-            // Живые соединения не рвём: переключение затронет только новые
             ["interrupt_exist_connections"] = false
         });
 
@@ -119,7 +119,6 @@ public static class ConfigBuilder
 
         if (ByeDpiActive(settings))
         {
-            // Адрес жёстко петлевой: ciadpi запускается с тем же --ip, см. ByeDpiArguments
             outbounds.Add(new JsonObject
             {
                 ["type"] = "socks",
@@ -203,8 +202,6 @@ public static class ConfigBuilder
         return safe.Length > 0 ? safe : "server";
     }
 
-    // ===================== outbound =====================
-
     /// <summary>
     /// Адрес самого прокси-сервера обязан резолвиться мимо туннеля, иначе получается
     /// замкнутый круг. В 1.12+ это делается полем domain_resolver на outbound'е -
@@ -255,13 +252,12 @@ public static class ConfigBuilder
         var outbound = new JsonObject
         {
             ["type"] = "vless",
-                ["server"] = p.Host,
+            ["server"] = p.Host,
             ["server_port"] = p.Port,
             ["uuid"] = p.Uuid,
             ["tls"] = tls
         };
-
-        // flow имеет смысл только с Reality/XTLS; на ws он сломает соединение
+        
         if (reality && !string.IsNullOrWhiteSpace(p.Flow))
             outbound["flow"] = p.Flow;
 
@@ -314,8 +310,7 @@ public static class ConfigBuilder
             ["path"] = string.IsNullOrWhiteSpace(p.Path) ? "/" : p.Path,
             ["mode"] = string.IsNullOrWhiteSpace(p.Mode) ? "auto" : p.Mode
         };
-
-        // Host у XHTTP отдельный от SNI и часто содержит длинную строку
+        
         if (!string.IsNullOrWhiteSpace(p.HttpHost)) transport["host"] = p.HttpHost;
 
         return new JsonObject
@@ -384,8 +379,6 @@ public static class ConfigBuilder
         }
     };
 
-    // ===================== inbounds =====================
-
     private static JsonArray BuildInbounds(AppSettings s)
     {
         var inbounds = new JsonArray
@@ -405,10 +398,12 @@ public static class ConfigBuilder
             {
                 ["type"] = "tun",
                 ["tag"] = "tun-in",
-                ["address"] = new JsonArray { "172.19.0.1/30" },
+                ["address"] = s.TunIpv6
+                    ? new JsonArray { "172.19.0.1/30", TunIpv6Address }
+                    : new JsonArray { "172.19.0.1/30" },
                 ["mtu"] = 9000,
                 ["auto_route"] = true,
-                ["strict_route"] = true,
+                ["strict_route"] = s.StrictRoute,
                 ["stack"] = "mixed"
             });
         }
@@ -436,6 +431,7 @@ public static class ConfigBuilder
                 ["outbound"] = DirectTag
             });
         }
+        
         routeRules.Add(new JsonObject
         {
             ["ip_cidr"] = new JsonArray(LoopbackCidrs.Select(x => (JsonNode)x).ToArray()),
@@ -450,11 +446,16 @@ public static class ConfigBuilder
 
         routeRules.Add(new JsonObject { ["ip_is_private"] = true, ["outbound"] = DirectTag });
 
+        if (settings is { TunEnabled: true, TunIpv6: true })
+        {
+            routeRules.Add(new JsonObject { ["ip_version"] = 6, ["action"] = "reject" });
+        }
+
         foreach (var rule in rules)
         {
             var node = ToRouteRule(rule, ruleSets, seen, byeDpi);
             if (node is null) continue;
-
+            
             if (byeDpi && settings.ByeDpiBlockQuic && rule.Action == RouteAction.ByeDpi)
                 routeRules.Add(QuicTwin(node));
 
@@ -469,7 +470,7 @@ public static class ConfigBuilder
             ["auto_detect_interface"] = true,
             ["default_domain_resolver"] = "dns-local"
         };
-
+        
         if (byeDpi) route["find_process"] = true;
 
         return route;
@@ -530,7 +531,7 @@ public static class ConfigBuilder
             default:
                 return null;
         }
-
+        
         if (rule.Action == RouteAction.Block)
             node["action"] = "reject";
         else
@@ -741,8 +742,6 @@ public static class ConfigBuilder
                 break;
             }
             default:
-                // geosite и rule_set по ссылке - скачиваются, на старте их ещё нет.
-                // geoip и process_name на этапе резолва неприменимы в принципе.
                 return null;
         }
 
