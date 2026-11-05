@@ -115,12 +115,16 @@ public static class TestData
     {
         var rules = config.GetProperty("route").GetProperty("rules").EnumerateArray().ToList();
         var border = rules.FindIndex(r => r.TryGetProperty("ip_is_private", out _));
-        return [.. rules.Skip(border + 1)];
+
+        // Сразу за ним может стоять служебный отказ внешнему IPv6
+        if (border + 1 < rules.Count && rules[border + 1].TryGetProperty("ip_version", out _)) border++;
+
+        return rules.Skip(border + 1).ToList();
     }
 
     /// <summary>DNS-правила без встроенного первого - «локальные имена через системный резолвер».</summary>
     public static List<JsonElement> UserDnsRules(this JsonElement config) =>
-        [.. config.GetProperty("dns").GetProperty("rules").EnumerateArray().Skip(1)];
+        config.GetProperty("dns").GetProperty("rules").EnumerateArray().Skip(1).ToList();
 
     public static string? Str(this JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) ? value.GetString() : null;

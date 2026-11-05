@@ -79,7 +79,9 @@ public class XhttpConfigTests
 
         Assert.Equal("auto", config.OutboundOfType("vless").GetProperty("transport").Str("mode"));
     }
-    
+
+    // ===================== локальный трафик =====================
+
     /// <summary>
     /// Запрос вида «localhost» или «nas.lan» приходит именем, и правило по
     /// ip_is_private на нём не срабатывает: адрес ещё не известен. Без явных
@@ -314,5 +316,91 @@ public class XhttpConfigTests
         var config = TestData.BuildConfig(routing: routing);
 
         Assert.Single(config.UserRouteRules());
+    }
+
+    // ===================== strict_route =====================
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Strict_route_берётся_из_настроек(bool strict)
+    {
+        var settings = TestData.Settings();
+        settings.StrictRoute = strict;
+
+        var config = TestData.BuildConfig(settings: settings);
+        var tun = config.GetProperty("inbounds").EnumerateArray().Single(i => i.Str("type") == "tun");
+
+        Assert.Equal(strict, tun.GetProperty("strict_route").GetBoolean());
+    }
+
+    [Fact]
+    public void Strict_route_по_умолчанию_включён()
+    {
+        Assert.True(new AppSettings().StrictRoute);
+    }
+
+    // ===================== IPv6 у TUN =====================
+
+    private static System.Text.Json.JsonElement Tun(System.Text.Json.JsonElement config) =>
+        config.GetProperty("inbounds").EnumerateArray().Single(i => i.Str("type") == "tun");
+
+    /// <summary>
+    /// Без IPv6 у TUN строгая маршрутизация глушит IPv6 целиком, вместе с ::1,
+    /// где слушают dev-серверы Node.
+    /// </summary>
+    [Fact]
+    public void По_умолчанию_у_tun_есть_ipv6_адрес()
+    {
+        var addresses = Tun(TestData.BuildConfig()).GetProperty("address")
+            .EnumerateArray().Select(a => a.GetString()).ToList();
+
+        Assert.Contains("172.19.0.1/30", addresses);
+        Assert.Contains(ConfigBuilder.TunIpv6Address, addresses);
+    }
+
+    [Fact]
+    public void Ipv6_у_tun_можно_выключить()
+    {
+        var settings = TestData.Settings();
+        settings.TunIpv6 = false;
+
+        var config = TestData.BuildConfig(settings: settings);
+
+        Assert.Single(Tun(config).GetProperty("address").EnumerateArray());
+        Assert.DoesNotContain(config.GetProperty("route").GetProperty("rules").EnumerateArray(),
+            r => r.TryGetProperty("ip_version", out _));
+    }
+
+    /// <summary>Внешний IPv6 отклоняется сразу - чтобы приложения не подвисали, а уходили на IPv4.</summary>
+    [Fact]
+    public void Внешний_ipv6_отклоняется_после_частных_адресов_и_до_пользовательских_правил()
+    {
+        var routing = TestData.Routing(
+            TestData.Rule(MatchKind.DomainSuffix, "example.com", RouteAction.Proxy));
+
+        var config = TestData.BuildConfig(routing: routing);
+        var rules = config.GetProperty("route").GetProperty("rules").EnumerateArray().ToList();
+
+        var privateIndex = rules.FindIndex(r => r.TryGetProperty("ip_is_private", out _));
+        var rejectIndex = rules.FindIndex(r => r.TryGetProperty("ip_version", out _));
+        var userIndex = rules.FindIndex(r => r.TryGetProperty("domain_suffix", out var d) &&
+                                             d.EnumerateArray().Any(x => x.GetString() == "example.com"));
+
+        Assert.True(privateIndex < rejectIndex && rejectIndex < userIndex);
+        Assert.Equal(6, rules[rejectIndex].GetProperty("ip_version").GetInt32());
+        Assert.Equal("reject", rules[rejectIndex].Str("action"));
+    }
+
+    [Fact]
+    public void Без_tun_правила_про_ipv6_нет()
+    {
+        var settings = TestData.Settings();
+        settings.TunEnabled = false;
+
+        var config = TestData.BuildConfig(settings: settings);
+
+        Assert.DoesNotContain(config.GetProperty("route").GetProperty("rules").EnumerateArray(),
+            r => r.TryGetProperty("ip_version", out _));
     }
 }

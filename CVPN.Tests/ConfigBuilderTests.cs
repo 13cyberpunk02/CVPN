@@ -5,6 +5,8 @@ namespace CVPN.Tests;
 
 public class ConfigBuilderTests
 {
+    // ===================== выходы и селектор =====================
+
     [Fact]
     public void Каждый_outbound_имеет_непустой_тег()
     {
@@ -112,6 +114,8 @@ public class ConfigBuilderTests
         Assert.Equal("auto", config.OutboundOfType("selector").Str("default"));
     }
 
+    // ===================== протоколы =====================
+
     [Fact]
     public void Reality_несёт_ключ_и_flow()
     {
@@ -162,7 +166,9 @@ public class ConfigBuilderTests
         foreach (var proxy in proxies)
             Assert.Equal("dns-local", proxy.GetProperty("domain_resolver").Str("server"));
     }
-    
+
+    // ===================== маршруты =====================
+
     [Fact]
     public void Служебные_правила_идут_первыми_и_в_нужном_порядке()
     {
@@ -173,6 +179,7 @@ public class ConfigBuilderTests
         Assert.Equal("dns", rules[1].Str("protocol"));
         Assert.Equal("hijack-dns", rules[1].Str("action"));
 
+        // ip_is_private замыкает служебный блок и по-прежнему ведёт напрямую
         var border = rules.FindIndex(r => r.TryGetProperty("ip_is_private", out _));
         Assert.True(border >= 2);
         Assert.Equal("direct", rules[border].Str("outbound"));
@@ -223,6 +230,7 @@ public class ConfigBuilderTests
 
         var config = TestData.BuildConfig(routing: routing);
 
+        // только пользовательские: у служебного правила локальных имён тоже есть domain_suffix
         var domains = config.UserRouteRules()
             .Where(r => r.TryGetProperty("domain_suffix", out _))
             .Select(r => r.GetProperty("domain_suffix").EnumerateArray().Single().GetString())
@@ -253,6 +261,7 @@ public class ConfigBuilderTests
 
         var config = TestData.BuildConfig(routing: TestData.Routing(rule));
 
+        // остаются только служебные
         Assert.Empty(config.UserRouteRules());
     }
 
@@ -266,7 +275,9 @@ public class ConfigBuilderTests
 
         Assert.Equal("direct", config.GetProperty("route").Str("final"));
     }
-    
+
+    // ===================== наборы правил =====================
+
     [Fact]
     public void Geosite_превращается_в_удалённый_набор()
     {
@@ -279,6 +290,8 @@ public class ConfigBuilderTests
         Assert.Equal("remote", set.Str("type"));
         Assert.Equal("geosite-youtube", set.Str("tag"));
         Assert.Contains("geosite-youtube.srs", set.Str("url"));
+
+        // качается через туннель: raw.githubusercontent.com часто недоступен напрямую
         Assert.Equal("proxy", set.Str("download_detour"));
     }
 
@@ -307,6 +320,8 @@ public class ConfigBuilderTests
         Assert.Equal("twitch", set.Str("tag"));
         Assert.Equal(@"C:\rules\twitch.srs", set.Str("path"));
     }
+
+    // ===================== dns =====================
 
     /// <summary>
     /// Иначе домен резолвится через туннель, и сайт с геобалансировкой отдаёт
@@ -340,6 +355,7 @@ public class ConfigBuilderTests
 
         Assert.Empty(config.UserDnsRules());
 
+        // при этом в маршрутах набор остаётся
         Assert.Equal(1, config.GetProperty("route").GetProperty("rule_set").GetArrayLength());
     }
 
@@ -441,7 +457,9 @@ public class ConfigBuilderTests
 
         Assert.Equal("local", local.Str("type"));
     }
-    
+
+    // ===================== входы =====================
+
     [Fact]
     public void Tun_добавляется_только_когда_включён()
     {
