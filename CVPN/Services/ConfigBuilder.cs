@@ -257,7 +257,7 @@ public static class ConfigBuilder
             ["uuid"] = p.Uuid,
             ["tls"] = tls
         };
-        
+
         if (reality && !string.IsNullOrWhiteSpace(p.Flow))
             outbound["flow"] = p.Flow;
 
@@ -310,7 +310,7 @@ public static class ConfigBuilder
             ["path"] = string.IsNullOrWhiteSpace(p.Path) ? "/" : p.Path,
             ["mode"] = string.IsNullOrWhiteSpace(p.Mode) ? "auto" : p.Mode
         };
-        
+
         if (!string.IsNullOrWhiteSpace(p.HttpHost)) transport["host"] = p.HttpHost;
 
         return new JsonObject
@@ -411,6 +411,7 @@ public static class ConfigBuilder
         return inbounds;
     }
 
+
     private static JsonObject BuildRoute(
         List<RouteRule> rules, RoutingProfile routing, AppSettings settings,
         JsonArray ruleSets, HashSet<string> seen)
@@ -431,7 +432,7 @@ public static class ConfigBuilder
                 ["outbound"] = DirectTag
             });
         }
-        
+
         routeRules.Add(new JsonObject
         {
             ["ip_cidr"] = new JsonArray(LoopbackCidrs.Select(x => (JsonNode)x).ToArray()),
@@ -455,7 +456,7 @@ public static class ConfigBuilder
         {
             var node = ToRouteRule(rule, ruleSets, seen, byeDpi);
             if (node is null) continue;
-            
+
             if (byeDpi && settings.ByeDpiBlockQuic && rule.Action == RouteAction.ByeDpi)
                 routeRules.Add(QuicTwin(node));
 
@@ -470,7 +471,7 @@ public static class ConfigBuilder
             ["auto_detect_interface"] = true,
             ["default_domain_resolver"] = "dns-local"
         };
-        
+
         if (byeDpi) route["find_process"] = true;
 
         return route;
@@ -531,7 +532,7 @@ public static class ConfigBuilder
             default:
                 return null;
         }
-        
+
         if (rule.Action == RouteAction.Block)
             node["action"] = "reject";
         else
@@ -608,6 +609,7 @@ public static class ConfigBuilder
         });
     }
 
+
     /// <summary>
     /// Домены, которые ходят напрямую, и резолвиться должны локально.
     /// Иначе запрос уходит через туннель, сайт с геобалансировкой отдаёт адрес
@@ -626,6 +628,16 @@ public static class ConfigBuilder
                 ["server"] = "dns-local"
             }
         };
+
+        if (s is { TunEnabled: true, TunIpv6: true })
+        {
+            dnsRules.Add(new JsonObject
+            {
+                ["query_type"] = new JsonArray { "AAAA" },
+                ["action"] = "predefined",
+                ["rcode"] = "NOERROR"
+            });
+        }
 
         foreach (var rule in rules.Where(r => r.Action == RouteAction.Direct))
         {

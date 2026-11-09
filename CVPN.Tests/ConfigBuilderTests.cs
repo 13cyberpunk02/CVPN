@@ -5,7 +5,6 @@ namespace CVPN.Tests;
 
 public class ConfigBuilderTests
 {
-    // ===================== выходы и селектор =====================
 
     [Fact]
     public void Каждый_outbound_имеет_непустой_тег()
@@ -167,8 +166,6 @@ public class ConfigBuilderTests
             Assert.Equal("dns-local", proxy.GetProperty("domain_resolver").Str("server"));
     }
 
-    // ===================== маршруты =====================
-
     [Fact]
     public void Служебные_правила_идут_первыми_и_в_нужном_порядке()
     {
@@ -179,7 +176,6 @@ public class ConfigBuilderTests
         Assert.Equal("dns", rules[1].Str("protocol"));
         Assert.Equal("hijack-dns", rules[1].Str("action"));
 
-        // ip_is_private замыкает служебный блок и по-прежнему ведёт напрямую
         var border = rules.FindIndex(r => r.TryGetProperty("ip_is_private", out _));
         Assert.True(border >= 2);
         Assert.Equal("direct", rules[border].Str("outbound"));
@@ -395,9 +391,9 @@ public class ConfigBuilderTests
         var referenced = new List<string>();
 
         foreach (var section in new[] { config.GetProperty("route"), config.GetProperty("dns") })
-        foreach (var rule in section.GetProperty("rules").EnumerateArray())
-            if (rule.TryGetProperty("rule_set", out var sets))
-                referenced.AddRange(sets.EnumerateArray().Select(x => x.GetString()!));
+            foreach (var rule in section.GetProperty("rules").EnumerateArray())
+                if (rule.TryGetProperty("rule_set", out var sets))
+                    referenced.AddRange(sets.EnumerateArray().Select(x => x.GetString()!));
 
         Assert.NotEmpty(referenced);
         Assert.All(referenced, tag => Assert.Contains(tag, declared));

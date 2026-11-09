@@ -124,7 +124,10 @@ public static class TestData
 
     /// <summary>DNS-правила без встроенного первого - «локальные имена через системный резолвер».</summary>
     public static List<JsonElement> UserDnsRules(this JsonElement config) =>
-        config.GetProperty("dns").GetProperty("rules").EnumerateArray().Skip(1).ToList();
+        config.GetProperty("dns").GetProperty("rules").EnumerateArray()
+            .Skip(1)
+            .Where(r => !r.TryGetProperty("query_type", out _)) // служебный пустой ответ на AAAA
+            .ToList();
 
     public static string? Str(this JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) ? value.GetString() : null;

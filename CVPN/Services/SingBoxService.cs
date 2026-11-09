@@ -45,8 +45,6 @@ public sealed class SingBoxService(string corePath) : IAsyncDisposable
         using var process = Process.Start(info)
                             ?? throw new InvalidOperationException(Loc.T("Core_StartFailed"));
 
-        // Оба потока читаются параллельно: последовательное чтение способно
-        // заблокироваться, если один из буферов заполнится
         var stdout = process.StandardOutput.ReadToEndAsync(ct);
         var stderr = process.StandardError.ReadToEndAsync(ct);
 
@@ -178,8 +176,7 @@ public sealed class SingBoxService(string corePath) : IAsyncDisposable
         {
             if (process.HasExited) return;
 
-            // Сначала мягко: по Ctrl+C ядро снимает TUN-интерфейс само
-            if (ConsoleSignal.TryGracefulStop(process, TimeSpan.FromSeconds(5))) return;
+            if (await Task.Run(() => ConsoleSignal.TryGracefulStop(process, TimeSpan.FromSeconds(5)))) return;
 
             LineReceived?.Invoke("[cvpn] the core did not react to the signal, killing it");
             process.Kill(entireProcessTree: true);

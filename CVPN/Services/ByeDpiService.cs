@@ -40,7 +40,7 @@ public sealed class ByeDpiService : IAsyncDisposable
 
         if (port is < 1 or > 65535)
             return Loc.T("ByeDpi_BadPort");
-        
+
         if (await IsListeningAsync(port)) return Loc.T("ByeDpi_PortInUse", port);
 
         var built = ByeDpiArguments.Build(userArguments, port, connIp);
@@ -167,9 +167,7 @@ public sealed class ByeDpiService : IAsyncDisposable
         try
         {
             if (process.HasExited) return;
-
-            if (ConsoleSignal.TryGracefulStop(process, TimeSpan.FromSeconds(2))) return;
-
+            
             process.Kill(entireProcessTree: true);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
