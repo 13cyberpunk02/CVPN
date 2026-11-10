@@ -2,6 +2,22 @@
 
 **English** · [Русский](README.ru.md)
 
+> [!IMPORTANT]
+> **The project has moved to [CVPN.Crossplatform](https://github.com/13cyberpunk02/CVPN.Crossplatform).**
+>
+> CVPN is not abandoned: it continues in the new repository, rewritten with
+> [Avalonia](https://avaloniaui.net). Avalonia is more modern than WPF and works on several
+> systems out of the box, so the new version runs on **Windows, Linux and Android**.
+>
+> - Profiles, rules and settings carry over on their own: the new version reads the same
+>   `%AppData%\CVPN` folder.
+> - The Windows installer installs over this version.
+> - Everything new (design, Linux, Android, fixes) is released there only.
+>
+> This repository is archived for history and no longer updated.
+>
+> **[Download the new version →](https://github.com/13cyberpunk02/CVPN.Crossplatform/releases/latest)**
+
 [![Release](https://img.shields.io/github/v/release/13CyberPunk02/CVPN?label=release)](https://github.com/13CyberPunk02/CVPN/releases)
 [![Downloads](https://img.shields.io/github/downloads/13CyberPunk02/CVPN/total)](https://github.com/13CyberPunk02/CVPN/releases)
 [![Tests](https://github.com/13CyberPunk02/CVPN/actions/workflows/tests.yml/badge.svg)](https://github.com/13CyberPunk02/CVPN/actions/workflows/tests.yml)
